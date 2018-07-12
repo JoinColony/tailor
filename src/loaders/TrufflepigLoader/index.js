@@ -1,15 +1,19 @@
 /* @flow */
 
-import type { ConstructorArgs } from '../HttpLoader/flowtypes';
-import createHttpLoader from '../HttpLoader';
-import transformTruffleArtifact from './transformTruffleArtifact';
+import type { HttpLoaderArgs } from '../flowtypes';
+import HttpLoader from '../HttpLoader';
+import transformTruffleArtifact from '../transforms/transformTruffleArtifact';
 
 const DEFAULT_HOST = 'http://127.0.0.1:3030';
+// eslint-disable-next-line max-len
 const DEFAULT_ENDPOINT = `${DEFAULT_HOST}/contracts?name=%%NAME%%&address=%%ADDRESS%%&version=%%VERSION%%`;
 
-export default function createTrufflepigLoader({
-  endpoint = DEFAULT_ENDPOINT,
-  transform = transformTruffleArtifact,
-}: ConstructorArgs = {}) {
-  return createHttpLoader({ endpoint, transform });
+export default class TrufflepigLoader extends HttpLoader {
+  constructor({
+    endpoint = DEFAULT_ENDPOINT,
+    transform = transformTruffleArtifact,
+    ...args
+  }: HttpLoaderArgs = {}) {
+    super({ endpoint, transform, ...args });
+  }
 }

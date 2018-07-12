@@ -6,7 +6,11 @@
   "main": "lib/index.js",
   "files": [
     "lib/index.js",
+    "lib/loaders/EtherscanLoader",
+    "lib/loaders/FSLoader",
     "lib/loaders/HttpLoader",
+    "lib/loaders/Loader",
+    "lib/loaders/TruffleLoader",
     "lib/loaders/TrufflepigLoader",
     "README.md"
   ],
@@ -88,5 +92,8 @@
     "assert": "^1.4.1",
     "isomorphic-fetch": "^2.2.1",
     "web3-utils": "^1.0.0-beta.34"
+  },
+  "optionalDependencies": {
+    "jsonfile": "^4.0.0"
   }
 }

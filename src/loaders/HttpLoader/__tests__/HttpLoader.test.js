@@ -1,7 +1,7 @@
 /* eslint-env jest */
 
 import createSandbox from 'jest-sandbox';
-import createHttpLoader, { HttpLoader }from '../index';
+import HttpLoader from '../index';
 
 describe('HttpLoader', () => {
   const sandbox = createSandbox();
@@ -17,17 +17,7 @@ describe('HttpLoader', () => {
     fetch.resetMocks();
   });
 
-  test('Creating an HttpLoader', () => {
-    expect(() => {
-      createHttpLoader();
-    }).toThrow('An "endpoint" option must be provided');
-
-    const loader = createHttpLoader({ endpoint });
-    expect(loader).toHaveProperty('_endpoint', endpoint);
-    expect(loader).toBeInstanceOf(HttpLoader);
-  });
-
-  test('Instantiating a new HttpLoader directly', () => {
+  test('Instantiating an HttpLoader', () => {
     expect(() => {
       new HttpLoader();
     }).toThrow('An "endpoint" option must be provided');

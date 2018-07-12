@@ -1,8 +1,8 @@
 /* eslint-env jest */
 
 import createSandbox from 'jest-sandbox';
-import createTrufflepigLoader from '../index';
-import { HttpLoader } from '../../HttpLoader';
+import TrufflepigLoader from '../index';
+import HttpLoader from '../../HttpLoader';
 
 describe('TrufflepigLoader', () => {
   const sandbox = createSandbox();
@@ -13,16 +13,16 @@ describe('TrufflepigLoader', () => {
 
   test('Instantiating a TrufflepigLoader', () => {
     expect(() => {
-      createTrufflepigLoader({ endpoint: '' });
+      new TrufflepigLoader({ endpoint: '' });
     }).toThrow('An "endpoint" option must be provided');
 
-    const loader = createTrufflepigLoader();
+    const loader = new TrufflepigLoader();
     expect(loader).toHaveProperty('_endpoint');
     expect(loader).toBeInstanceOf(HttpLoader);
   });
 
   test('Loading contract data', async () => {
-    const loader = createTrufflepigLoader();
+    const loader = new TrufflepigLoader();
     sandbox.spyOn(loader, '_transform');
 
     const contractName = 'TruffleContract';

@@ -1,16 +1,20 @@
 /* @flow */
 
-import type { TruffleArtifact } from './flowtypes';
-import type { ContractData, Query } from '../../interface/Loader';
+import type {
+  ContractData,
+  Query,
+  Transform,
+  TruffleArtifact,
+} from '../flowtypes';
 
 /*
  * Given a Truffle Artifact object and a Query, transform the artifact
  * into the contract data that the Loader is expected to return
  */
-export default function transformTruffleArtifact(
+const transformTruffleArtifact: Transform = (
   { abi = [], bytecode, networks = {} }: TruffleArtifact = {},
   { network }: Query = {},
-): ContractData {
+): ContractData => {
   let address;
 
   // Some clients (like Ganache) create IDs as integers; normalise them
@@ -30,4 +34,6 @@ export default function transformTruffleArtifact(
     address,
     bytecode,
   };
-}
+};
+
+export default transformTruffleArtifact;
