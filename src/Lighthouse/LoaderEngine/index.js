@@ -1,11 +1,11 @@
 /* @flow */
 
 import type {
-  Loader,
   ContractData,
-  RequiredContractDataProps,
+  ILoader,
   Query,
-} from '../interface/Loader';
+  RequiredContractDataProps,
+} from './flowtypes';
 
 import { REQUIRED_CONTRACT_DATA_PROPS } from './defaults';
 import { validateDataField, validateQueryField } from './validation';
@@ -13,7 +13,7 @@ import { validateDataField, validateQueryField } from './validation';
 const assert = require('assert');
 
 export default class LoaderEngine {
-  _loader: Loader;
+  _loader: ILoader;
 
   /*
    * Given contract data and required contract properties, validate the
@@ -42,7 +42,7 @@ export default class LoaderEngine {
     );
   }
 
-  constructor(loader: Loader) {
+  constructor(loader: ILoader) {
     assert(
       typeof loader === 'object' && Object.hasOwnProperty.call(loader, 'load'),
       'LoaderEngine requires a valid Loader',

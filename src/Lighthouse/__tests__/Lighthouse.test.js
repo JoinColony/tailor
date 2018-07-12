@@ -2,7 +2,7 @@
 
 import createSandbox from 'jest-sandbox';
 import Lighthouse from '../index';
-import LoaderEngine from '../../LoaderEngine';
+import LoaderEngine from '../LoaderEngine';
 
 describe('Lighthouse', () => {
   const sandbox = createSandbox();
