@@ -16,12 +16,17 @@
         "build:dist": "webpack",
         "build:flow": "flow-copy-source src lib --ignore '__tests__/*.js'",
         "build:lib": "babel src --out-dir lib --ignore __tests__ --source-maps",
+        "build:ci": "NODE_ENV=test yarn build",
         "clean": "rimraf {lib,dist}",
         "flow": "flow check",
+        "flow:ci": "flow --json | flow-junit-transformer > reports/flow/flow-results.xml",
         "lint": "run(){ eslint --ignore-pattern=**/{node_modules,dist,lib}/* --fix ${@:-\"src/{,**/}*.js\"}; }; run",
+        "lint:ci": "eslint --format junit -o reports/eslint/eslint-results.xml src",
         "precommit": "lint-staged",
-        "test": "yarn run lint && yarn run test:unit",
-        "test:unit": "jest --coverage --config=jest.conf.json"
+        "test": "NODE_ENV=test jest",
+        "test:ci": "jest --clearCache && NODE_ENV=test jest --config=jest.conf.json --bail --ci --coverage --verbose=true --reporters='jest-junit'",
+        "test:coverage": "NODE_ENV=test jest --coverage",
+        "test:watch": "NODE_ENV=test jest --watchAll"
     },
     "lint-staged": {
         "src/{,**/}*.js": [
@@ -43,6 +48,7 @@
     },
     "devDependencies": {
         "@colony/eslint-config-colony": "^5.0.0",
+        "@kironeducation/flow-junit-transformer": "^0.3.0",
         "babel-eslint": "^8.2.5",
         "babel-loader": "^7.1.5",
         "babel-plugin-transform-class-properties": "^6.24.1",
@@ -58,9 +64,12 @@
         "eslint-plugin-prettier": "^2.6.2",
         "flow-bin": "^0.76.0",
         "flow-copy-source": "^2.0.1",
+        "husky": "^0.14.3",
         "jest": "^23.4.0",
         "jest-fetch-mock": "^1.6.5",
+        "jest-junit": "^5.1.0",
         "jest-sandbox": "^1.1.2",
+        "lint-staged": "^7.2.0",
         "prettier": "^1.13.7",
         "rimraf": "2.6.2",
         "webpack": "^4.16.0",
