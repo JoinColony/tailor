@@ -7,15 +7,19 @@ import type { Validator, Schema } from './flowtypes';
 export const VALIDATORS: { [name: string]: Validator } = {
   ADDRESS: [isAddress, 'must be a valid address'],
   STRING: [
-    value => typeof value === 'string' && value.length,
+    (value: string) => Boolean(typeof value === 'string' && value.length),
     'must be a non-empty string',
   ],
   BYTECODE: [
     // Pretty basic validation, but it should suffice for our purposes
-    value => typeof value === 'string' && value.slice(0, 2) === '0x',
+    (value: string) =>
+      Boolean(typeof value === 'string' && value.slice(0, 2) === '0x'),
     'must be valid bytecode',
   ],
-  ABI: [value => Array.isArray(value) && value.length, 'must be valid ABI'],
+  ABI: [
+    (value: Array<*>) => Boolean(Array.isArray(value) && value.length),
+    'must be valid ABI',
+  ],
 };
 
 export const QUERY_SCHEMA: Schema = {
