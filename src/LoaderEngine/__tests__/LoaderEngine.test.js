@@ -1,4 +1,5 @@
 /* eslint-env jest */
+/* eslint-disable no-new */
 
 import createSandbox from 'jest-sandbox';
 import LoaderEngine from '../index';

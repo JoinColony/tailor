@@ -1,5 +1,5 @@
 /* eslint-env jest */
-/* eslint-disable no-underscore-dangle,no-new */
+/* eslint-disable no-underscore-dangle,no-new,import/no-extraneous-dependencies */
 
 import createSandbox from 'jest-sandbox';
 import path from 'path';

@@ -1,5 +1,5 @@
 /* eslint-env jest */
-/* eslint-disable no-new */
+/* eslint-disable no-new,global-require */
 
 jest.mock('jsonfile', () => {
   throw new Error('Not installed!');

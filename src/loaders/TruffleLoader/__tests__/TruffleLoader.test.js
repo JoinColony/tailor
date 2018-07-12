@@ -1,4 +1,5 @@
 /* eslint-env jest */
+/* eslint-disable no-new,max-len */
 
 import TruffleLoader from '../index';
 import FSLoader from '../../FSLoader';

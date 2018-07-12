@@ -1,4 +1,5 @@
 /* eslint-env jest */
+/* eslint-disable no-new,no-underscore-dangle */
 
 import createSandbox from 'jest-sandbox';
 import TrufflepigLoader from '../index';
@@ -53,9 +54,6 @@ describe('TrufflepigLoader', () => {
       address: correctAddress,
       bytecode: contractResponse.bytecode,
     });
-    expect(loader._transform).toHaveBeenCalledWith(
-      contractResponse,
-      query,
-    );
+    expect(loader._transform).toHaveBeenCalledWith(contractResponse, query);
   });
 });

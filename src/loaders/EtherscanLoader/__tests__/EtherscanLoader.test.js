@@ -1,4 +1,5 @@
 /* eslint-env jest */
+/* eslint-disable no-new */
 
 import EtherscanLoader from '../index';
 import HttpLoader from '../../HttpLoader';

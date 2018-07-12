@@ -1,7 +1,6 @@
 /* @flow */
 
-import type { Query } from '../flowtypes';
-import type { EtherscanResponse } from '../flowtypes';
+import type { EtherscanResponse, Query } from '../flowtypes';
 
 export default function etherscanTransform(
   response: EtherscanResponse,
