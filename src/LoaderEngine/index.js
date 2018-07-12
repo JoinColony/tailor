@@ -13,7 +13,7 @@ import { validateDataField, validateQueryField } from './validation';
 const assert = require('assert');
 
 export default class LoaderEngine {
-  loader: Loader;
+  _loader: Loader;
 
   /*
    * Given contract data and required contract properties, validate the
@@ -47,7 +47,7 @@ export default class LoaderEngine {
       typeof loader === 'object' && Object.hasOwnProperty.call(loader, 'load'),
       'LoaderEngine requires a valid Loader',
     );
-    this.loader = loader;
+    this._loader = loader;
   }
 
   /*
@@ -74,7 +74,7 @@ export default class LoaderEngine {
       contractName ? { contractName } : { contractAddress },
       otherQuery,
     );
-    const data = await this.loader.load(firstQuery, props);
+    const data = await this._loader.load(firstQuery, props);
 
     if (data == null) throw new Error('Unable to load contract definition');
 
@@ -86,7 +86,7 @@ export default class LoaderEngine {
       data.address = routerAddress;
     } else if (routerName) {
       // If we have the router name, look it up for the router address.
-      const routerContract = await this.loader.load(
+      const routerContract = await this._loader.load(
         Object.assign({}, otherQuery, { contractName: routerName }),
         props,
       );

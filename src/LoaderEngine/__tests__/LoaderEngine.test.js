@@ -64,7 +64,7 @@ describe('LoaderEngine', () => {
 
   test('Instantiating a LoaderEngine', () => {
     const engine = new LoaderEngine(mockLoader);
-    expect(engine).toHaveProperty('loader', mockLoader);
+    expect(engine).toHaveProperty('_loader', mockLoader);
 
     // Without a valid loader
     expect(() => {
