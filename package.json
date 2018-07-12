@@ -49,6 +49,7 @@
     "devDependencies": {
         "@colony/eslint-config-colony": "^5.0.0",
         "@kironeducation/flow-junit-transformer": "^0.3.0",
+        "babel-cli": "^6.26.0",
         "babel-eslint": "^8.2.5",
         "babel-loader": "^7.1.5",
         "babel-plugin-transform-class-properties": "^6.24.1",
