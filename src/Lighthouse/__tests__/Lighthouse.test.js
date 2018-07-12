@@ -2,6 +2,7 @@
 
 import createSandbox from 'jest-sandbox';
 import Lighthouse from '../index';
+import LoaderEngine from '../../LoaderEngine';
 
 describe('Lighthouse', () => {
   const sandbox = createSandbox();
@@ -19,5 +20,10 @@ describe('Lighthouse', () => {
       loader: mockLoader,
     });
     expect(lh).toBeInstanceOf(Lighthouse);
-  })
+    expect(lh).toHaveProperty('loader', expect.any(LoaderEngine));
+    expect(lh.loader).toHaveProperty(
+      '_loader',
+      expect.objectContaining({ load: expect.any(Function) }),
+    );
+  });
 });
