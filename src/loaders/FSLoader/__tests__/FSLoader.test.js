@@ -41,7 +41,7 @@ describe('FSLoader', () => {
     const loader = new FSLoader({ directory });
 
     try {
-      await loader.load({ contractAddress: '0x123' });
+      await loader.loadContractData({ contractAddress: '0x123' });
       expect(false).toBe(true); // Should be unreachable
     } catch (error) {
       expect(error.toString()).toMatch(
@@ -50,7 +50,7 @@ describe('FSLoader', () => {
     }
 
     const query = { contractName };
-    const data = await loader.load(query);
+    const data = await loader.loadContractData(query);
     expect(path.resolve).toHaveBeenCalledWith(
       loader._directory,
       `${contractName}.json`,

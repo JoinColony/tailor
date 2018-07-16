@@ -29,7 +29,7 @@ export default class FSLoader extends Loader {
     this._directory = directory;
   }
 
-  async load(query: Query) {
+  async loadContractData(query: Query) {
     const { contractName = '' } = query;
 
     assert(!!contractName, 'A "contractName" property must be provided');

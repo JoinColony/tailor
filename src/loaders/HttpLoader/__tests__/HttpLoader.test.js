@@ -55,7 +55,7 @@ describe('HttpLoader', () => {
 
     fetch.once(JSON.stringify(contractResponse));
 
-    const data = await loader.load(query);
+    const data = await loader.loadContractData(query);
     expect(data).toEqual(contractResponse);
     expect(loader.resolveEndpointResource).toHaveBeenCalledWith(query);
     expect(fetch).toHaveBeenCalledWith(expect.stringContaining(contractName));
@@ -69,7 +69,7 @@ describe('HttpLoader', () => {
     fetch.mockRejectOnce(new Error('Boom!'));
 
     try {
-      await loader.load(query);
+      await loader.loadContractData(query);
       expect(false).toBe(true); // should be unreachable
     } catch (error) {
       expect(error.toString()).toMatch(
@@ -86,7 +86,7 @@ describe('HttpLoader', () => {
     fetch.once('not valid json');
 
     try {
-      await loader.load(query);
+      await loader.loadContractData(query);
       expect(false).toBe(true); // should be unreachable
     } catch (error) {
       expect(error.toString()).toMatch(

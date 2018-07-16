@@ -22,5 +22,9 @@ export type RequiredContractDataProps = {
 };
 
 export interface Loader {
+  loadContractData(
+    query: Query,
+    props?: RequiredContractDataProps,
+  ): Promise<Object>;
   load(query: Query, props?: RequiredContractDataProps): Promise<ContractData>;
 }

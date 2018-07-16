@@ -48,7 +48,7 @@ describe('TrufflepigLoader', () => {
 
     fetch.once(JSON.stringify(contractResponse));
 
-    const data = await loader.load(query);
+    const data = await loader.loadContractData(query);
     expect(data).toEqual({
       abi: contractResponse.abi,
       address: correctAddress,

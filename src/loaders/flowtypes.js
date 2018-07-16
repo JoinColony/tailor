@@ -4,7 +4,16 @@ import type {
   ContractData,
   Loader as ILoader,
   Query,
+  RequiredContractDataProps,
 } from '../interface/Loader';
+
+export type Validator = [(value: *) => boolean, string];
+
+export type { ContractData, ILoader, Query, RequiredContractDataProps };
+
+export type Schema = {
+  [fieldName: string]: Validator,
+};
 
 export type Transform = (jsonObj: Object, query: Query) => ContractData;
 
@@ -28,5 +37,3 @@ export type TruffleArtifact = {
     },
   },
 };
-
-export type { ILoader, ContractData, Query };

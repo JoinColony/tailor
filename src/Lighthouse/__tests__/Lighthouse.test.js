@@ -2,7 +2,9 @@
 
 import createSandbox from 'jest-sandbox';
 import Lighthouse from '../index';
-import LoaderEngine from '../LoaderEngine';
+import Loader from '../../loaders/Loader';
+
+jest.mock('../../loaders/Loader');
 
 describe('Lighthouse', () => {
   const sandbox = createSandbox();
@@ -11,19 +13,11 @@ describe('Lighthouse', () => {
     sandbox.clear();
   });
 
-  const mockLoader = {
-    load: sandbox.fn(),
-  };
-
   test('Instantiating a Lighthouse', () => {
     const lh = new Lighthouse({
-      loader: mockLoader,
+      loader: new Loader(),
     });
     expect(lh).toBeInstanceOf(Lighthouse);
-    expect(lh).toHaveProperty('loader', expect.any(LoaderEngine));
-    expect(lh.loader).toHaveProperty(
-      '_loader',
-      expect.objectContaining({ load: expect.any(Function) }),
-    );
+    expect(lh).toHaveProperty('loader', expect.any(Loader));
   });
 });

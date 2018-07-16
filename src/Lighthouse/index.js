@@ -1,12 +1,11 @@
 /* @flow */
 
-import LoaderEngine from './LoaderEngine';
-import type { ILoader } from './LoaderEngine/flowtypes';
+import type { Loader as ILoader } from '../interface/Loader';
 
 export default class Lighthouse {
-  loader: LoaderEngine;
+  loader: ILoader;
 
   constructor({ loader }: { loader: ILoader } = {}) {
-    this.loader = new LoaderEngine(loader);
+    this.loader = loader;
   }
 }
