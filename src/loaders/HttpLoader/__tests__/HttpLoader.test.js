@@ -18,6 +18,10 @@ describe('HttpLoader', () => {
     fetch.resetMocks();
   });
 
+  test('It should provide a name', () => {
+    expect(HttpLoader.name).toEqual('http');
+  });
+
   test('Instantiating an HttpLoader', () => {
     expect(() => {
       new HttpLoader();
@@ -37,6 +41,14 @@ describe('HttpLoader', () => {
     });
     expect(resource).toBe(
       `//endpoint?name=${contractName}&version=${version}&address=${contractAddress}`, // eslint-disable-line max-len
+    );
+
+    const resourceWithoutName = loader.resolveEndpointResource({
+      contractAddress,
+      version,
+    });
+    expect(resourceWithoutName).toBe(
+      `//endpoint?name=&version=${version}&address=${contractAddress}`,
     );
   });
 
@@ -59,12 +71,24 @@ describe('HttpLoader', () => {
     expect(data).toEqual(contractResponse);
     expect(loader.resolveEndpointResource).toHaveBeenCalledWith(query);
     expect(fetch).toHaveBeenCalledWith(expect.stringContaining(contractName));
+
+    loader.resolveEndpointResource.mockReset();
+    fetch.mockReset();
+    fetch.once(JSON.stringify(''));
+    try {
+      await loader.loadContractData({});
+      expect(false).toBe(true); // unreachable
+    } catch (error) {
+      expect(error.toString()).toMatch(
+        'Unable to load contract data for contract',
+      );
+    }
   });
 
   test('Loading contract data: failure to fetch resource', async () => {
     const loader = new HttpLoader({ endpoint });
 
-    const query = { contractName };
+    const query = { contractAddress };
 
     fetch.mockRejectOnce(new Error('Boom!'));
 
@@ -73,7 +97,7 @@ describe('HttpLoader', () => {
       expect(false).toBe(true); // should be unreachable
     } catch (error) {
       expect(error.toString()).toMatch(
-        'Unable to fetch resource for contract MyContract',
+        `Unable to fetch resource for contract ${contractAddress}`,
       );
     }
   });

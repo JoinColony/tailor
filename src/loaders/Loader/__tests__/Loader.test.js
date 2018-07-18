@@ -11,6 +11,10 @@ describe('Loader', () => {
     sandbox.clear();
   });
 
+  test('It should provide a name', () => {
+    expect(Loader.name).toEqual('loader');
+  });
+
   test('Validating contract data', () => {
     const data = {
       address: '0x7da82c7ab4771ff031b66538d2fb9b0b047f6cf9',
@@ -152,6 +156,29 @@ describe('Loader', () => {
 
     // With routerName
     loader.loadContractData.mockResolvedValue(data);
+    expect(await loader.load(routerNameQuery, props)).toMatchObject(data);
+    expect(loader.loadContractData).toHaveBeenCalledWith(
+      { contractName: routerNameQuery.contractName },
+      props,
+    );
+    expect(loader.loadContractData).toHaveBeenCalledWith(
+      { contractName: routerNameQuery.routerName },
+      props,
+    );
+    expect(loader.loadContractData).toHaveBeenCalledTimes(2);
+    expect(loader.constructor.runQueryValidation).toHaveBeenCalledWith(
+      routerNameQuery,
+    );
+    expect(loader.constructor.runDataValidation).toHaveBeenCalledWith(
+      data,
+      props,
+    );
+    resetSpies();
+
+    // With routerName, but no routerContract found
+    loader.loadContractData
+      .mockResolvedValueOnce(data)
+      .mockResolvedValueOnce(null);
     expect(await loader.load(routerNameQuery, props)).toMatchObject(data);
     expect(loader.loadContractData).toHaveBeenCalledWith(
       { contractName: routerNameQuery.contractName },

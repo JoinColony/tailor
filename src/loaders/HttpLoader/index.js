@@ -41,7 +41,7 @@ export default class HttpLoader extends Loader {
 
   async loadContractData(query: Query) {
     let error = new Error();
-    let action = '';
+    let action = 'load contract data';
     let response;
 
     try {
