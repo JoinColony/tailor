@@ -32,7 +32,7 @@
     "lint:ci": "eslint --format junit -o reports/eslint/eslint-results.xml src",
     "precommit": "lint-staged",
     "test": "NODE_ENV=test jest",
-    "test:ci": "jest --clearCache && NODE_ENV=test jest --config=jest.conf.json --bail --ci --coverage --verbose=true --reporters='jest-junit'",
+    "test:ci": "jest --clearCache && NODE_ENV=test jest --bail --ci --coverage --verbose=true --reporters='jest-junit'",
     "test:coverage": "NODE_ENV=test jest --coverage",
     "test:watch": "NODE_ENV=test jest --watchAll"
   },
