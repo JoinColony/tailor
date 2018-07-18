@@ -7,4 +7,8 @@ import ABIParser from '../ABIParser';
  * which is the same as the data the ABIParser expects; simply extend the
  * class with no modifications. Later, we can use other data provided here.
  */
-export default class TruffleParser extends ABIParser {}
+export default class TruffleParser extends ABIParser {
+  static get name() {
+    return 'truffle';
+  }
+}

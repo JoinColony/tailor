@@ -6,11 +6,20 @@ import ABIParser from '../../ABIParser';
 import TruffleParser from '../index';
 import MetaCoinArtifact from '../__fixtures__/MetaCoin';
 
+const contractData = Object.assign(
+  { address: '0x7da82c7ab4771ff031b66538d2fb9b0b047f6cf9' },
+  MetaCoinArtifact,
+);
+
 describe('TruffleParser', () => {
   const sandbox = createSandbox();
 
   beforeEach(() => {
     sandbox.clear();
+  });
+
+  test('It should provide a name', () => {
+    expect(TruffleParser.name).toEqual('truffle');
   });
 
   test('It inherits ABIParser', () => {
@@ -22,23 +31,23 @@ describe('TruffleParser', () => {
     const parser = new TruffleParser();
     sandbox.spyOn(parser.constructor, 'parseABI');
 
-    const result = parser.parse(MetaCoinArtifact);
+    const result = parser.parse(contractData);
     expect(parser.constructor.parseABI).toHaveBeenCalledWith(
       MetaCoinArtifact.abi,
     );
 
     expect(result).toHaveProperty(
       'constants',
-      expect.arrayContaining([expect.any(Object)]),
+      expect.objectContaining({ getBalance: expect.any(Object) }),
     );
     expect(result).toHaveProperty(
       'events',
-      expect.arrayContaining([expect.any(Object)]),
+      expect.objectContaining({ Transfer: expect.any(Object) }),
     );
     expect(result).toHaveProperty(
       'methods',
-      expect.arrayContaining([expect.any(Object)]),
+      expect.objectContaining({ sendCoin: expect.any(Object) }),
     );
-    expect(result).toHaveProperty('contractData', MetaCoinArtifact);
+    expect(result).toHaveProperty('address', contractData.address);
   });
 });
