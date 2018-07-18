@@ -19,6 +19,10 @@ const assert = require('assert');
 export default class Loader implements ILoader {
   _transform: Transform;
 
+  static get name() {
+    return 'loader';
+  }
+
   constructor({ transform = transformJson }: LoaderArgs = {}) {
     assert(
       typeof transform === 'function',

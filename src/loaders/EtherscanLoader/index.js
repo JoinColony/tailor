@@ -9,6 +9,10 @@ const DEFAULT_ENDPOINT =
   'https://api.etherscan.io/api?module=contract&action=getabi&address=%%ADDRESS%%'; // eslint-disable-line max-len
 
 export default class EtherscanLoader extends HttpLoader {
+  static get name() {
+    return 'etherscan';
+  }
+
   constructor({
     endpoint = DEFAULT_ENDPOINT,
     transform = transformEtherscanResponse,

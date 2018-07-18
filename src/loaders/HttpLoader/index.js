@@ -9,6 +9,10 @@ const assert = require('assert');
 export default class HttpLoader extends Loader {
   _endpoint: string;
 
+  static get name() {
+    return 'http';
+  }
+
   constructor({ endpoint, transform }: HttpLoaderArgs = {}) {
     super({ transform });
     assert(

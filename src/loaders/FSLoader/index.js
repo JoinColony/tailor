@@ -20,6 +20,10 @@ try {
 export default class FSLoader extends Loader {
   _directory: string;
 
+  static get name() {
+    return 'fs';
+  }
+
   constructor({ directory, transform }: FSLoaderArgs = {}) {
     super({ transform });
     assert(
