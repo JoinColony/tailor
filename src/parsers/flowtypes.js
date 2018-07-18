@@ -1,6 +1,6 @@
 /* @flow */
 
-export type { Parser as IParser } from '../interface/Parser';
+export type { IParser } from '../interface/Parser';
 
 export type {
   ConstantSpec,
