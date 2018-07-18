@@ -31,8 +31,8 @@
     "lint:fix": "run(){ eslint --ignore-pattern=**/{node_modules,dist,lib}/* --fix ${@:-\"src/{,**/}*.js\"}; }; run",
     "lint:ci": "eslint --format junit -o reports/eslint/eslint-results.xml src",
     "precommit": "lint-staged",
-    "test": "NODE_ENV=test jest",
-    "test:ci": "jest --clearCache && NODE_ENV=test jest --bail --ci --coverage --verbose=true --reporters='jest-junit'",
+    "test": "NODE_ENV=test jest --config=jest.conf.js",
+    "test:ci": "jest --clearCache && NODE_ENV=test jest --config=jest.conf.js --bail --ci --coverage --verbose=true --reporters='jest-junit'",
     "test:coverage": "NODE_ENV=test jest --coverage",
     "test:watch": "NODE_ENV=test jest --watchAll"
   },
