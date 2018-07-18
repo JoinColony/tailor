@@ -1,4 +1,7 @@
 /* @flow */
+/* eslint-disable no-restricted-syntax */
+
+import { isAddress } from 'web3-utils';
 
 import type {
   ABI,
@@ -6,17 +9,21 @@ import type {
   ABIParam,
   ConstantSpec,
   EventSpec,
-  IParser,
   MethodSpec,
   ParamsSpec,
   ParamType,
 } from '../flowtypes';
 
 import { TYPE_PATTERN_MAP } from './constants';
+import Parser from '../Parser';
 
 const assert = require('assert');
 
-export default class ABIParser implements IParser {
+export default class ABIParser extends Parser {
+  static get name() {
+    return 'abi';
+  }
+
   static parseFieldName(name?: string, index: number) {
     return (
       // Remove initial `_` from the given name
@@ -44,7 +51,6 @@ export default class ABIParser implements IParser {
     return {
       convertInput: convert.bind(this, 'convertInput'),
       convertOutput: convert.bind(this, 'convertOutput'),
-      // TODO does this validate fn need more context? (field name)
       validate(value: *) {
         assert(typeof value === 'object', 'Must be an object');
         return tupleTypes.every(([name, type]) => type.validate(value[name]));
@@ -125,31 +131,37 @@ export default class ABIParser implements IParser {
   static parseABI(abi: ABI) {
     return abi.filter(({ type }) => type !== 'constructor').reduce(
       (acc, entry) => {
+        let spec;
         if (entry.type === 'event') {
-          acc.events.push(this.parseEventSpec(entry));
+          spec = this.parseEventSpec(entry);
+          acc.events[spec.name] = spec;
         } else if (
           entry.stateMutability === 'view' ||
           entry.stateMutability === 'pure'
         ) {
-          acc.constants.push(this.parseConstantSpec(entry));
+          spec = this.parseConstantSpec(entry);
+          acc.constants[spec.name] = spec;
         } else {
-          acc.methods.push(this.parseMethodSpec(entry));
+          spec = this.parseMethodSpec(entry);
+          acc.methods[spec.name] = spec;
         }
         return acc;
       },
       {
-        constants: [],
-        events: [],
-        methods: [],
+        constants: {},
+        events: {},
+        methods: {},
       },
     );
   }
 
   parse(contractData: *) {
     assert(Array.isArray(contractData.abi), 'Expected an "abi" property');
-    return Object.create({
-      contractData,
-      ...this.constructor.parseABI(contractData.abi),
-    });
+    assert(isAddress(contractData.address), 'Expected an "address" property');
+    return Object.assign(
+      {},
+      { address: contractData.address },
+      this.constructor.parseABI(contractData.abi),
+    );
   }
 }

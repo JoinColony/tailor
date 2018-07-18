@@ -15,11 +15,20 @@ const [
   sendCoinABI,
 ] = MetaCoinABI.abi;
 
+const contractData = Object.assign(
+  { address: '0x7da82c7ab4771ff031b66538d2fb9b0b047f6cf9' },
+  MetaCoinABI,
+);
+
 describe('ABIParser', () => {
   const sandbox = createSandbox();
 
   beforeEach(() => {
     sandbox.clear();
+  });
+
+  test('It should provide a name', () => {
+    expect(ABIParser.name).toEqual('abi');
   });
 
   test('It parses contract specs from a JSON ABI', () => {
@@ -29,7 +38,7 @@ describe('ABIParser', () => {
     sandbox.spyOn(parser.constructor, 'parseEventSpec');
     sandbox.spyOn(parser.constructor, 'parseConstantSpec');
 
-    const result = parser.parse(MetaCoinABI);
+    const result = parser.parse(contractData);
 
     expect(parser.constructor.parseABI).toHaveBeenCalled();
 
@@ -46,17 +55,17 @@ describe('ABIParser', () => {
 
     expect(result).toHaveProperty(
       'constants',
-      expect.arrayContaining([expect.any(Object)]),
+      expect.objectContaining({ getBalance: expect.any(Object) }),
     );
     expect(result).toHaveProperty(
       'events',
-      expect.arrayContaining([expect.any(Object)]),
+      expect.objectContaining({ Transfer: expect.any(Object) }),
     );
     expect(result).toHaveProperty(
       'methods',
-      expect.arrayContaining([expect.any(Object)]),
+      expect.objectContaining({ sendCoin: expect.any(Object) }),
     );
-    expect(result).toHaveProperty('contractData', MetaCoinABI);
+    expect(result).toHaveProperty('address', contractData.address);
   });
 
   test('It parses method specs', () => {
@@ -259,6 +268,40 @@ describe('ABIParser', () => {
       the_address,
       field_1,
     });
+
+    const input = { id: 1 };
+    const output = { id: 'one' };
+    const idType = {
+      validate: sandbox.fn(),
+      convertInput: undefined, // parseTupleType should pass through the input
+      convertOutput: sandbox.fn().mockReturnValue(output.id),
+    };
+
+    parser.constructor.parseType.mockReturnValueOnce(idType);
+    const tupleTypeWithoutConversion = parser.constructor.parseTupleType([
+      {
+        type: 'uint8',
+        name: 'id',
+      },
+    ]);
+
+    // convertInput/convertOutput functions should have been created
+    expect(tupleTypeWithoutConversion).toEqual({
+      validate: expect.any(Function),
+      convertInput: expect.any(Function),
+      convertOutput: expect.any(Function),
+    });
+
+    // The validate fn for the tuple should call the validate fn for the type
+    tupleTypeWithoutConversion.validate(input);
+    expect(idType.validate).toHaveBeenCalledWith(1);
+
+    // The input should pass through
+    expect(tupleTypeWithoutConversion.convertInput(input)).toEqual(input);
+
+    // The output fn for the tuple should call the output fn for the type
+    expect(tupleTypeWithoutConversion.convertOutput(input)).toEqual(output);
+    expect(idType.convertOutput).toHaveBeenCalledWith(1);
   });
 
   test('It parses params', () => {
