@@ -2,7 +2,7 @@
 
 import type {
   ContractData,
-  Loader as ILoader,
+  ILoader,
   Query,
   RequiredContractDataProps,
 } from '../interface/Loader';

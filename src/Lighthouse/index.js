@@ -1,6 +1,6 @@
 /* @flow */
 
-import type { Loader as ILoader } from '../interface/Loader';
+import type { ILoader } from '../interface/Loader';
 
 export default class Lighthouse {
   loader: ILoader;

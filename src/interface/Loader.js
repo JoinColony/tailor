@@ -21,7 +21,7 @@ export type RequiredContractDataProps = {
   bytecode?: boolean,
 };
 
-export interface Loader {
+export interface ILoader {
   loadContractData(
     query: Query,
     props?: RequiredContractDataProps,
