@@ -6,6 +6,10 @@ import FSLoader from '../../FSLoader';
 import truffleTransformArtifact from '../../transforms/transformTruffleArtifact';
 
 describe('TruffleLoader', () => {
+  test('It should provide a name', () => {
+    expect(TruffleLoader.name).toEqual('truffle');
+  });
+
   test('Instantiating a TruffleLoader', () => {
     expect(() => {
       new TruffleLoader({ directory: '' });

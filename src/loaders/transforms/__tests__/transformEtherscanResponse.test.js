@@ -42,4 +42,16 @@ describe('Transforming Etherscan responses', () => {
       abi,
     });
   });
+
+  test('No query provided', () => {
+    expect(
+      transformEtherscanResponse({
+        status: '1',
+        result: abi,
+      }),
+    ).toEqual({
+      abi,
+      address: undefined,
+    });
+  });
 });

@@ -5,6 +5,10 @@ import EtherscanLoader from '../index';
 import HttpLoader from '../../HttpLoader';
 
 describe('EtherscanLoader', () => {
+  test('It should provide a name', () => {
+    expect(EtherscanLoader.name).toEqual('etherscan');
+  });
+
   test('Instantiating an EtherscanLoader', () => {
     expect(() => {
       new EtherscanLoader({ endpoint: '' });

@@ -12,6 +12,10 @@ describe('TrufflepigLoader', () => {
     sandbox.clear();
   });
 
+  test('It should provide a name', () => {
+    expect(TrufflepigLoader.name).toEqual('trufflepig');
+  });
+
   test('Instantiating a TrufflepigLoader', () => {
     expect(() => {
       new TrufflepigLoader({ endpoint: '' });
