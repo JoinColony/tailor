@@ -55,15 +55,80 @@ describe('ABIParser', () => {
 
     expect(result).toHaveProperty(
       'constants',
-      expect.objectContaining({ getBalance: expect.any(Object) }),
+      expect.objectContaining({
+        getBalance: [expect.any(Object)],
+        overloaded: [
+          {
+            name: 'overloaded',
+            input: [
+              {
+                name: 'a',
+                type: PARAM_TYPES.INTEGER,
+              },
+              {
+                name: 'b',
+                type: PARAM_TYPES.INTEGER,
+              },
+              {
+                name: 'c',
+                type: PARAM_TYPES.INTEGER,
+              },
+            ],
+            output: [
+              {
+                name: 'sum',
+                type: PARAM_TYPES.INTEGER,
+              },
+            ],
+          },
+          {
+            name: 'overloaded',
+            input: [
+              {
+                name: 'a',
+                type: PARAM_TYPES.INTEGER,
+              },
+              {
+                name: 'b',
+                type: PARAM_TYPES.INTEGER,
+              },
+            ],
+            output: [
+              {
+                name: 'sum',
+                type: PARAM_TYPES.INTEGER,
+              },
+            ],
+          },
+          {
+            name: 'overloaded',
+            input: [
+              {
+                name: 'a',
+                type: PARAM_TYPES.INTEGER,
+              },
+              {
+                name: 'b',
+                type: PARAM_TYPES.BOOLEAN,
+              },
+            ],
+            output: [
+              {
+                name: 'sum',
+                type: PARAM_TYPES.INTEGER,
+              },
+            ],
+          },
+        ],
+      }),
     );
     expect(result).toHaveProperty(
       'events',
-      expect.objectContaining({ Transfer: expect.any(Object) }),
+      expect.objectContaining({ Transfer: [expect.any(Object)] }),
     );
     expect(result).toHaveProperty(
       'methods',
-      expect.objectContaining({ sendCoin: expect.any(Object) }),
+      expect.objectContaining({ sendCoin: [expect.any(Object)] }),
     );
     expect(result).toHaveProperty('address', contractData.address);
   });

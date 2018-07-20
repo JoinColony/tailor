@@ -128,31 +128,40 @@ export default class ABIParser extends Parser {
     };
   }
 
+  static specsReducer(specs: Object, entry: ABIEntry) {
+    let spec;
+    let propName;
+    if (entry.type === 'event') {
+      spec = this.parseEventSpec(entry);
+      propName = 'events';
+    } else if (
+      entry.stateMutability === 'view' ||
+      entry.stateMutability === 'pure'
+    ) {
+      spec = this.parseConstantSpec(entry);
+      propName = 'constants';
+    } else {
+      spec = this.parseMethodSpec(entry);
+      propName = 'methods';
+    }
+
+    const existingSpec = specs[propName][spec.name];
+    Object.assign(specs[propName], {
+      [spec.name]: Array.isArray(existingSpec)
+        ? existingSpec.concat(spec)
+        : [spec],
+    });
+    return specs;
+  }
+
   static parseABI(abi: ABI) {
-    return abi.filter(({ type }) => type !== 'constructor').reduce(
-      (acc, entry) => {
-        let spec;
-        if (entry.type === 'event') {
-          spec = this.parseEventSpec(entry);
-          acc.events[spec.name] = spec;
-        } else if (
-          entry.stateMutability === 'view' ||
-          entry.stateMutability === 'pure'
-        ) {
-          spec = this.parseConstantSpec(entry);
-          acc.constants[spec.name] = spec;
-        } else {
-          spec = this.parseMethodSpec(entry);
-          acc.methods[spec.name] = spec;
-        }
-        return acc;
-      },
-      {
+    return abi
+      .filter(({ type }) => type !== 'constructor')
+      .reduce((specs, entry) => this.specsReducer(specs, entry), {
         constants: {},
         events: {},
         methods: {},
-      },
-    );
+      });
   }
 
   parse(contractData: *) {

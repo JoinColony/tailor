@@ -21,15 +21,15 @@ export type ConstantSpec = {
 };
 
 export type EventSpecs = {
-  [eventName: string]: EventSpec,
+  [eventName: string]: Array<EventSpec>,
 };
 
 export type MethodSpecs = {
-  [methodName: string]: MethodSpec,
+  [methodName: string]: Array<MethodSpec>,
 };
 
 export type ConstantSpecs = {
-  [constantName: string]: ConstantSpec,
+  [constantName: string]: Array<ConstantSpec>,
 };
 
 export type PartialMethodSpec = {
@@ -51,15 +51,15 @@ export type PartialConstantSpec = {
 };
 
 export type PartialEventSpecs = {
-  [eventName: string]: PartialEventSpec,
+  [eventName: string]: Array<PartialEventSpec>,
 };
 
 export type PartialMethodSpecs = {
-  [methodName: string]: PartialMethodSpec,
+  [methodName: string]: Array<PartialMethodSpec>,
 };
 
 export type PartialConstantSpecs = {
-  [constantName: string]: PartialConstantSpec,
+  [constantName: string]: Array<PartialConstantSpec>,
 };
 
 export type ContractSpec = {
