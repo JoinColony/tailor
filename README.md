@@ -22,14 +22,22 @@ import contractData from './MetaCoin.json'
 
 const metaCoin = new Tailor({ contractData })
 
-const balance = await metaCoin.getBalance('0x456')
+const balance = await metaCoin.getBalance('0x123')
 // -> BigNumber(50)
 
-const transaction = metaCoin.sendCoin('0x789', 20)
+const transaction = metaCoin.sendCoin('0x456', 20)
 const estimatedGas = await transaction.estimate()
 // -> BigNumber(46000)
 await transaction.send()
-// -> { successful: true, eventData: { ... }, meta: { ... } }
+  // -> { successful: true, eventData: { ... }, meta: { ... } }
+
+try {
+  metaCoin.sendCoin('0x789', 9999999).send()
+} catch (err) {
+  // support for Solidity reason strings
+  console.error(`Tx failed: ${err.reason}`)
+  // -> "insufficient funds"
+}
 
 // listen for Transfer event
 metaCoin.on('Transfer', { eventData } => {
@@ -139,37 +147,58 @@ Out of the box Tailor comes with type checking for Solidity types, so transactio
 For example, a contract could have a `uint8` parameter which represents a rating between 1 and 10. Zero and any number greater than 10 are not valid, but Tailor doesn’t know this.
 
 ```js
-const ratingType = {
-  async validate(value) {
-    await someAsyncThing(value)
-    return value >= 1 && value <= 10
-  },
-  convertOutput(value) {
-    return isBigNumber(value) ? value.toNumber() : value
-  },
-  convertInput(value) {
-    return Number(value)
+const types = {
+  rating: {
+    async validate(value) {
+      await someAsyncThing(value)
+      return value >= 1 && value <= 10
+    },
+    convertOutput(value) {
+      return isBigNumber(value) ? value.toNumber() : value
+    },
+    convertInput(value) {
+      return Number(value)
+    }
   }
 }
-
 const methods = {
   giveRating: {
     input: [
       {
-        name: rating,
-        type: ratingType
+        name: 'rating',
+        type: 'rating'
       }
     ]
   }
 }
-
 const myContract = new Tailor({
   methods,
+  types,
   ...
 })
 ```
 
 Custom type validation functions can either return a boolean, or a promise which will resolve to one. The `async` support is super useful for situations where you might want to compare input against another value from the contract.
+
+It's also possible to pass a type object directly with a method's input/output.
+
+```js
+const ratingType = { ... }
+const methods = {
+  giveRating: {
+    input: [
+      {
+        name: 'rating',
+        type: ratingType
+      }
+    ]
+  }
+}
+const myContract = new Tailor({
+  methods,
+  ...
+})
+```
 
 ### Method Hooks
 For cases where we want to perform some extra functionality before or after a transaction is sent, Tailor provides method hooks. For example, we may want to store the result of a transaction or call on IPFS, or send another transaction after a first successful one.
@@ -213,6 +242,25 @@ const myContract = new Tailor({
   ...
 })
 ```
+
+### Method Overloading
+Solidity allows for method overloads, and Tailor attempts to accomodate this automatically. For methods where overloads accept different combinations of the same arguments, Tailor will treat anything beyond the minimum as "optional" parameters.
+
+```js
+await overridenMethod({ commonParam: 'always here' }).send()
+await overriddenMethod({
+  commonParam: 'still here',
+  optionalParam: 'also here!'
+}).send()
+```
+
+In cases where the same parameter can be of multiple different types, Tailor tries its best to determine which version is being called based on the arguments provided. For types which are completely different this works fine, however similar types where the intended version to be called is ambiguous will call an error to be thrown. For these types of methods, you will need to explicity provide which type you want to use.
+
+```js
+example
+```
+
+> TODO: contract spec for overriden methods
 
 ## Extending Tailor
 Many Ethereum projects take full advantage of the openness of the platform, and opt to release a library to interact with their contracts. Although you could quite happily use the above methods to achieve such a goal, Tailor is designed around being able to extend the base class to implement your own complex functionality.
