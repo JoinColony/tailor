@@ -18,9 +18,9 @@ describe('Param types', () => {
     expect(() => ADDRESS_TYPE.validate('abc')).toThrow('address');
   });
   test('Boolean', () => {
-    expect(BOOLEAN_TYPE.validate()).toBe(true);
     expect(BOOLEAN_TYPE.validate(false)).toBe(true);
     expect(BOOLEAN_TYPE.validate(true)).toBe(true);
+    expect(() => BOOLEAN_TYPE.validate()).toThrow('boolean');
     expect(() => BOOLEAN_TYPE.validate(1)).toThrow('boolean');
   });
   test('Bytes', () => {

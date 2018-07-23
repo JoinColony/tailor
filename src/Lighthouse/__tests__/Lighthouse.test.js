@@ -8,7 +8,7 @@ import TruffleLoader from '../../loaders/TruffleLoader';
 import TrufflepigLoader from '../../loaders/TrufflepigLoader';
 import ABIParser from '../../parsers/ABIParser';
 import TruffleParser from '../../parsers/TruffleParser';
-import PARAM_TYPES from '../../paramTypes';
+import PARAM_TYPES from '../../modules/paramTypes';
 
 describe('Lighthouse', () => {
   const sandbox = createSandbox();
