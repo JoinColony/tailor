@@ -31,10 +31,13 @@
     "lint:fix": "run(){ eslint --ignore-pattern=**/{node_modules,dist,lib}/* --fix ${@:-\"src/{,**/}*.js\"}; }; run",
     "lint:ci": "eslint --format junit -o reports/eslint/eslint-results.xml src",
     "precommit": "lint-staged",
-    "test": "NODE_ENV=test jest --config=jest.conf.js",
-    "test:ci": "jest --clearCache && NODE_ENV=test jest --config=jest.conf.js --bail --ci --coverage --verbose=true --reporters='jest-junit'",
-    "test:coverage": "NODE_ENV=test jest --coverage",
-    "test:watch": "NODE_ENV=test jest --watchAll"
+    "test": "yarn test:lib && yarn test:integration",
+    "test:lib": "NODE_ENV=test jest --config=jest.conf.js",
+    "test:lib:ci": "jest --clearCache && NODE_ENV=test jest --config=jest.conf.js --bail --ci --coverage --verbose=true --reporters='jest-junit'",
+    "test:integration": "NODE_ENV=test jest --config=jest-integration.conf.js",
+    "test:integration:ci": "jest --clearCache && NODE_ENV=test jest --config=jest-integration.conf.js --bail --ci --verbose=true --reporters='jest-junit'",
+    "test:coverage": "NODE_ENV=test jest --config=jest.conf.js --coverage",
+    "test:watch": "NODE_ENV=test jest --config=jest.conf.js --watchAll"
   },
   "lint-staged": {
     "src/{,**/}*.js": [
@@ -65,6 +68,7 @@
     "babel-plugin-transform-runtime": "^6.23.0",
     "babel-preset-env": "^1.7.0",
     "babel-preset-flow": "^6.23.0",
+    "chalk": "^2.4.1",
     "eslint": "^5.1.0",
     "eslint-cli": "^1.1.1",
     "eslint-config-airbnb-base": "^13.0.0",
@@ -74,6 +78,7 @@
     "eslint-plugin-prettier": "^2.6.2",
     "flow-bin": "^0.76.0",
     "flow-copy-source": "^2.0.1",
+    "ganache-cli": "^6.1.6",
     "husky": "^0.14.3",
     "jest": "^23.4.0",
     "jest-fetch-mock": "^1.6.5",
@@ -82,6 +87,7 @@
     "lint-staged": "^7.2.0",
     "prettier": "^1.13.7",
     "rimraf": "2.6.2",
+    "truffle": "v5.0.0-next.5",
     "webpack": "^4.16.0",
     "webpack-cli": "^3.0.8"
   },

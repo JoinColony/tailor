@@ -3,3 +3,5 @@ dist
 lib
 node_modules/
 yarn-error.log
+integration-testing/ganache-accounts.json
+integration-testing/truffle-project/build
