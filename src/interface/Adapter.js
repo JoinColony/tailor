@@ -7,12 +7,14 @@ import type { ContractData } from './Loader';
 
 export type Address = string;
 
+export type FunctionArguments = Array<*>;
+
 export type FunctionCall = {
   method: string,
-  parameters: Array<any>,
+  arguments: FunctionArguments,
 };
 
-export type FunctionCallData = string;
+export type TransactionData = string;
 
 export type GasEstimate = number;
 
@@ -22,7 +24,7 @@ export type Event = {
   blockNumber: number,
   blockHash: string,
   transactionIndex: number,
-  address: string, // contract address
+  address: Address, // contract address
   data: string,
   topics: Array<string>, // topic hashes
   transactionHash: string,
@@ -38,7 +40,7 @@ export type Event = {
 export type TransactionReceipt = {
   blockHash: string,
   blockNumber: number,
-  contractAddress: string | null,
+  contractAddress: Address | null,
   cumulativeGasUsed: BigNumber,
   gasUsed: BigNumber,
   hash: string,
@@ -51,7 +53,7 @@ export type TransactionReceipt = {
   events: { [String]: Event },
 };
 
-export type FunctionCallResult = { [string | number]: any };
+export type FunctionCallResult = Array<*>;
 
 export type SubscriptionOptions = {
   address?: Address, // defaults to _address
@@ -61,10 +63,11 @@ export type SubscriptionOptions = {
 export interface IAdapter {
   initialize(contractData: ContractData): void;
 
-  encodeFunctionCall(functionCall: FunctionCall): FunctionCallData;
-  decodeFunctionCallData(functionCallData: FunctionCallData): FunctionCall;
+  encodeDeploy(arguments: FunctionArguments): TransactionData;
+  encodeFunctionCall(functionCall: FunctionCall): TransactionData;
+  decodeFunctionCallData(functionCallData: TransactionData): FunctionCall;
 
-  estimate(functionCall: FunctionCall): Promise<GasEstimate>;
+  estimate(transactionData: TransactionData): Promise<GasEstimate>;
   sendSignedTransaction(
     transaction: SignedTransaction,
   ): PromiEvent<TransactionReceipt>;
@@ -72,4 +75,6 @@ export interface IAdapter {
   call(functionCall: FunctionCall): Promise<FunctionCallResult>;
 
   subscribe(options: SubscriptionOptions): Promise<EventEmitter>;
+
+  getCurrentNetwork(): Promise<number>;
 }

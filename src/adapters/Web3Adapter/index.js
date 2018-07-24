@@ -4,10 +4,11 @@ import type EventEmitter from 'eventemitter3';
 import type {
   IAdapter,
   FunctionCall,
-  FunctionCallData,
+  TransactionData,
   SignedTransaction,
   TransactionReceipt,
   SubscriptionOptions,
+  FunctionArguments,
 } from '../../interface/Adapter';
 import type { ContractData } from '../../interface/Loader';
 
@@ -27,18 +28,31 @@ export default class Web3Adapter implements IAdapter {
     );
   }
 
+  encodeDeploy(args: FunctionArguments) {
+    this._checkInitialized();
+
+    return this._contract.deploy({ arguments: args }).encodeABI();
+  }
+
   encodeFunctionCall(functionCall: FunctionCall) {
+    this._checkInitialized();
+
     return this._contract.methods[functionCall.method](
-      ...functionCall.parameters,
+      ...functionCall.arguments,
     ).encodeABI();
   }
 
-  decodeFunctionCallData(functionCallData: FunctionCallData) {
+  decodeFunctionCallData(functionCallData: TransactionData) {
+    this._checkInitialized();
+
     const methodSig = functionCallData.slice(0, 10);
     // eslint-disable-next-line no-underscore-dangle
     const methodInterface = this._contract._jsonInterface.find(
       el => el.signature === methodSig,
     );
+
+    if (!methodInterface) throw new Error('Cannot decode function call data!');
+
     const paramTypes = methodInterface.inputs.map(param => param.type);
     const paramData = `0x${functionCallData.slice(10)}`;
     const paramsResult = this._web3.eth.abi.decodeParameters(
@@ -51,14 +65,17 @@ export default class Web3Adapter implements IAdapter {
       params.push(paramsResult[i]);
     }
 
-    return { method: methodInterface.name, parameters: params };
+    return { method: methodInterface.name, arguments: params };
   }
 
-  async estimate(functionCall: FunctionCall) {
+  async estimate(transactionData: TransactionData) {
+    this._checkInitialized();
+
     // TODO: it's possible to pass `from`, `gas`, and `value` as options here
-    return this._contract.methods[functionCall.method](
-      ...functionCall.parameters,
-    ).estimateGas();
+    return this._web3.eth.estimateGas({
+      to: this._contract.options.address,
+      data: transactionData,
+    });
   }
 
   // adapted from https://github.com/ethereum/web3.js/blob/1.0/packages/web3-eth-contract/src/index.js#L836
@@ -109,6 +126,8 @@ export default class Web3Adapter implements IAdapter {
   }
 
   sendSignedTransaction(transaction: SignedTransaction) {
+    this._checkInitialized();
+
     const promiEvent = new PromiEvent();
     const txPromiEvent = this._web3.eth.sendSignedTransaction(transaction);
 
@@ -138,12 +157,24 @@ export default class Web3Adapter implements IAdapter {
   }
 
   async call(functionCall: FunctionCall) {
-    return this._contract.methods[functionCall.method](
-      ...functionCall.parameters,
+    this._checkInitialized();
+
+    const rawResult = await this._contract.methods[functionCall.method](
+      ...functionCall.arguments,
     ).call();
+
+    // convert Result object to array
+    const result = [];
+    for (let i = 0; i < functionCall.arguments.length; i += 1) {
+      result.push(rawResult[i]);
+    }
+
+    return result;
   }
 
   async subscribe(options: SubscriptionOptions) {
+    this._checkInitialized();
+
     const contract = this._contract.clone();
 
     if (options.address) {
@@ -154,5 +185,14 @@ export default class Web3Adapter implements IAdapter {
       return (contract.events[options.event](): EventEmitter);
     }
     return (contract.events.allEvents(): EventEmitter);
+  }
+
+  getCurrentNetwork() {
+    return this._web3.eth.net.getId();
+  }
+
+  _checkInitialized() {
+    if (!this._contract)
+      throw new Error('Adapter not initialized! Call `.initialize()` first.');
   }
 }
