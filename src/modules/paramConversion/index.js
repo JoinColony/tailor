@@ -2,7 +2,7 @@
 
 import type { ParamsSpec } from '../../interface/Params';
 
-export function convertInput(spec: ParamsSpec, ...input: any): Array<any> {
+export function convertInput(spec: ParamsSpec = [], ...input: any): Array<any> {
   return (
     spec
       // Get the input value (or default value)
@@ -37,7 +37,10 @@ export function convertInput(spec: ParamsSpec, ...input: any): Array<any> {
   );
 }
 
-export function convertOutput(spec: ParamsSpec, ...output: Array<any>): Object {
+export function convertOutput(
+  spec: ParamsSpec = [],
+  ...output: Array<any>
+): Object {
   return spec.reduce((acc, { name, type }, index) => {
     const value = output[index];
     acc[name] = type.convertOutput ? type.convertOutput(value) : value;
