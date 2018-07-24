@@ -29,7 +29,12 @@ jobs:
           command: yarn lint:ci
       - run:
           name: "Running unit tests"
-          command: yarn test:ci
+          command: yarn test:lib:ci
+          environment:
+            JEST_JUNIT_OUTPUT: "reports/jest/jest-results.xml"
+      - run:
+          name: "Running integration tests"
+          command: yarn test:integration:ci
           environment:
             JEST_JUNIT_OUTPUT: "reports/jest/jest-results.xml"
       - store_test_results:

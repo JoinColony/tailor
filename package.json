@@ -33,8 +33,9 @@
     "precommit": "lint-staged",
     "test": "yarn test:lib && yarn test:integration",
     "test:lib": "NODE_ENV=test jest --config=jest.conf.js",
+    "test:lib:ci": "jest --clearCache && NODE_ENV=test jest --config=jest.conf.js --bail --ci --coverage --verbose=true --reporters='jest-junit'",
     "test:integration": "NODE_ENV=test jest --config=jest-integration.conf.js",
-    "test:ci": "jest --clearCache && NODE_ENV=test jest --config=jest.conf.js --bail --ci --coverage --verbose=true --reporters='jest-junit' && NODE_ENV=test jest --config=jest-integration.conf.js --bail --ci --coverage --verbose=true --reporters='jest-junit'",
+    "test:integration:ci": "jest --clearCache && NODE_ENV=test jest --config=jest-integration.conf.js --bail --ci --verbose=true --reporters='jest-junit'",
     "test:coverage": "NODE_ENV=test jest --config=jest.conf.js --coverage",
     "test:watch": "NODE_ENV=test jest --config=jest.conf.js --watchAll"
   },
