@@ -6,7 +6,7 @@ import createSandbox from 'jest-sandbox';
 import ABIParser from '../index';
 import MetaCoinABI from '../__fixtures__/MetaCoinABI';
 
-import PARAM_TYPES from '../../../paramTypes';
+import PARAM_TYPES from '../../../modules/paramTypes';
 
 const [
   lastSenderABI,

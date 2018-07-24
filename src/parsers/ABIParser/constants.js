@@ -8,7 +8,7 @@ import {
   BYTES_TYPE,
   INTEGER_TYPE,
   STRING_TYPE,
-} from '../../paramTypes';
+} from '../../modules/paramTypes';
 
 // Patterns: https://github.com/ethereum/web3.js/tree/1.0/packages/web3-eth-abi/src/types
 export const ADDRESS_PATTERN = /address(\[([0-9]*)])?/;

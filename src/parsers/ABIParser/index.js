@@ -24,7 +24,7 @@ export default class ABIParser extends Parser {
     return 'abi';
   }
 
-  static parseFieldName(name?: string, index: number) {
+  static parseFieldName(name: ?string, index: number) {
     return (
       // Remove initial `_` from the given name
       (typeof name === 'string' && name.length && name.replace(/^_/, '')) ||

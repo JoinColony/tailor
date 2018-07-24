@@ -2,7 +2,8 @@
 
 import BigNumber from 'bn.js';
 import { isAddress, isHexStrict, utf8ToHex } from 'web3-utils';
-import type { ParamType } from '../interface/Params';
+
+import type { ParamType } from '../../interface/Params';
 
 const assert = require('assert');
 
@@ -24,7 +25,7 @@ export const INTEGER_TYPE: ParamType = {
 };
 
 export const BOOLEAN_TYPE: ParamType = {
-  validate(value: * = false) {
+  validate(value: *) {
     assert(typeof value === 'boolean', 'Must be a boolean');
     return true;
   },
