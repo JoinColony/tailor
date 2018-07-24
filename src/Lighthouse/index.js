@@ -7,24 +7,33 @@ import { DEFAULT_LOADER, DEFAULT_PARSER } from './defaults';
 import Loader from '../loaders/Loader';
 import Parser from '../parsers/Parser';
 
+// eslint-disable-next-line import/no-cycle
+import Constant from '../modules/Constant';
+
 import type {
-  PartialConstantSpecs,
+  ConstantSpec,
+  ConstantSpecs,
   ContractData,
-  PartialEventSpecs,
+  ContractSpec,
+  IAdapter,
   ILoader,
   IParser,
   LighthouseArgs,
   LoaderName,
   LoaderSpec,
-  PartialMethodSpecs,
   ParserName,
   ParserSpec,
+  PartialConstantSpecs,
+  PartialEventSpecs,
+  PartialMethodSpecs,
   Query,
 } from './flowtypes';
 
 const assert = require('assert');
 
 export default class Lighthouse {
+  adapter: IAdapter;
+
   loader: ILoader;
 
   parser: IParser;
@@ -35,6 +44,10 @@ export default class Lighthouse {
     constants: PartialConstantSpecs,
     events: PartialEventSpecs,
     methods: PartialMethodSpecs,
+  };
+
+  constants: {
+    [constantName: string]: Constant,
   };
 
   // TODO JoinColony/lighthouse/issues/16
@@ -122,16 +135,39 @@ export default class Lighthouse {
     this._query = query;
   }
 
-  _defineContractInterface(contractData: ContractData) {
+  _getContractSpec(contractData: ContractData): ContractSpec {
     const initialSpecs = this.parser.parse(contractData);
     return deepmerge(initialSpecs, this._overrides, {
       // Arrays should overwrite rather than concatenate
       arrayMerge: (destination, source) => source,
     });
-    // TODO JoinColony/lighthouse/issues/15
   }
 
-  async initialize() {
+  _defineConstants(constantSpecs: ConstantSpecs): void {
+    // $FlowFixMe Still ain't fixed https://github.com/facebook/flow/issues/2221
+    this.constants = Object.values(constantSpecs).reduce(
+      (acc, spec: ConstantSpec) => {
+        acc[spec.name] = new Constant(this, spec);
+        return acc;
+      },
+      {},
+    );
+  }
+
+  _defineContractInterface(contractData: ContractData) {
+    const specs = this._getContractSpec(contractData);
+    this._defineConstants(specs.constants);
+
+    // TODO JoinColony/lighthouse/issues/20
+    // this._defineEvents(events);
+
+    // TODO JoinColony/lighthouse/issues/21
+    // this._defineMethods(methods);
+
+    return specs;
+  }
+
+  async initialize(): Promise<void> {
     const contractData = await this.loader.load(this._query);
     this._defineContractInterface(contractData);
   }
