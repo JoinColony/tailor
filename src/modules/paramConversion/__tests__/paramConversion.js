@@ -36,6 +36,30 @@ describe('Parameter conversion', () => {
     expect(validateNumber).toHaveBeenCalledWith(3);
   });
 
+  test('Converting input values (one object value)', () => {
+    const spec = [
+      {
+        name: 'myObject',
+        type: {
+          validate: sandbox.fn().mockReturnValue(true),
+          convertInput: sandbox.fn().mockImplementation(input => input.abc),
+        },
+      },
+    ];
+
+    const validateObj = sandbox.spyOn(spec[0].type, 'validate');
+
+    const expectation = [123];
+    const obj = { abc: 123 };
+
+    expect(convertInput(spec, { myObject: obj })).toEqual(expectation);
+    expect(validateObj).toHaveBeenCalledWith(obj);
+    validateObj.mockClear();
+
+    expect(convertInput(spec, obj)).toEqual(expectation);
+    expect(validateObj).toHaveBeenCalledWith(obj);
+  });
+
   test('Converting input values (multiple values)', () => {
     const spec = [
       {
@@ -63,6 +87,36 @@ describe('Parameter conversion', () => {
     expect(convertInput(spec, 3, true)).toEqual(expectation);
     expect(validateNumber).toHaveBeenCalledWith(3);
     expect(validateBoolean).toHaveBeenCalledWith(true);
+  });
+
+  test('Converting input values (multiple object values)', () => {
+    const objType = {
+      validate: sandbox.fn().mockReturnValue(true),
+      convertInput: sandbox.fn().mockImplementation(input => input.abc),
+    };
+    const spec = [
+      {
+        name: 'myObj1',
+        type: objType,
+      },
+      {
+        name: 'myObj2',
+        type: objType,
+      },
+    ];
+
+    const expectation = [123, 234];
+    const myObj1 = { abc: 123 };
+    const myObj2 = { abc: 234 };
+
+    expect(convertInput(spec, { myObj1, myObj2 })).toEqual(expectation);
+    expect(objType.validate).toHaveBeenCalledWith(myObj1);
+    expect(objType.validate).toHaveBeenCalledWith(myObj2);
+    objType.validate.mockClear();
+
+    expect(convertInput(spec, myObj1, myObj2)).toEqual(expectation);
+    expect(objType.validate).toHaveBeenCalledWith(myObj1);
+    expect(objType.validate).toHaveBeenCalledWith(myObj2);
   });
 
   test('Converting input values (default value)', () => {

@@ -1,19 +1,15 @@
 /* @flow */
 
-import isPlainObject from 'lodash.isplainobject';
-
 import type { ParamsSpec } from '../../interface/Params';
 
 export function convertInput(spec: ParamsSpec, ...input: any): Array<any> {
-  // Determine whether the input is an object with named parameters (as opposed
-  // to sequential values) by examining the first item
-  const isObject = input.length === 1 && isPlainObject(input[0]);
-
   return (
     spec
       // Get the input value (or default value)
       .map(({ name, defaultValue, type }, index) => {
-        const inputValue = isObject ? input[0][name] : input[index];
+        // Support either objects with named parameters or sequential parameters
+        const inputValue =
+          (typeof input[0] === 'object' && input[0][name]) || input[index];
         const value =
           typeof inputValue !== 'undefined' ? inputValue : defaultValue;
         return {
