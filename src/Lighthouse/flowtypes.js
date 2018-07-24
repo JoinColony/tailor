@@ -3,6 +3,7 @@
 import type { ILoader, ContractData, Query } from '../interface/Loader';
 import type { IParser } from '../interface/Parser';
 import type {
+  ConstantSpec,
   ConstantSpecs,
   ContractSpec,
   EventSpecs,
@@ -13,6 +14,8 @@ import type {
 } from '../interface/ContractSpec';
 
 import { LOADER_NAME_MAP, PARSER_NAME_MAP } from './constants';
+
+export type { IAdapter } from '../interface/Adapter';
 
 export type LoaderName = $Keys<typeof LOADER_NAME_MAP>;
 
@@ -39,6 +42,7 @@ export type LighthouseArgs = {
 };
 
 export type {
+  ConstantSpec,
   ConstantSpecs,
   ContractData,
   ContractSpec,

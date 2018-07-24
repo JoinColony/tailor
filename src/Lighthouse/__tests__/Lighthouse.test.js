@@ -132,7 +132,7 @@ describe('Lighthouse', () => {
     const contractData = 'some contract data';
     const customRoleType = {};
     const overrides = {
-      methods: {
+      constants: {
         getTaskRole: {
           input: [
             {
@@ -151,7 +151,7 @@ describe('Lighthouse', () => {
     const lh = new Lighthouse(overrides);
 
     const initialSpecs = {
-      methods: {
+      constants: {
         getTaskRole: {
           input: [
             {
@@ -170,25 +170,28 @@ describe('Lighthouse', () => {
       },
     };
     sandbox.spyOn(lh.parser, 'parse').mockImplementation(() => initialSpecs);
+    sandbox.spyOn(lh, '_defineConstants');
 
     const iface = lh._defineContractInterface(contractData);
     expect(lh.parser.parse).toHaveBeenCalledWith(contractData);
-    expect(iface).toEqual({
-      constants: {},
-      events: {},
-      methods: {
+    const specs = {
+      constants: {
         getTaskRole: {
           // Only set in initial specs; should be from initial specs
-          convertInput: initialSpecs.methods.getTaskRole.convertInput,
+          convertInput: initialSpecs.constants.getTaskRole.convertInput,
 
           // Only set in overrides; should be from overrides
-          convertOutput: overrides.methods.getTaskRole.convertOutput,
+          convertOutput: overrides.constants.getTaskRole.convertOutput,
 
           // Set in initial specs and overrides; should be from overrides
-          input: overrides.methods.getTaskRole.input,
+          input: overrides.constants.getTaskRole.input,
         },
       },
-    });
+      events: {},
+      methods: {},
+    };
+    expect(iface).toEqual(specs);
+    expect(lh._defineConstants).toHaveBeenCalledWith(specs.constants);
   });
 
   test('Initializing an instance', async () => {

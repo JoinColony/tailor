@@ -215,7 +215,7 @@ describe('Parameter conversion', () => {
   });
 
   test('Converting output values (no values)', () => {
-    const spec = [];
+    const spec = undefined;
 
     const expectation = {};
     expect(convertOutput(spec)).toEqual(expectation);
