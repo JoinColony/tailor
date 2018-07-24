@@ -1,5 +1,7 @@
 // @flow
 import type BigNumber from 'bn.js';
+import type PromiEvent from 'web3-core-promievent';
+import type EventEmitter from 'eventemitter3';
 
 import type { ContractData } from './Loader';
 
@@ -55,14 +57,6 @@ export type SubscriptionOptions = {
   address?: Address, // defaults to _address
   event?: string, // all events if omitted
 };
-
-export interface EventEmitter {
-  on(event: string, callback: () => any): void;
-  once(event: string, callback: () => any): void;
-  off(event: string): void;
-}
-
-export type PromiEvent<T> = Promise<T> & EventEmitter;
 
 export interface IAdapter {
   initialize(contractData: ContractData): void;
