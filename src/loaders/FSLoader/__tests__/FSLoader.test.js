@@ -58,6 +58,9 @@ describe('FSLoader', () => {
       );
     }
 
+    sandbox
+      .spyOn(loader, 'transform')
+      .mockImplementation(input => `transformed ${input}`);
     const query = { contractName };
     const data = await loader.loadContractData(query);
     expect(path.resolve).toHaveBeenCalledWith(
@@ -68,7 +71,8 @@ describe('FSLoader', () => {
       'contract json',
       expect.any(Function),
     );
-    expect(data).toEqual('contract data');
+    expect(loader.transform).toHaveBeenCalledWith('contract data', query);
+    expect(data).toEqual('transformed contract data');
 
     try {
       await loader.loadContractData(query);

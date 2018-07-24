@@ -39,11 +39,12 @@ export default class FSLoader extends Loader {
     assert(!!contractName, 'A "contractName" property must be provided');
 
     const file = path.resolve(this._directory, `${contractName}.json`);
-    return new Promise((resolve, reject) => {
+    const jsonObj = await new Promise((resolve, reject) => {
       jsonfile.readFile(file, (error, contents) => {
         if (error) return reject(error);
         return resolve(contents);
       });
     });
+    return this.transform(jsonObj, query);
   }
 }
