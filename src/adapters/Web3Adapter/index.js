@@ -1,5 +1,4 @@
 // @flow
-import Eth from 'web3-eth';
 import PromiEvent from 'web3-core-promievent';
 import type EventEmitter from 'eventemitter3';
 import type {
@@ -13,16 +12,16 @@ import type {
 import type { ContractData } from '../../interface/Loader';
 
 export default class Web3Adapter implements IAdapter {
-  _eth: any;
+  _web3: any;
 
   _contract: any;
 
   constructor(web3: any) {
-    this._eth = new Eth(typeof web3 === 'string' ? web3 : web3.currentProvider);
+    this._web3 = web3;
   }
 
   initialize(contractData: ContractData) {
-    this._contract = new this._eth.Contract(
+    this._contract = new this._web3.eth.Contract(
       contractData.abi,
       contractData.address,
     );
@@ -42,7 +41,10 @@ export default class Web3Adapter implements IAdapter {
     );
     const paramTypes = methodInterface.inputs.map(param => param.type);
     const paramData = `0x${functionCallData.slice(10)}`;
-    const paramsResult = this._eth.abi.decodeParameters(paramTypes, paramData);
+    const paramsResult = this._web3.eth.abi.decodeParameters(
+      paramTypes,
+      paramData,
+    );
 
     const params = [];
     for (let i = 0; i < paramTypes.length; i += 1) {
@@ -106,9 +108,9 @@ export default class Web3Adapter implements IAdapter {
     return decodedReceipt;
   }
 
-  sendTransaction(transaction: SignedTransaction) {
+  sendSignedTransaction(transaction: SignedTransaction) {
     const promiEvent = new PromiEvent();
-    const txPromiEvent = this._eth.sendSignedTransaction(transaction);
+    const txPromiEvent = this._web3.eth.sendSignedTransaction(transaction);
 
     txPromiEvent.on('transactionHash', hash =>
       promiEvent.eventEmitter.emit('transactionHash', hash),

@@ -65,7 +65,7 @@ export interface IAdapter {
   decodeFunctionCallData(functionCallData: FunctionCallData): FunctionCall;
 
   estimate(functionCall: FunctionCall): Promise<GasEstimate>;
-  sendTransaction(
+  sendSignedTransaction(
     transaction: SignedTransaction,
   ): PromiEvent<TransactionReceipt>;
 
