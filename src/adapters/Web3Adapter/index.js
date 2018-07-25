@@ -2,7 +2,6 @@
 import PromiEvent from 'web3-core-promievent';
 import type EventEmitter from 'eventemitter3';
 import type {
-  IAdapter,
   FunctionCall,
   TransactionData,
   SignedTransaction,
@@ -11,13 +10,19 @@ import type {
   FunctionArguments,
 } from '../../interface/Adapter';
 import type { ContractData } from '../../interface/Loader';
+import Adapter from '../Adapter';
 
-export default class Web3Adapter implements IAdapter {
+export default class Web3Adapter extends Adapter {
   _web3: any;
 
   _contract: any;
 
-  constructor(web3: any) {
+  static get name() {
+    return 'web3';
+  }
+
+  constructor({ web3 }: { web3: any } = {}) {
+    super();
     this._web3 = web3;
   }
 
