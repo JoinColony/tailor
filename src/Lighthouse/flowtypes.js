@@ -1,6 +1,7 @@
 /* @flow */
 
 import type { ILoader, ContractData, Query } from '../interface/Loader';
+import type { IAdapter } from '../interface/Adapter';
 import type { IParser } from '../interface/Parser';
 import type {
   ConstantSpecs,
@@ -12,7 +13,20 @@ import type {
   PartialMethodSpecs,
 } from '../interface/ContractSpec';
 
-import { LOADER_NAME_MAP, PARSER_NAME_MAP } from './constants';
+import {
+  ADAPTER_NAME_MAP,
+  LOADER_NAME_MAP,
+  PARSER_NAME_MAP,
+} from './constants';
+
+export type { IAdapter } from '../interface/Adapter';
+
+export type AdapterName = $Keys<typeof ADAPTER_NAME_MAP>;
+
+export type AdapterSpec = {
+  name?: AdapterName,
+  options?: Object,
+};
 
 export type LoaderName = $Keys<typeof LOADER_NAME_MAP>;
 
@@ -29,6 +43,7 @@ export type ParserSpec = {
 };
 
 export type LighthouseArgs = {
+  adapter?: IAdapter | AdapterSpec,
   contractData?: ContractData,
   constants?: PartialConstantSpecs,
   events?: PartialEventSpecs,
