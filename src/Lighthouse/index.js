@@ -52,7 +52,7 @@ export default class Lighthouse {
     // TODO default adapter options doesn't include a web3 instance...
     input: IAdapter | AdapterSpec | AdapterName = DEFAULT_ADAPTER,
   ): IAdapter {
-    if (!input) throw new Error('Expected a loader option');
+    if (!input) throw new Error('Expected an adapter option');
 
     if (input instanceof Adapter) return input;
 
