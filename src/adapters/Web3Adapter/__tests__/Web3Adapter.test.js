@@ -35,6 +35,10 @@ describe('Web3Adapter', () => {
     sandbox.clear();
   });
 
+  test('Name', () => {
+    expect(Web3Adapter.name).toEqual('web3');
+  });
+
   test('Initialize', () => {
     const adapter = new Web3Adapter({ web3: mockWeb3 });
     adapter.initialize(contractData);
