@@ -11,7 +11,7 @@ export type FunctionArguments = Array<*>;
 
 export type FunctionCall = {
   method: string,
-  arguments: FunctionArguments,
+  args: FunctionArguments,
 };
 
 export type TransactionData = string;
@@ -63,7 +63,7 @@ export type SubscriptionOptions = {
 export interface IAdapter {
   initialize(contractData: ContractData): void;
 
-  encodeDeploy(arguments: FunctionArguments): TransactionData;
+  encodeDeploy(args: FunctionArguments): TransactionData;
   encodeFunctionCall(functionCall: FunctionCall): TransactionData;
   decodeFunctionCallData(functionCallData: TransactionData): FunctionCall;
 

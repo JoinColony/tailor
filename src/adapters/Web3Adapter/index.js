@@ -34,29 +34,27 @@ export default class Web3Adapter extends Adapter {
   }
 
   encodeDeploy(args: FunctionArguments) {
-    this._checkInitialized();
-
-    return this._contract.deploy({ arguments: args }).encodeABI();
+    return this.contract.deploy({ arguments: args }).encodeABI();
   }
 
   encodeFunctionCall(functionCall: FunctionCall) {
-    this._checkInitialized();
+    if (!this.contract.methods[functionCall.method])
+      throw new Error('No such method found for this contract.');
 
-    return this._contract.methods[functionCall.method](
-      ...functionCall.arguments,
+    return this.contract.methods[functionCall.method](
+      ...functionCall.args,
     ).encodeABI();
   }
 
   decodeFunctionCallData(functionCallData: TransactionData) {
-    this._checkInitialized();
-
     const methodSig = functionCallData.slice(0, 10);
     // eslint-disable-next-line no-underscore-dangle
-    const methodInterface = this._contract._jsonInterface.find(
+    const methodInterface = this.contract._jsonInterface.find(
       el => el.signature === methodSig,
     );
 
-    if (!methodInterface) throw new Error('Cannot decode function call data!');
+    if (!methodInterface)
+      throw new Error('No method with this signature found for this contract.');
 
     const paramTypes = methodInterface.inputs.map(param => param.type);
     const paramData = `0x${functionCallData.slice(10)}`;
@@ -70,15 +68,13 @@ export default class Web3Adapter extends Adapter {
       params.push(paramsResult[i]);
     }
 
-    return { method: methodInterface.name, arguments: params };
+    return { method: methodInterface.name, args: params };
   }
 
   async estimate(transactionData: TransactionData) {
-    this._checkInitialized();
-
     // TODO: it's possible to pass `from`, `gas`, and `value` as options here
     return this._web3.eth.estimateGas({
-      to: this._contract.options.address,
+      to: this.contract.options.address,
       data: transactionData,
     });
   }
@@ -91,10 +87,10 @@ export default class Web3Adapter extends Adapter {
 
     const logs = receipt.logs.map(log =>
       // eslint-disable-next-line no-underscore-dangle
-      this._contract._decodeEventABI(
+      this.contract._decodeEventABI(
         {
           name: 'ALLEVENTS',
-          jsonInterface: this._contract.options.jsonInterface,
+          jsonInterface: this.contract.options.jsonInterface,
         },
         log,
       ),
@@ -131,8 +127,6 @@ export default class Web3Adapter extends Adapter {
   }
 
   sendSignedTransaction(transaction: SignedTransaction) {
-    this._checkInitialized();
-
     const promiEvent = new PromiEvent();
     const txPromiEvent = this._web3.eth.sendSignedTransaction(transaction);
 
@@ -144,7 +138,7 @@ export default class Web3Adapter extends Adapter {
     );
     txPromiEvent.on('confirmation', (confirmationNumber, receipt) =>
       promiEvent.eventEmitter.emit(
-        'receipt',
+        'confirmation',
         confirmationNumber,
         this._decodeReceipt(receipt),
       ),
@@ -162,31 +156,32 @@ export default class Web3Adapter extends Adapter {
   }
 
   async call(functionCall: FunctionCall) {
-    this._checkInitialized();
+    if (!this.contract.methods[functionCall.method])
+      throw new Error('No such method found for this contract.');
 
-    const rawResult = await this._contract.methods[functionCall.method](
-      ...functionCall.arguments,
+    const rawResult = await this.contract.methods[functionCall.method](
+      ...functionCall.args,
     ).call();
 
     // convert Result object to array
     const result = [];
-    for (let i = 0; i < functionCall.arguments.length; i += 1) {
+    for (let i = 0; i < functionCall.args.length; i += 1) {
       result.push(rawResult[i]);
     }
 
     return result;
   }
 
-  async subscribe(options: SubscriptionOptions) {
-    this._checkInitialized();
-
-    const contract = this._contract.clone();
+  async subscribe(options: SubscriptionOptions = {}) {
+    const contract = this.contract.clone();
 
     if (options.address) {
       contract.options.address = options.address;
     }
 
     if (options.event) {
+      if (!contract.events[options.event])
+        throw new Error('No such event found for this contract.');
       return (contract.events[options.event](): EventEmitter);
     }
     return (contract.events.allEvents(): EventEmitter);
@@ -196,8 +191,8 @@ export default class Web3Adapter extends Adapter {
     return this._web3.eth.net.getId();
   }
 
-  _checkInitialized() {
-    if (!this._contract)
-      throw new Error('Adapter not initialized! Call `.initialize()` first.');
+  get contract() {
+    if (this._contract) return this._contract;
+    throw new Error('Adapter not initialized! Call `.initialize()` first.');
   }
 }
