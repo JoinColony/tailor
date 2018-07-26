@@ -16,6 +16,14 @@ export type FunctionCall = {
 
 export type TransactionData = string;
 
+export type EstimateOptions = {
+  from?: Address,
+  to?: Address,
+  data?: TransactionData,
+  gas?: number,
+  value?: number,
+};
+
 export type GasEstimate = number;
 
 export type SignedTransaction = string;
@@ -67,7 +75,7 @@ export interface IAdapter {
   encodeFunctionCall(functionCall: FunctionCall): TransactionData;
   decodeFunctionCallData(functionCallData: TransactionData): FunctionCall;
 
-  estimate(transactionData: TransactionData): Promise<GasEstimate>;
+  estimate(options: EstimateOptions): Promise<GasEstimate>;
   sendSignedTransaction(
     transaction: SignedTransaction,
   ): PromiEvent<TransactionReceipt>;

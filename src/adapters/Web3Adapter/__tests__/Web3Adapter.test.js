@@ -26,7 +26,7 @@ describe('Web3Adapter', () => {
   };
 
   const contractData = {
-    abi: { the: 'abi' },
+    abi: [{ name: 'myMethod' }],
     address: '0x123',
   };
   const args = ['first', 'second'];
@@ -100,7 +100,7 @@ describe('Web3Adapter', () => {
 
     // non-existing function
     expect(() => adapter.encodeFunctionCall(badFunctionCall)).toThrow(
-      'No such method found for this contract.',
+      badFunctionCall.method,
     );
   });
 
@@ -151,7 +151,7 @@ describe('Web3Adapter', () => {
 
     // non-existing methodSig
     expect(() => adapter.decodeFunctionCallData(badFunctionCallData)).toThrow(
-      'No method with this signature found for this contract.',
+      badMethodSig,
     );
   });
 
@@ -170,7 +170,7 @@ describe('Web3Adapter', () => {
     const adapter = new Web3Adapter({ web3: mockWeb3 });
     adapter.initialize(contractData);
 
-    const result = await adapter.estimate(transactionData);
+    const result = await adapter.estimate({ data: transactionData });
 
     expect(result).toBe(estimatedGas);
     expect(mockWeb3.eth.estimateGas).toHaveBeenCalledWith({
@@ -366,7 +366,9 @@ describe('Web3Adapter', () => {
 
     // non-existing function
     await expect(adapter.call(badFunctionCall)).rejects.toEqual(
-      new Error('No such method found for this contract.'),
+      new Error(
+        `Method "${badFunctionCall.method}" not defined on this contract`,
+      ),
     );
   });
 
@@ -408,7 +410,7 @@ describe('Web3Adapter', () => {
 
     // non-existing event
     await expect(adapter.subscribe(badOptions)).rejects.toEqual(
-      new Error('No such event found for this contract.'),
+      new Error(`Event "${badOptions.event}" not defined on this contract`),
     );
 
     // all events

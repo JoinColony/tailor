@@ -2,12 +2,13 @@
 import PromiEvent from 'web3-core-promievent';
 import type EventEmitter from 'eventemitter3';
 import type {
-  FunctionCall,
-  TransactionData,
-  SignedTransaction,
-  TransactionReceipt,
-  SubscriptionOptions,
+  EstimateOptions,
   FunctionArguments,
+  FunctionCall,
+  SignedTransaction,
+  SubscriptionOptions,
+  TransactionData,
+  TransactionReceipt,
 } from '../../interface/Adapter';
 import type { ContractData } from '../../interface/Loader';
 import Adapter from '../Adapter';
@@ -39,7 +40,9 @@ export default class Web3Adapter extends Adapter {
 
   encodeFunctionCall(functionCall: FunctionCall) {
     if (!this.contract.methods[functionCall.method])
-      throw new Error('No such method found for this contract.');
+      throw new Error(
+        `Method "${functionCall.method}" not defined on this contract`,
+      );
 
     return this.contract.methods[functionCall.method](
       ...functionCall.args,
@@ -54,7 +57,9 @@ export default class Web3Adapter extends Adapter {
     );
 
     if (!methodInterface)
-      throw new Error('No method with this signature found for this contract.');
+      throw new Error(
+        `No method with signature "${methodSig}" defined on this contract`,
+      );
 
     const paramTypes = methodInterface.inputs.map(param => param.type);
     const paramData = `0x${functionCallData.slice(10)}`;
@@ -71,12 +76,12 @@ export default class Web3Adapter extends Adapter {
     return { method: methodInterface.name, args: params };
   }
 
-  async estimate(transactionData: TransactionData) {
-    // TODO: it's possible to pass `from`, `gas`, and `value` as options here
-    return this._web3.eth.estimateGas({
-      to: this.contract.options.address,
-      data: transactionData,
-    });
+  async estimate(options: EstimateOptions) {
+    return this._web3.eth.estimateGas(
+      Object.assign({}, options, {
+        to: options.to || this.contract.options.address,
+      }),
+    );
   }
 
   // adapted from https://github.com/ethereum/web3.js/blob/1.0/packages/web3-eth-contract/src/index.js#L836
@@ -96,7 +101,7 @@ export default class Web3Adapter extends Adapter {
       ),
     );
 
-    const decodedReceipt = receipt;
+    const decodedReceipt = Object.assign({}, receipt);
     decodedReceipt.events = {};
 
     let count = 0;
@@ -157,7 +162,9 @@ export default class Web3Adapter extends Adapter {
 
   async call(functionCall: FunctionCall) {
     if (!this.contract.methods[functionCall.method])
-      throw new Error('No such method found for this contract.');
+      throw new Error(
+        `Method "${functionCall.method}" not defined on this contract`,
+      );
 
     const rawResult = await this.contract.methods[functionCall.method](
       ...functionCall.args,
@@ -181,7 +188,9 @@ export default class Web3Adapter extends Adapter {
 
     if (options.event) {
       if (!contract.events[options.event])
-        throw new Error('No such event found for this contract.');
+        throw new Error(
+          `Event "${options.event}" not defined on this contract`,
+        );
       return (contract.events[options.event](): EventEmitter);
     }
     return (contract.events.allEvents(): EventEmitter);
