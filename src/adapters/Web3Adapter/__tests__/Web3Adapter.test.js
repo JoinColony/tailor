@@ -23,6 +23,7 @@ describe('Web3Adapter', () => {
       Contract: sandbox.fn(),
       estimateGas: sandbox.fn(),
       sendSignedTransaction: sandbox.fn(),
+      getGasPrice: sandbox.fn(),
     },
   };
 
@@ -431,6 +432,15 @@ describe('Web3Adapter', () => {
     await adapter.getCurrentNetwork();
 
     expect(mockWeb3.eth.net.getId).toHaveBeenCalled();
+  });
+
+  test('Get gas price', async () => {
+    // no init required for getGasPrice
+    const adapter = new Web3Adapter({ web3: mockWeb3 });
+
+    await adapter.getGasPrice();
+
+    expect(mockWeb3.eth.getGasPrice).toHaveBeenCalled();
   });
 
   test('Get contract instance', async () => {

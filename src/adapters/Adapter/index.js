@@ -48,4 +48,8 @@ export default class Adapter implements IAdapter {
   getCurrentNetwork() {
     return notDefinedError('getCurrentNetwork');
   }
+
+  getGasPrice() {
+    return notDefinedError('getGasPrice');
+  }
 }

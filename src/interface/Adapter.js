@@ -10,13 +10,15 @@ export type Address = string;
 export type FunctionSignature = string; // myFunction(uint256,bool)
 
 export type FunctionArguments = Array<*>;
+export type Gas = number;
+export type TransactionData = string;
+export type SignedTransaction = string;
+export type FunctionCallResult = Array<*>;
 
 export type FunctionCall = {
   functionSignature: FunctionSignature,
   args: FunctionArguments,
 };
-
-export type TransactionData = string;
 
 export type EstimateOptions = {
   from?: Address,
@@ -25,10 +27,6 @@ export type EstimateOptions = {
   gas?: number,
   value?: number,
 };
-
-export type GasEstimate = number;
-
-export type SignedTransaction = string;
 
 export type EventSignature = string; // 'MyEvent(uint8)'
 
@@ -46,7 +44,7 @@ export type Event = {
     length: number,
   },
   event: string, // 'MyEvent'
-  eventSignature: EventSignature,
+  eventSignature: EventSignature, // 'MyEvent(uint8)'
 };
 
 export type TransactionReceipt = {
@@ -65,8 +63,6 @@ export type TransactionReceipt = {
   events: { [String]: Event },
 };
 
-export type FunctionCallResult = Array<*>;
-
 export type SubscriptionOptions = {
   address?: Address, // defaults to _address
   event?: EventSignature, // all events if omitted
@@ -79,7 +75,7 @@ export interface IAdapter {
   encodeFunctionCall(functionCall: FunctionCall): TransactionData;
   decodeFunctionCallData(functionCallData: TransactionData): FunctionCall;
 
-  estimate(options: EstimateOptions): Promise<GasEstimate>;
+  estimate(options: EstimateOptions): Promise<Gas>;
   sendSignedTransaction(
     transaction: SignedTransaction,
   ): PromiEvent<TransactionReceipt>;
@@ -89,4 +85,5 @@ export interface IAdapter {
   subscribe(options: SubscriptionOptions): Promise<EventEmitter>;
 
   getCurrentNetwork(): Promise<number>;
+  getGasPrice(): Promise<number>;
 }

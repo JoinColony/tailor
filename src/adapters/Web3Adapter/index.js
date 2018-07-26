@@ -201,6 +201,10 @@ export default class Web3Adapter extends Adapter {
     return this._web3.eth.net.getId();
   }
 
+  getGasPrice() {
+    return this._web3.eth.getGasPrice();
+  }
+
   get contract() {
     if (this._contract) return this._contract;
     throw new Error('Adapter not initialized! Call `.initialize()` first.');
