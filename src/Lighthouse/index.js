@@ -2,29 +2,39 @@
 
 import deepmerge from 'deepmerge';
 
-import { LOADER_NAME_MAP, PARSER_NAME_MAP } from './constants';
-import { DEFAULT_LOADER, DEFAULT_PARSER } from './defaults';
+import {
+  LOADER_NAME_MAP,
+  PARSER_NAME_MAP,
+  ADAPTER_NAME_MAP,
+} from './constants';
+import { DEFAULT_LOADER, DEFAULT_PARSER, DEFAULT_ADAPTER } from './defaults';
+import Adapter from '../adapters/Adapter';
 import Loader from '../loaders/Loader';
 import Parser from '../parsers/Parser';
 
 import type {
-  PartialConstantSpecs,
+  AdapterName,
+  AdapterSpec,
   ContractData,
-  PartialEventSpecs,
+  IAdapter,
   ILoader,
   IParser,
   LighthouseArgs,
   LoaderName,
   LoaderSpec,
-  PartialMethodSpecs,
   ParserName,
   ParserSpec,
+  PartialConstantSpecs,
+  PartialEventSpecs,
+  PartialMethodSpecs,
   Query,
 } from './flowtypes';
 
 const assert = require('assert');
 
 export default class Lighthouse {
+  adapter: IAdapter;
+
   loader: ILoader;
 
   parser: IParser;
@@ -36,6 +46,31 @@ export default class Lighthouse {
     events: PartialEventSpecs,
     methods: PartialMethodSpecs,
   };
+
+  // TODO JoinColony/lighthouse/issues/16
+  static getAdapter(
+    // TODO default adapter options doesn't include a web3 instance...
+    input: IAdapter | AdapterSpec | AdapterName = DEFAULT_ADAPTER,
+  ): IAdapter {
+    if (!input) throw new Error('Expected an adapter option');
+
+    if (input instanceof Adapter) return input;
+
+    let name: AdapterName = '';
+    let options;
+    if (typeof input === 'string') {
+      name = input;
+    } else {
+      const spec: AdapterSpec = input;
+      ({ name = '', options } = spec);
+    }
+
+    assert(
+      Object.hasOwnProperty.call(ADAPTER_NAME_MAP, name),
+      `Adapter with name "${name}" not found`,
+    );
+    return new ADAPTER_NAME_MAP[name](options);
+  }
 
   // TODO JoinColony/lighthouse/issues/16
   static getLoader(
@@ -86,6 +121,7 @@ export default class Lighthouse {
   }
 
   static getLighthouseDefaults({
+    adapter,
     constants = {},
     contractData,
     events = {},
@@ -95,6 +131,7 @@ export default class Lighthouse {
     query,
   }: LighthouseArgs = {}) {
     return {
+      adapter: this.getAdapter(adapter),
       constants,
       contractData,
       events,
@@ -107,6 +144,7 @@ export default class Lighthouse {
 
   constructor(args: LighthouseArgs) {
     const {
+      adapter,
       constants,
       contractData,
       events,
@@ -115,6 +153,7 @@ export default class Lighthouse {
       parser,
       query,
     } = this.constructor.getLighthouseDefaults(args);
+    this.adapter = adapter;
     this.loader = loader;
     this.parser = parser;
     this._overrides = { constants, events, methods };
@@ -133,6 +172,7 @@ export default class Lighthouse {
 
   async initialize() {
     const contractData = await this.loader.load(this._query);
+    this.adapter.initialize(contractData);
     this._defineContractInterface(contractData);
   }
 }

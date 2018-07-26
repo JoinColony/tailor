@@ -1,16 +1,28 @@
 // @flow
 import type BigNumber from 'bn.js';
+import type PromiEvent from 'web3-core-promievent';
+import type EventEmitter from 'eventemitter3';
 
 import type { ContractData } from './Loader';
 
 export type Address = string;
 
+export type FunctionArguments = Array<*>;
+
 export type FunctionCall = {
   method: string,
-  parameters: Array<any>,
+  args: FunctionArguments,
 };
 
-export type FunctionCallData = string;
+export type TransactionData = string;
+
+export type EstimateOptions = {
+  from?: Address,
+  to?: Address,
+  data?: TransactionData,
+  gas?: number,
+  value?: number,
+};
 
 export type GasEstimate = number;
 
@@ -20,7 +32,7 @@ export type Event = {
   blockNumber: number,
   blockHash: string,
   transactionIndex: number,
-  address: string, // contract address
+  address: Address, // contract address
   data: string,
   topics: Array<string>, // topic hashes
   transactionHash: string,
@@ -36,7 +48,7 @@ export type Event = {
 export type TransactionReceipt = {
   blockHash: string,
   blockNumber: number,
-  contractAddress: string | null,
+  contractAddress: Address | null,
   cumulativeGasUsed: BigNumber,
   gasUsed: BigNumber,
   hash: string,
@@ -49,33 +61,28 @@ export type TransactionReceipt = {
   events: { [String]: Event },
 };
 
-export type FunctionCallResult = { [string | number]: any };
+export type FunctionCallResult = Array<*>;
 
 export type SubscriptionOptions = {
   address?: Address, // defaults to _address
   event?: string, // all events if omitted
 };
 
-export interface EventEmitter {
-  on(event: string, callback: () => any): void;
-  once(event: string, callback: () => any): void;
-  off(event: string): void;
-}
-
-export type PromiEvent<T> = Promise<T> & EventEmitter;
-
 export interface IAdapter {
   initialize(contractData: ContractData): void;
 
-  encodeFunctionCall(functionCall: FunctionCall): FunctionCallData;
-  decodeFunctionCallData(functionCallData: FunctionCallData): FunctionCall;
+  encodeDeploy(args: FunctionArguments): TransactionData;
+  encodeFunctionCall(functionCall: FunctionCall): TransactionData;
+  decodeFunctionCallData(functionCallData: TransactionData): FunctionCall;
 
-  estimate(functionCall: FunctionCall): Promise<GasEstimate>;
-  sendTransaction(
+  estimate(options: EstimateOptions): Promise<GasEstimate>;
+  sendSignedTransaction(
     transaction: SignedTransaction,
   ): PromiEvent<TransactionReceipt>;
 
   call(functionCall: FunctionCall): Promise<FunctionCallResult>;
 
   subscribe(options: SubscriptionOptions): Promise<EventEmitter>;
+
+  getCurrentNetwork(): Promise<number>;
 }

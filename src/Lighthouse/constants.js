@@ -1,5 +1,7 @@
 /* @flow */
 
+import Adapter from '../adapters/Adapter';
+import Web3Adapter from '../adapters/Web3Adapter';
 import Loader from '../loaders/Loader';
 import TrufflepigLoader from '../loaders/TrufflepigLoader';
 import ABIParser from '../parsers/ABIParser';
@@ -8,6 +10,12 @@ import TruffleLoader from '../loaders/TruffleLoader';
 import EtherscanLoader from '../loaders/EtherscanLoader';
 import FSLoader from '../loaders/FSLoader';
 import TruffleParser from '../parsers/TruffleParser';
+
+export const ADAPTER_NAME_MAP: {
+  [adapterName: string]: Adapter.constructor,
+} = {
+  [Web3Adapter.name]: Web3Adapter,
+};
 
 export const LOADER_NAME_MAP: { [loaderName: string]: Loader.constructor } = {
   [TruffleLoader.name]: TruffleLoader,

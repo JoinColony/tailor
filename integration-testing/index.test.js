@@ -1,5 +1,6 @@
 import path from 'path';
 import createSandbox from 'jest-sandbox';
+import Web3 from 'web3';
 
 import Lighthouse from '../src';
 
@@ -19,6 +20,12 @@ describe('Integration testing', () => {
 
   test('Initializing a client', async () => {
     const client = new Lighthouse({
+      adapter: {
+        name: 'web3',
+        options: {
+          web3: new Web3('http://localhost:8545'),
+        },
+      },
       query: { contractName: 'MetaCoin' },
       parser: 'truffle',
       loader: {
