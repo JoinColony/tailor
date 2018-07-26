@@ -172,7 +172,7 @@ export default class Lighthouse {
 
   async initialize() {
     const contractData = await this.loader.load(this._query);
-    await this.adapter.initialize(contractData);
+    this.adapter.initialize(contractData);
     this._defineContractInterface(contractData);
   }
 }
