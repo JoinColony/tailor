@@ -28,3 +28,9 @@ export const TYPE_PATTERN_MAP: Map<ParamType, RegExp> = new Map([
   [INTEGER_TYPE, INTEGER_PATTERN],
   [STRING_TYPE, STRING_PATTERN],
 ]);
+
+export const SPEC_TYPES = {
+  CONSTANTS: 'constants',
+  EVENTS: 'events',
+  METHODS: 'methods',
+};

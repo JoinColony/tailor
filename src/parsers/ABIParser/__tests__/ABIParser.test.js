@@ -53,82 +53,78 @@ describe('ABIParser', () => {
       constructorABI,
     );
 
-    expect(result).toHaveProperty(
-      'constants',
-      expect.objectContaining({
-        getBalance: [expect.any(Object)],
-        overloaded: [
+    expect(result).toHaveProperty('constants', {
+      getBalance: expect.any(Object),
+      getBalanceInEth: expect.any(Object),
+      lastSender: expect.any(Object),
+      overloaded: expect.any(Object),
+    });
+    expect(result.constants.overloaded).toEqual({
+      name: 'overloaded',
+      inputs: expect.arrayContaining([
+        [
+          // function overloaded(uint a, uint b, uint c) public pure returns(uint sum)
           {
-            name: 'overloaded',
-            input: [
-              {
-                name: 'a',
-                type: PARAM_TYPES.INTEGER,
-              },
-              {
-                name: 'b',
-                type: PARAM_TYPES.INTEGER,
-              },
-              {
-                name: 'c',
-                type: PARAM_TYPES.INTEGER,
-              },
-            ],
-            output: [
-              {
-                name: 'sum',
-                type: PARAM_TYPES.INTEGER,
-              },
-            ],
+            name: 'a',
+            type: PARAM_TYPES.INTEGER,
           },
           {
-            name: 'overloaded',
-            input: [
-              {
-                name: 'a',
-                type: PARAM_TYPES.INTEGER,
-              },
-              {
-                name: 'b',
-                type: PARAM_TYPES.INTEGER,
-              },
-            ],
-            output: [
-              {
-                name: 'sum',
-                type: PARAM_TYPES.INTEGER,
-              },
-            ],
+            name: 'b',
+            type: PARAM_TYPES.INTEGER,
           },
           {
-            name: 'overloaded',
-            input: [
-              {
-                name: 'a',
-                type: PARAM_TYPES.INTEGER,
-              },
-              {
-                name: 'b',
-                type: PARAM_TYPES.BOOLEAN,
-              },
-            ],
-            output: [
-              {
-                name: 'sum',
-                type: PARAM_TYPES.INTEGER,
-              },
-            ],
+            name: 'c',
+            type: PARAM_TYPES.INTEGER,
           },
         ],
-      }),
-    );
+        [
+          // function overloaded(uint a, uint b) public pure returns(uint sum)
+          {
+            name: 'a',
+            type: PARAM_TYPES.INTEGER,
+          },
+          {
+            name: 'b',
+            type: PARAM_TYPES.INTEGER,
+          },
+        ],
+        [
+          // function overloaded(uint a, bool b) public pure returns(uint sum)
+          {
+            name: 'a',
+            type: PARAM_TYPES.INTEGER,
+          },
+          {
+            name: 'b',
+            type: PARAM_TYPES.BOOLEAN,
+          },
+        ],
+        [
+          // function overloaded(bool a, bool b) public pure returns(uint sum)
+          {
+            name: 'a',
+            type: PARAM_TYPES.BOOLEAN,
+          },
+          {
+            name: 'b',
+            type: PARAM_TYPES.BOOLEAN,
+          },
+        ],
+      ]),
+      output: [
+        {
+          name: 'sum',
+          type: PARAM_TYPES.INTEGER,
+        },
+      ],
+    });
     expect(result).toHaveProperty(
       'events',
-      expect.objectContaining({ Transfer: [expect.any(Object)] }),
+      expect.objectContaining({ Transfer: expect.any(Object) }),
     );
     expect(result).toHaveProperty(
       'methods',
-      expect.objectContaining({ sendCoin: [expect.any(Object)] }),
+      expect.objectContaining({ sendCoin: expect.any(Object) }),
     );
     expect(result).toHaveProperty('address', contractData.address);
   });
@@ -137,17 +133,19 @@ describe('ABIParser', () => {
     const parser = new ABIParser();
     sandbox.spyOn(parser.constructor, 'parseParams');
 
-    expect(parser.constructor.parseMethodSpec(sendCoinABI)).toEqual({
+    expect(parser.constructor.parseMethodSpec([sendCoinABI])).toEqual({
       name: 'sendCoin',
-      input: [
-        {
-          name: 'receiver',
-          type: PARAM_TYPES.ADDRESS,
-        },
-        {
-          name: 'amount',
-          type: PARAM_TYPES.INTEGER,
-        },
+      inputs: [
+        [
+          {
+            name: 'receiver',
+            type: PARAM_TYPES.ADDRESS,
+          },
+          {
+            name: 'amount',
+            type: PARAM_TYPES.INTEGER,
+          },
+        ],
       ],
       output: [
         {
@@ -169,15 +167,17 @@ describe('ABIParser', () => {
 
     const noInputs = 'test without inputs or outputs';
     expect(
-      parser.constructor.parseMethodSpec({
-        name: noInputs,
-        constant: false,
-        stateMutability: 'nonpayable',
-        type: 'function',
-      }),
+      parser.constructor.parseMethodSpec([
+        {
+          name: noInputs,
+          constant: false,
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+      ]),
     ).toEqual({
       name: noInputs,
-      input: [],
+      inputs: [[]],
       output: [],
       isPayable: false,
     });
@@ -190,8 +190,8 @@ describe('ABIParser', () => {
     const parser = new ABIParser();
     sandbox.spyOn(parser.constructor, 'parseParams');
 
-    expect(parser.constructor.parseConstantSpec(lastSenderABI)).toEqual({
-      input: [],
+    expect(parser.constructor.parseConstantSpec([lastSenderABI])).toEqual({
+      inputs: [[]],
       name: lastSenderABI.name,
       output: [
         {
@@ -212,10 +212,12 @@ describe('ABIParser', () => {
 
     const noInputsOrOutputsName = 'no inputs or outputs';
     expect(
-      parser.constructor.parseConstantSpec({
-        name: noInputsOrOutputsName,
-      }),
-    ).toEqual({ input: [], output: [], name: noInputsOrOutputsName });
+      parser.constructor.parseConstantSpec([
+        {
+          name: noInputsOrOutputsName,
+        },
+      ]),
+    ).toEqual({ inputs: [[]], output: [], name: noInputsOrOutputsName });
     expect(parser.constructor.parseParams).toHaveBeenCalledTimes(2);
     expect(parser.constructor.parseParams).toHaveBeenCalledWith(
       [],
@@ -227,21 +229,23 @@ describe('ABIParser', () => {
     const parser = new ABIParser();
     sandbox.spyOn(parser.constructor, 'parseParams');
 
-    expect(parser.constructor.parseEventSpec(transferABI)).toEqual({
+    expect(parser.constructor.parseEventSpec([transferABI])).toEqual({
       name: transferABI.name,
-      output: [
-        {
-          name: 'from',
-          type: PARAM_TYPES.ADDRESS,
-        },
-        {
-          name: 'to',
-          type: PARAM_TYPES.ADDRESS,
-        },
-        {
-          name: 'value',
-          type: PARAM_TYPES.INTEGER,
-        },
+      outputs: [
+        [
+          {
+            name: 'from',
+            type: PARAM_TYPES.ADDRESS,
+          },
+          {
+            name: 'to',
+            type: PARAM_TYPES.ADDRESS,
+          },
+          {
+            name: 'value',
+            type: PARAM_TYPES.INTEGER,
+          },
+        ],
       ],
     });
     expect(parser.constructor.parseParams).toHaveBeenCalledWith(
@@ -252,10 +256,12 @@ describe('ABIParser', () => {
 
     const noInputsName = 'no inputs';
     expect(
-      parser.constructor.parseEventSpec({
-        name: noInputsName,
-      }),
-    ).toEqual({ output: [], name: noInputsName });
+      parser.constructor.parseEventSpec([
+        {
+          name: noInputsName,
+        },
+      ]),
+    ).toEqual({ outputs: [[]], name: noInputsName });
     expect(parser.constructor.parseParams).toHaveBeenCalledTimes(1);
     expect(parser.constructor.parseParams).toHaveBeenCalledWith(
       [],

@@ -1,5 +1,7 @@
 /* @flow */
 
+import { SPEC_TYPES } from './ABIParser/constants';
+
 export type { IParser } from '../interface/Parser';
 
 export type {
@@ -36,3 +38,11 @@ export type ABIEntry = {
 };
 
 export type ABI = Array<ABIEntry>;
+
+export type SpecType = $Values<typeof SPEC_TYPES>;
+
+export type EntryGroupsByType = {
+  [specType: SpecType]: {
+    [entryName: string]: Array<ABIEntry>,
+  },
+};
