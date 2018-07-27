@@ -1,4 +1,6 @@
 /* @flow */
+
+// TODO: remove this once fully implemented
 /* eslint-disable class-methods-use-this */
 
 import EventEmitter from 'eventemitter3';
@@ -60,15 +62,35 @@ export default class Transaction extends EventEmitter {
   }
 
   async send(): Promise<TransactionReceipt> {
-    this.emit('transactionHash');
-    this.emit('receipt');
-    this.emit('confirmation');
-    this.emit('error');
-    throw new Error('Not yet implemented');
+    if (!this._signed) this.sign();
+
+    return new Promise((resolve, reject) => {
+      this._lh.adapter
+        // $FlowFixMe above sign() will cause _signed to exist or throw
+        .sendSignedTransaction(this._signed)
+        .on('transactionHash', hash => this.emit('transactionHash', hash))
+        .on('receipt', receipt => this.emit('receipt', receipt))
+        .on('confirmation', (confirmationNumber, receipt) =>
+          this.emit('confirmation', confirmationNumber, receipt),
+        )
+        .on('error', error => this.emit('error', error))
+        .catch(reject)
+        .then(resolve);
+    });
   }
 
-  toJSON(): {} {
-    throw new Error('Not yet implemented');
+  toJSON(): TransactionState {
+    const state: TransactionState = {
+      functionCall: this._functionCall,
+      gas: this._gas,
+      value: this._value,
+      signed: this._signed || undefined,
+      receipt: this._receipt || undefined,
+    };
+    Object.keys(state).forEach(
+      key => state[key] === undefined && delete state[key],
+    );
+    return state;
   }
 
   get functionCall(): FunctionCall {

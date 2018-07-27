@@ -1,6 +1,6 @@
 // @flow
 import type BigNumber from 'bn.js';
-import type PromiEvent from 'web3-core-promievent';
+import type { PromiEventEmitter } from 'web3-core-promievent';
 import type EventEmitter from 'eventemitter3';
 
 import type { ContractData } from './Loader';
@@ -79,7 +79,7 @@ export interface IAdapter {
   estimate(options: EstimateOptions): Promise<Gas>;
   sendSignedTransaction(
     transaction: SignedTransaction,
-  ): PromiEvent<TransactionReceipt>;
+  ): PromiEventEmitter<TransactionReceipt>;
 
   call(functionCall: FunctionCall): Promise<FunctionCallResult>;
 

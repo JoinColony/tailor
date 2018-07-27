@@ -157,7 +157,7 @@ export default class Web3Adapter extends Adapter {
       promiEvent.resolve(this._decodeReceipt(receipt)),
     );
 
-    return promiEvent;
+    return promiEvent.eventEmitter;
   }
 
   async call({ functionSignature, args }: FunctionCall) {
