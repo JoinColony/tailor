@@ -33,7 +33,7 @@ export type ConstantSpecs = {
 };
 
 export type PartialMethodSpec = {
-  input?: ParamsSpec,
+  inputs?: Array<ParamsSpec>,
   isPayable?: boolean,
   name?: string,
   output?: ParamsSpec,
@@ -41,12 +41,12 @@ export type PartialMethodSpec = {
 
 export type PartialEventSpec = {
   name?: string,
-  output?: ParamsSpec,
+  outputs?: Array<ParamsSpec>,
 };
 
 export type PartialConstantSpec = {
   name?: string,
-  input?: ParamsSpec,
+  inputs?: Array<ParamsSpec>,
   output?: ParamsSpec,
 };
 
