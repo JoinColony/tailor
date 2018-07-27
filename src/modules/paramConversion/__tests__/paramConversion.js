@@ -2,7 +2,7 @@
 
 import createSandbox from 'jest-sandbox';
 
-import { convertInput, convertOutput } from '../index';
+import { convertInput, convertOutput, findMatchingSpecs } from '../index';
 import PARAM_TYPES from '../../paramTypes';
 
 describe('Parameter conversion', () => {
@@ -253,5 +253,78 @@ describe('Parameter conversion', () => {
     const expectation = { id: 3, name: 'james' };
     expect(convertOutput(spec, 3, 'james')).toEqual(expectation);
     expect(spec[1].type.convertOutput).toHaveBeenCalledWith('james');
+  });
+
+  test('Finding matching specs (for overloading)', () => {
+    const spec1 = [
+      {
+        name: 'a',
+        type: PARAM_TYPES.INTEGER,
+      },
+    ];
+    const spec2 = [
+      {
+        name: 'a',
+        type: PARAM_TYPES.BOOLEAN,
+      },
+    ];
+    const spec3 = [
+      {
+        name: 'a',
+        type: PARAM_TYPES.INTEGER,
+      },
+      {
+        name: 'b',
+        type: PARAM_TYPES.BOOLEAN,
+      },
+    ];
+    const spec4 = [
+      {
+        name: 'a',
+        type: PARAM_TYPES.INTEGER,
+      },
+      {
+        name: 'b',
+        type: PARAM_TYPES.INTEGER,
+      },
+    ];
+
+    const specs = [spec1, spec2, spec3, spec4];
+
+    // No specs
+    expect(findMatchingSpecs([])).toEqual([]);
+
+    // No input; fall back to the longest specs
+    expect(findMatchingSpecs(specs)).toEqual(
+      expect.arrayContaining([spec3, spec4]),
+    );
+
+    // Sequential arguments
+    expect(findMatchingSpecs(specs, 3)).toEqual(
+      expect.arrayContaining([spec1, spec2]),
+    );
+    expect(findMatchingSpecs(specs, true)).toEqual(
+      expect.arrayContaining([spec1, spec2]),
+    );
+    expect(findMatchingSpecs(specs, 3, true)).toEqual(
+      expect.arrayContaining([spec3, spec4]),
+    );
+    expect(findMatchingSpecs(specs, 3, 3)).toEqual(
+      expect.arrayContaining([spec3, spec4]),
+    );
+
+    // Object argument
+    expect(findMatchingSpecs(specs, { a: 3 })).toEqual(
+      expect.arrayContaining([spec1, spec2]),
+    );
+    expect(findMatchingSpecs(specs, { a: true })).toEqual(
+      expect.arrayContaining([spec1, spec2]),
+    );
+    expect(findMatchingSpecs(specs, { a: 3, b: true })).toEqual(
+      expect.arrayContaining([spec3, spec4]),
+    );
+    expect(findMatchingSpecs(specs, { a: 3, b: 3 })).toEqual(
+      expect.arrayContaining([spec3, spec4]),
+    );
   });
 });

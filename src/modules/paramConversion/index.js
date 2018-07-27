@@ -44,3 +44,22 @@ export function convertOutput(spec: ParamsSpec, ...output: Array<any>): Object {
     return acc;
   }, {});
 }
+
+export function findMatchingSpecs(
+  specs: Array<ParamsSpec>,
+  ...input: any
+): Array<ParamsSpec> {
+  // Get the length of the input (object or array of values)
+  const inputLength =
+    (typeof input[0] === 'object' && Object.keys(input[0]).length) ||
+    input.length;
+
+  // Try and find specs of the same size as the input
+  const specsOfExactSize = specs.filter(spec => spec.length === inputLength);
+  if (specsOfExactSize.length) return specsOfExactSize;
+
+  // Fall back to the longest specs
+  return specs
+    .sort((a, b) => b.length - a.length)
+    .filter((spec, i, [longest]) => spec.length === longest.length);
+}
