@@ -10,7 +10,8 @@ export type Address = string;
 export type FunctionSignature = string; // myFunction(uint256,bool)
 
 export type FunctionArguments = Array<*>;
-export type Gas = number;
+export type Gas = BigNumber;
+export type Wei = BigNumber;
 export type TransactionData = string;
 export type SignedTransaction = string;
 export type FunctionCallResult = Array<*>;
@@ -24,8 +25,8 @@ export type EstimateOptions = {
   from?: Address,
   to?: Address,
   data?: TransactionData,
-  gas?: number,
-  value?: number,
+  gas?: Gas,
+  value?: Wei,
 };
 
 export type EventSignature = string; // 'MyEvent(uint8)'
@@ -85,5 +86,5 @@ export interface IAdapter {
   subscribe(options: SubscriptionOptions): Promise<EventEmitter>;
 
   getCurrentNetwork(): Promise<number>;
-  getGasPrice(): Promise<number>;
+  getGasPrice(): Promise<Gas>;
 }

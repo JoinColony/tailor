@@ -1,5 +1,6 @@
 // @flow
 import PromiEvent from 'web3-core-promievent';
+import BigNumber from 'bn.js';
 import type EventEmitter from 'eventemitter3';
 import type {
   EstimateOptions,
@@ -202,7 +203,7 @@ export default class Web3Adapter extends Adapter {
   }
 
   getGasPrice() {
-    return this._web3.eth.getGasPrice();
+    return new BigNumber(this._web3.eth.getGasPrice());
   }
 
   get contract() {
