@@ -8,13 +8,15 @@ import type {
   ABIEntry,
   ABIParam,
   ConstantSpec,
+  EntryGroupsByType,
   EventSpec,
   MethodSpec,
   ParamsSpec,
   ParamType,
+  SpecType,
 } from '../flowtypes';
 
-import { TYPE_PATTERN_MAP } from './constants';
+import { TYPE_PATTERN_MAP, SPEC_TYPES } from './constants';
 import Parser from '../Parser';
 
 const assert = require('assert');
@@ -33,6 +35,10 @@ export default class ABIParser extends Parser {
     );
   }
 
+  /*
+   * Given tuple components from an ABI entry, parse them to get a
+   * custom ParamType.
+   */
   static parseTupleType(components: Array<ABIParam>): ParamType {
     const tupleTypes = components.map(({ name, type }, index) => [
       this.parseFieldName(name, index),
@@ -58,6 +64,9 @@ export default class ABIParser extends Parser {
     };
   }
 
+  /*
+   * Given a solidity type (including tuples), parse it to get the ParamType.
+   */
   static parseType(
     solidityType: string,
     components?: Array<ABIParam>,
@@ -72,6 +81,10 @@ export default class ABIParser extends Parser {
     throw new Error(`Type "${solidityType}" could not be matched`);
   }
 
+  /*
+   * Given an array of ABI parameters (inputs or outputs), parse the parameters
+   * to get a ParamsSpec
+   */
   static parseParams(params: Array<ABIParam>, methodName: string): ParamsSpec {
     return params.map(({ name, type, components }, index) => {
       if (!name)
@@ -88,39 +101,47 @@ export default class ABIParser extends Parser {
     });
   }
 
-  static parseMethodSpec({
-    inputs = [],
-    name,
-    outputs = [],
-    payable,
-  }: ABIEntry): MethodSpec {
+  /*
+   * Given ABI entries for a method (presumed to be of the same name,
+   * i.e. for overloading), parse the spec.
+   */
+  static parseMethodSpec(entries: Array<ABIEntry>): MethodSpec {
+    const { name, payable, outputs = [] } = entries[0];
     return {
-      input: this.parseParams(inputs, name),
+      inputs: entries.map(({ inputs = [] }) => this.parseParams(inputs, name)),
       isPayable: Boolean(payable),
       name,
       output: this.parseParams(outputs, name),
     };
   }
 
-  static parseEventSpec({ name, inputs = [] }: ABIEntry): EventSpec {
+  /*
+   * Given ABI entries for an event (presumed to be of the same name,
+   * i.e. for overloading), parse the spec.
+   */
+  static parseEventSpec(entries: Array<ABIEntry>): EventSpec {
+    const { name } = entries[0];
     return {
       name,
-      output: this.parseParams(inputs, name),
+      outputs: entries.map(({ inputs: outputs = [] }) =>
+        this.parseParams(outputs, name),
+      ),
     };
   }
 
-  static parseConstantSpec({
-    name,
-    inputs = [],
-    outputs = [],
-  }: ABIEntry): ConstantSpec {
+  /*
+   * Given ABI entries for a constant (presumed to be of the same name,
+   * i.e. for overloading), parse the spec.
+   */
+  static parseConstantSpec(entries: Array<ABIEntry>): ConstantSpec {
+    const { name, outputs = [], inputs: firstInputs = [] } = entries[0];
     return {
-      input: this.parseParams(inputs, name),
+      inputs: entries.map(({ inputs = [] }) => this.parseParams(inputs, name)),
       name,
       // For public variables: if there are no inputs, and only one (unnamed)
       // output, use the function name as the output name.
       output: this.parseParams(
-        inputs.length === 0 && outputs.length === 1
+        firstInputs.length === 0 && outputs.length === 1
           ? outputs.map(output => ({ ...output, name: output.name || name }))
           : outputs,
         name,
@@ -128,40 +149,80 @@ export default class ABIParser extends Parser {
     };
   }
 
-  static specsReducer(specs: Object, entry: ABIEntry) {
-    let spec;
-    let propName;
-    if (entry.type === 'event') {
-      spec = this.parseEventSpec(entry);
-      propName = 'events';
-    } else if (
-      entry.stateMutability === 'view' ||
-      entry.stateMutability === 'pure'
-    ) {
-      spec = this.parseConstantSpec(entry);
-      propName = 'constants';
-    } else {
-      spec = this.parseMethodSpec(entry);
-      propName = 'methods';
-    }
+  /*
+   * Given an ABI entry, get its type.
+   */
+  static getSpecType(entry: ABIEntry): SpecType {
+    if (entry.type === 'event') return SPEC_TYPES.EVENTS;
 
-    const existingSpec = specs[propName][spec.name];
-    Object.assign(specs[propName], {
-      [spec.name]: Array.isArray(existingSpec)
-        ? existingSpec.concat(spec)
-        : [spec],
-    });
-    return specs;
+    if (entry.stateMutability === 'view' || entry.stateMutability === 'pure')
+      return SPEC_TYPES.CONSTANTS;
+
+    return SPEC_TYPES.METHODS;
   }
 
-  static parseABI(abi: ABI) {
-    return abi
-      .filter(({ type }) => type !== 'constructor')
-      .reduce((specs, entry) => this.specsReducer(specs, entry), {
+  /*
+   * Given a type and ABI entries, parse the entries to return a spec
+   * for the type in question.
+   */
+  static parseSpecForType(specType: SpecType, entries: Array<ABIEntry>) {
+    if (specType === SPEC_TYPES.CONSTANTS)
+      return this.parseConstantSpec(entries);
+
+    if (specType === SPEC_TYPES.EVENTS) return this.parseEventSpec(entries);
+
+    return this.parseMethodSpec(entries);
+  }
+
+  /*
+   * Given ABI entries, filter out the unsupported types, group by type,
+   * then group by entry name.
+   */
+  static groupABIEntries(abi: ABI) {
+    return (
+      abi
+        // Filter out unsupported types
+        .filter(({ type }) => type !== 'constructor')
+        // Group by type, then name
+        .reduce(
+          (acc, entry) => {
+            const type = ABIParser.getSpecType(entry);
+            acc[type][entry.name] = Array.isArray(acc[type][entry.name])
+              ? acc[type][entry.name].concat(entry)
+              : [entry];
+            return acc;
+          },
+          {
+            constants: {},
+            events: {},
+            methods: {},
+          },
+        )
+    );
+  }
+
+  /*
+   * Given ABI entries grouped by type, parse each group to get the
+   * correct spec for that type.
+   */
+  static parseSpecsForGroups(groups: EntryGroupsByType) {
+    return Object.keys(groups).reduce(
+      (acc, type) => {
+        Object.keys(groups[type]).forEach(name => {
+          acc[type][name] = this.parseSpecForType(type, groups[type][name]);
+        });
+        return acc;
+      },
+      {
         constants: {},
         events: {},
         methods: {},
-      });
+      },
+    );
+  }
+
+  static parseABI(abi: ABI) {
+    return this.parseSpecsForGroups(this.groupABIEntries(abi));
   }
 
   parse(contractData: *) {

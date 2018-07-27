@@ -3,7 +3,7 @@
 import type { ParamsSpec } from './Params';
 
 export type MethodSpec = {
-  input: ParamsSpec,
+  inputs: Array<ParamsSpec>,
   isPayable: boolean,
   name: string,
   output: ParamsSpec,
@@ -11,29 +11,29 @@ export type MethodSpec = {
 
 export type EventSpec = {
   name: string,
-  output: ParamsSpec,
+  outputs: Array<ParamsSpec>,
 };
 
 export type ConstantSpec = {
   name: string,
-  input: ParamsSpec,
+  inputs: Array<ParamsSpec>,
   output: ParamsSpec,
 };
 
 export type EventSpecs = {
-  [eventName: string]: Array<EventSpec>,
+  [eventName: string]: EventSpec,
 };
 
 export type MethodSpecs = {
-  [methodName: string]: Array<MethodSpec>,
+  [methodName: string]: MethodSpec,
 };
 
 export type ConstantSpecs = {
-  [constantName: string]: Array<ConstantSpec>,
+  [constantName: string]: ConstantSpec,
 };
 
 export type PartialMethodSpec = {
-  input?: ParamsSpec,
+  inputs?: Array<ParamsSpec>,
   isPayable?: boolean,
   name?: string,
   output?: ParamsSpec,
@@ -41,12 +41,12 @@ export type PartialMethodSpec = {
 
 export type PartialEventSpec = {
   name?: string,
-  output?: ParamsSpec,
+  outputs?: Array<ParamsSpec>,
 };
 
 export type PartialConstantSpec = {
   name?: string,
-  input?: ParamsSpec,
+  inputs?: Array<ParamsSpec>,
   output?: ParamsSpec,
 };
 
