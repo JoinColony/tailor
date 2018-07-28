@@ -7,10 +7,12 @@ import type { ContractData } from './Loader';
 
 export type Address = string;
 
+export type FunctionSignature = string;
+
 export type FunctionArguments = Array<*>;
 
 export type FunctionCall = {
-  method: string,
+  functionSignature: FunctionSignature,
   args: FunctionArguments,
 };
 
@@ -28,6 +30,8 @@ export type GasEstimate = number;
 
 export type SignedTransaction = string;
 
+export type EventSignature = string;
+
 export type Event = {
   blockNumber: number,
   blockHash: string,
@@ -42,7 +46,7 @@ export type Event = {
     length: number,
   },
   event: string, // 'MyEvent'
-  eventSignature: string, // 'MyEvent(uint8)'
+  eventSignature: EventSignature, // 'MyEvent(uint8)'
 };
 
 export type TransactionReceipt = {
