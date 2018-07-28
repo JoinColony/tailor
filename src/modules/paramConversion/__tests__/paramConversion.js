@@ -2,7 +2,11 @@
 
 import createSandbox from 'jest-sandbox';
 
-import { convertInput, convertOutput, findMatchingSpecs } from '../index';
+import {
+  convertInput,
+  convertOutput,
+  findMatchingFunctionSignatures,
+} from '../index';
 import PARAM_TYPES from '../../paramTypes';
 
 describe('Parameter conversion', () => {
@@ -13,11 +17,10 @@ describe('Parameter conversion', () => {
   });
 
   test('Converting input values (no values)', () => {
-    const spec = [];
-
-    const expectation = [];
-    expect(convertInput(spec, { itDoesntMatter: 'abc' })).toEqual(expectation);
-    expect(convertInput(spec)).toEqual(expectation);
+    expect(convertInput(undefined, { itDoesntMatter: 'abc' })).toEqual([]);
+    expect(convertInput(undefined)).toEqual([]);
+    expect(convertInput([], { itDoesntMatter: 'abc' })).toEqual([]);
+    expect(convertInput([])).toEqual([]);
   });
 
   test('Converting input values (one value)', () => {
@@ -218,6 +221,7 @@ describe('Parameter conversion', () => {
     const spec = [];
 
     const expectation = {};
+    expect(convertOutput(undefined)).toEqual(expectation);
     expect(convertOutput(spec)).toEqual(expectation);
 
     // Theoretically we shouldn't receive values we don't expect in the spec
@@ -243,6 +247,10 @@ describe('Parameter conversion', () => {
         type: PARAM_TYPES.INTEGER,
       },
       {
+        name: 'isTrue',
+        type: PARAM_TYPES.BOOLEAN,
+      },
+      {
         name: 'name',
         type: Object.assign({}, PARAM_TYPES.STRING, {
           convertOutput: sandbox.fn().mockImplementation(value => value),
@@ -250,81 +258,102 @@ describe('Parameter conversion', () => {
       },
     ];
 
-    const expectation = { id: 3, name: 'james' };
-    expect(convertOutput(spec, 3, 'james')).toEqual(expectation);
-    expect(spec[1].type.convertOutput).toHaveBeenCalledWith('james');
+    const id = 3;
+    const name = 'james';
+    const isTrue = false;
+    expect(convertOutput(spec, id, isTrue, name)).toEqual({ id, isTrue, name });
+    expect(spec[2].type.convertOutput).toHaveBeenCalledWith(name);
   });
 
   test('Finding matching specs (for overloading)', () => {
-    const spec1 = [
-      {
-        name: 'a',
-        type: PARAM_TYPES.INTEGER,
-      },
-    ];
-    const spec2 = [
-      {
-        name: 'a',
-        type: PARAM_TYPES.BOOLEAN,
-      },
-    ];
-    const spec3 = [
-      {
-        name: 'a',
-        type: PARAM_TYPES.INTEGER,
-      },
-      {
-        name: 'b',
-        type: PARAM_TYPES.BOOLEAN,
-      },
-    ];
-    const spec4 = [
-      {
-        name: 'a',
-        type: PARAM_TYPES.INTEGER,
-      },
-      {
-        name: 'b',
-        type: PARAM_TYPES.INTEGER,
-      },
-    ];
+    const functionParams = {
+      'myConstant(uint)': [
+        {
+          name: 'a',
+          type: PARAM_TYPES.INTEGER,
+        },
+      ],
+      'myConstant(bool)': [
+        {
+          name: 'a',
+          type: PARAM_TYPES.BOOLEAN,
+        },
+      ],
+      'myConstant(uint,bool)': [
+        {
+          name: 'a',
+          type: PARAM_TYPES.INTEGER,
+        },
+        {
+          name: 'b',
+          type: PARAM_TYPES.BOOLEAN,
+        },
+      ],
+      'myConstant(uint,uint)': [
+        {
+          name: 'a',
+          type: PARAM_TYPES.INTEGER,
+        },
+        {
+          name: 'b',
+          type: PARAM_TYPES.INTEGER,
+        },
+      ],
+    };
 
-    const specs = [spec1, spec2, spec3, spec4];
+    // No signatures
+    expect(findMatchingFunctionSignatures({})).toEqual([]);
 
-    // No specs
-    expect(findMatchingSpecs([])).toEqual([]);
-
-    // No input; fall back to the longest specs
-    expect(findMatchingSpecs(specs)).toEqual(
-      expect.arrayContaining([spec3, spec4]),
+    // No input; fall back to the longest
+    expect(findMatchingFunctionSignatures(functionParams)).toEqual(
+      expect.arrayContaining([
+        'myConstant(uint,bool)',
+        'myConstant(uint,uint)',
+      ]),
     );
 
     // Sequential arguments
-    expect(findMatchingSpecs(specs, 3)).toEqual(
-      expect.arrayContaining([spec1, spec2]),
+    expect(findMatchingFunctionSignatures(functionParams, 3)).toEqual(
+      expect.arrayContaining(['myConstant(uint)', 'myConstant(bool)']),
     );
-    expect(findMatchingSpecs(specs, true)).toEqual(
-      expect.arrayContaining([spec1, spec2]),
+    expect(findMatchingFunctionSignatures(functionParams, true)).toEqual(
+      expect.arrayContaining(['myConstant(uint)', 'myConstant(bool)']),
     );
-    expect(findMatchingSpecs(specs, 3, true)).toEqual(
-      expect.arrayContaining([spec3, spec4]),
+    expect(findMatchingFunctionSignatures(functionParams, 3, true)).toEqual(
+      expect.arrayContaining([
+        'myConstant(uint,bool)',
+        'myConstant(uint,uint)',
+      ]),
     );
-    expect(findMatchingSpecs(specs, 3, 3)).toEqual(
-      expect.arrayContaining([spec3, spec4]),
+    expect(findMatchingFunctionSignatures(functionParams, 3, 3)).toEqual(
+      expect.arrayContaining([
+        'myConstant(uint,bool)',
+        'myConstant(uint,uint)',
+      ]),
     );
 
     // Object argument
-    expect(findMatchingSpecs(specs, { a: 3 })).toEqual(
-      expect.arrayContaining([spec1, spec2]),
+    expect(findMatchingFunctionSignatures(functionParams, { a: 3 })).toEqual(
+      expect.arrayContaining(['myConstant(uint)', 'myConstant(bool)']),
     );
-    expect(findMatchingSpecs(specs, { a: true })).toEqual(
-      expect.arrayContaining([spec1, spec2]),
+    expect(findMatchingFunctionSignatures(functionParams, { a: true })).toEqual(
+      expect.arrayContaining(['myConstant(uint)', 'myConstant(bool)']),
     );
-    expect(findMatchingSpecs(specs, { a: 3, b: true })).toEqual(
-      expect.arrayContaining([spec3, spec4]),
+    expect(
+      findMatchingFunctionSignatures(functionParams, { a: 3, b: true }),
+    ).toEqual(
+      expect.arrayContaining([
+        'myConstant(uint,bool)',
+        'myConstant(uint,uint)',
+      ]),
     );
-    expect(findMatchingSpecs(specs, { a: 3, b: 3 })).toEqual(
-      expect.arrayContaining([spec3, spec4]),
+    expect(
+      findMatchingFunctionSignatures(functionParams, { a: 3, b: 3 }),
+    ).toEqual(
+      expect.arrayContaining([
+        'myConstant(uint,bool)',
+        'myConstant(uint,uint)',
+      ]),
     );
   });
 });
