@@ -43,6 +43,12 @@
       "type": "event"
     },
     {
+      "anonymous": false,
+      "inputs": [],
+      "name": "Transfer",
+      "type": "event"
+    },
+    {
       "constant": false,
       "inputs": [
         {

@@ -11,6 +11,7 @@ import PARAM_TYPES from '../../../modules/paramTypes';
 const [
   lastSenderABI,
   constructorABI,
+  transferOverloadedABI,
   transferABI,
   sendCoinABI,
 ] = MetaCoinABI.abi;
@@ -61,9 +62,8 @@ describe('ABIParser', () => {
     });
     expect(result.constants.overloaded).toEqual({
       name: 'overloaded',
-      inputs: expect.arrayContaining([
-        [
-          // function overloaded(uint a, uint b, uint c) public pure returns(uint sum)
+      input: {
+        'overloaded(uint256,uint256,uint256)': [
           {
             name: 'a',
             type: PARAM_TYPES.INTEGER,
@@ -77,8 +77,7 @@ describe('ABIParser', () => {
             type: PARAM_TYPES.INTEGER,
           },
         ],
-        [
-          // function overloaded(uint a, uint b) public pure returns(uint sum)
+        'overloaded(uint256,uint256)': [
           {
             name: 'a',
             type: PARAM_TYPES.INTEGER,
@@ -88,8 +87,7 @@ describe('ABIParser', () => {
             type: PARAM_TYPES.INTEGER,
           },
         ],
-        [
-          // function overloaded(uint a, bool b) public pure returns(uint sum)
+        'overloaded(uint256,bool)': [
           {
             name: 'a',
             type: PARAM_TYPES.INTEGER,
@@ -99,8 +97,7 @@ describe('ABIParser', () => {
             type: PARAM_TYPES.BOOLEAN,
           },
         ],
-        [
-          // function overloaded(bool a, bool b) public pure returns(uint sum)
+        'overloaded(bool,bool)': [
           {
             name: 'a',
             type: PARAM_TYPES.BOOLEAN,
@@ -110,7 +107,7 @@ describe('ABIParser', () => {
             type: PARAM_TYPES.BOOLEAN,
           },
         ],
-      ]),
+      },
       output: [
         {
           name: 'sum',
@@ -135,8 +132,8 @@ describe('ABIParser', () => {
 
     expect(parser.constructor.parseMethodSpec([sendCoinABI])).toEqual({
       name: 'sendCoin',
-      inputs: [
-        [
+      input: {
+        'sendCoin(address,uint256)': [
           {
             name: 'receiver',
             type: PARAM_TYPES.ADDRESS,
@@ -146,7 +143,7 @@ describe('ABIParser', () => {
             type: PARAM_TYPES.INTEGER,
           },
         ],
-      ],
+      },
       output: [
         {
           name: 'sufficient',
@@ -177,7 +174,9 @@ describe('ABIParser', () => {
       ]),
     ).toEqual({
       name: noInputs,
-      inputs: [[]],
+      input: {
+        [`${noInputs}()`]: [],
+      },
       output: [],
       isPayable: false,
     });
@@ -191,7 +190,9 @@ describe('ABIParser', () => {
     sandbox.spyOn(parser.constructor, 'parseParams');
 
     expect(parser.constructor.parseConstantSpec([lastSenderABI])).toEqual({
-      inputs: [[]],
+      input: {
+        [`${lastSenderABI.name}()`]: [],
+      },
       name: lastSenderABI.name,
       output: [
         {
@@ -217,7 +218,13 @@ describe('ABIParser', () => {
           name: noInputsOrOutputsName,
         },
       ]),
-    ).toEqual({ inputs: [[]], output: [], name: noInputsOrOutputsName });
+    ).toEqual({
+      input: {
+        [`${noInputsOrOutputsName}()`]: [],
+      },
+      output: [],
+      name: noInputsOrOutputsName,
+    });
     expect(parser.constructor.parseParams).toHaveBeenCalledTimes(2);
     expect(parser.constructor.parseParams).toHaveBeenCalledWith(
       [],
@@ -229,10 +236,13 @@ describe('ABIParser', () => {
     const parser = new ABIParser();
     sandbox.spyOn(parser.constructor, 'parseParams');
 
-    expect(parser.constructor.parseEventSpec([transferABI])).toEqual({
+    expect(
+      parser.constructor.parseEventSpec([transferABI, transferOverloadedABI]),
+    ).toEqual({
       name: transferABI.name,
-      outputs: [
-        [
+      output: {
+        'Transfer()': [],
+        'Transfer(address,address,uint256)': [
           {
             name: 'from',
             type: PARAM_TYPES.ADDRESS,
@@ -246,7 +256,7 @@ describe('ABIParser', () => {
             type: PARAM_TYPES.INTEGER,
           },
         ],
-      ],
+      },
     });
     expect(parser.constructor.parseParams).toHaveBeenCalledWith(
       transferABI.inputs,
@@ -261,7 +271,12 @@ describe('ABIParser', () => {
           name: noInputsName,
         },
       ]),
-    ).toEqual({ outputs: [[]], name: noInputsName });
+    ).toEqual({
+      output: {
+        'no inputs()': [],
+      },
+      name: noInputsName,
+    });
     expect(parser.constructor.parseParams).toHaveBeenCalledTimes(1);
     expect(parser.constructor.parseParams).toHaveBeenCalledWith(
       [],
