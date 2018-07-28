@@ -22,6 +22,9 @@ export const INTEGER_TYPE: ParamType = {
     );
     return true;
   },
+  convertOutput(value: string) {
+    return parseInt(value, 10);
+  },
 };
 
 export const BOOLEAN_TYPE: ParamType = {
