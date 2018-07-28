@@ -19,8 +19,6 @@ import {
   PARSER_NAME_MAP,
 } from './constants';
 
-export type { IAdapter } from '../interface/Adapter';
-
 export type AdapterName = $Keys<typeof ADAPTER_NAME_MAP>;
 
 export type AdapterSpec = {
@@ -58,6 +56,7 @@ export type {
   ContractData,
   ContractSpec,
   EventSpecs,
+  IAdapter,
   ILoader,
   IParser,
   MethodSpecs,

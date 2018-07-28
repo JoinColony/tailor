@@ -18,8 +18,10 @@ describe('Integration testing', () => {
     sandbox.clear();
   });
 
+  let client;
+
   test('Initializing a client', async () => {
-    const client = new Lighthouse({
+    client = new Lighthouse({
       adapter: {
         name: 'web3',
         options: {
@@ -43,7 +45,24 @@ describe('Integration testing', () => {
 
     await client.initialize();
 
+    expect(client).toHaveProperty('constants', {
+      getBalance: expect.any(Function),
+      getBalanceInEth: expect.any(Function),
+      lastSender: expect.any(Function),
+      overloaded: expect.any(Function),
+    });
+
     // It hasn't crashed yet? Good enough for now.
+  });
+
+  test('Calling an overloaded constant', async () => {
+    const { overloaded } = client.constants;
+    expect(await overloaded(2, 2, 2)).toEqual({ sum: 6 });
+    expect(await overloaded(2, 2)).toEqual({ sum: 4 });
+    expect(await overloaded(2, true)).toEqual({ sum: 2 });
+    expect(await overloaded(true, true)).toEqual({
+      sum: 0,
+    });
   });
 
   // TODO add tests for:
@@ -53,6 +72,5 @@ describe('Integration testing', () => {
   // JoinColony/lighthouse#19
   // JoinColony/lighthouse#20
   // JoinColony/lighthouse#21
-  // JoinColony/lighthouse#22
   // JoinColony/lighthouse#25
 });
