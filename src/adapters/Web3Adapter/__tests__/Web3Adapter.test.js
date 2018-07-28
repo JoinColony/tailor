@@ -2,6 +2,7 @@
 /* eslint-disable no-underscore-dangle */
 
 import createSandbox from 'jest-sandbox';
+import { sha3 } from 'web3-utils';
 
 import PromiEvent from 'web3-core-promievent';
 import Web3Adapter from '../index';
@@ -69,11 +70,11 @@ describe('Web3Adapter', () => {
 
   test('Encode function call', () => {
     const functionCall = {
-      method: 'myMethod',
+      functionSignature: 'myMethod()',
       args,
     };
     const badFunctionCall = {
-      method: 'badMethod',
+      functionSignature: 'badMethod()',
       args,
     };
     const encodedFunctionCall = 'encoded function call';
@@ -85,7 +86,7 @@ describe('Web3Adapter', () => {
       encodeABI: mockEncodeABI,
     }));
     mockWeb3.eth.Contract.mockImplementation(() => ({
-      methods: { myMethod: mockMethod },
+      methods: { 'myMethod()': mockMethod },
     }));
 
     const adapter = new Web3Adapter({ web3: mockWeb3 });
@@ -105,12 +106,13 @@ describe('Web3Adapter', () => {
   });
 
   test('Decode function call data', () => {
-    const methodSig = '0x12345678';
-    const badMethodSig = '0x87654321';
+    const methodName = 'myMethod()';
+    const badMethodName = 'myBadMethod()';
+    const methodSig = sha3(methodName).slice(0, 10);
+    const badMethodSig = sha3(badMethodName).slice(0, 10);
     const functionArgs = '9999999999999999';
     const functionCallData = methodSig + functionArgs;
     const badFunctionCallData = badMethodSig + functionArgs;
-    const methodName = 'myMethod';
     const jsonInterface = [
       {
         name: methodName,
@@ -145,7 +147,7 @@ describe('Web3Adapter', () => {
       `0x${functionArgs}`,
     );
     expect(validResult).toEqual({
-      method: methodName,
+      functionSignature: methodSig,
       args: ['first', 'second'],
     });
 
@@ -333,11 +335,11 @@ describe('Web3Adapter', () => {
 
   test('Call', async () => {
     const functionCall = {
-      method: 'myMethod',
+      functionSignature: 'myMethod()',
       args,
     };
     const badFunctionCall = {
-      method: 'badMethod',
+      functionSignature: 'badMethod()',
       args,
     };
     const callResult = {
@@ -351,7 +353,7 @@ describe('Web3Adapter', () => {
       call: mockCall,
     }));
     mockWeb3.eth.Contract.mockImplementation(() => ({
-      methods: { myMethod: mockMethod },
+      methods: { 'myMethod()': mockMethod },
     }));
 
     const adapter = new Web3Adapter({ web3: mockWeb3 });
@@ -367,7 +369,9 @@ describe('Web3Adapter', () => {
     // non-existing function
     await expect(adapter.call(badFunctionCall)).rejects.toEqual(
       new Error(
-        `Method "${badFunctionCall.method}" not defined on this contract`,
+        `Method with signature "${
+          badFunctionCall.functionSignature
+        }" not defined on this contract`,
       ),
     );
   });

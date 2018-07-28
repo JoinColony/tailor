@@ -38,15 +38,14 @@ export default class Web3Adapter extends Adapter {
     return this.contract.deploy({ arguments: args }).encodeABI();
   }
 
-  encodeFunctionCall(functionCall: FunctionCall) {
-    if (!this.contract.methods[functionCall.method])
+  encodeFunctionCall({ args, functionSignature }: FunctionCall) {
+    if (!this.contract.methods[functionSignature])
       throw new Error(
-        `Method "${functionCall.method}" not defined on this contract`,
+        // eslint-disable-next-line max-len
+        `Method with signature "${functionSignature}" not defined on this contract`,
       );
 
-    return this.contract.methods[functionCall.method](
-      ...functionCall.args,
-    ).encodeABI();
+    return this.contract.methods[functionSignature](...args).encodeABI();
   }
 
   decodeFunctionCallData(functionCallData: TransactionData) {
@@ -73,7 +72,7 @@ export default class Web3Adapter extends Adapter {
       params.push(paramsResult[i]);
     }
 
-    return { method: methodInterface.name, args: params };
+    return { functionSignature: methodSig, args: params };
   }
 
   async estimate(options: EstimateOptions) {
@@ -160,19 +159,20 @@ export default class Web3Adapter extends Adapter {
     return promiEvent;
   }
 
-  async call(functionCall: FunctionCall) {
-    if (!this.contract.methods[functionCall.method])
+  async call({ functionSignature, args }: FunctionCall) {
+    if (!this.contract.methods[functionSignature])
       throw new Error(
-        `Method "${functionCall.method}" not defined on this contract`,
+        // eslint-disable-next-line max-len
+        `Method with signature "${functionSignature}" not defined on this contract`,
       );
 
-    const rawResult = await this.contract.methods[functionCall.method](
-      ...functionCall.args,
+    const rawResult = await this.contract.methods[functionSignature](
+      ...args,
     ).call();
 
     // convert Result object to array
     const result = [];
-    for (let i = 0; i < functionCall.args.length; i += 1) {
+    for (let i = 0; i < args.length; i += 1) {
       result.push(rawResult[i]);
     }
 
@@ -188,6 +188,7 @@ export default class Web3Adapter extends Adapter {
 
     if (options.event) {
       if (!contract.events[options.event])
+        // TODO check event sig
         throw new Error(
           `Event "${options.event}" not defined on this contract`,
         );
