@@ -8,7 +8,7 @@ const DEFAULT_HOST = 'http://127.0.0.1:3030';
 // eslint-disable-next-line max-len
 const DEFAULT_ENDPOINT = `${DEFAULT_HOST}/contracts?name=%%NAME%%&address=%%ADDRESS%%&version=%%VERSION%%`;
 
-export default class TrufflepigLoader extends HttpLoader {
+export default class TrufflepigLoader extends HttpLoader<*> {
   static get name() {
     return 'trufflepig';
   }

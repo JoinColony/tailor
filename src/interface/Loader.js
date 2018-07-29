@@ -1,16 +1,18 @@
 /* @flow */
 
-export type Query = {
-  contractAddress?: string,
+import type { Address } from './flowtypes';
+
+export type GenericQuery = {
+  contractAddress?: Address,
   contractName?: string,
-  routerAddress?: string,
+  routerAddress?: Address,
   routerName?: string,
   version?: string,
   network?: string,
 };
 
 export type ContractData = {
-  address?: string,
+  address: Address,
   abi?: Array<*>,
   bytecode?: string,
 };
@@ -21,7 +23,7 @@ export type RequiredContractDataProps = {
   bytecode?: boolean,
 };
 
-export interface ILoader {
+export interface ILoader<Query: GenericQuery> {
   loadContractData(
     query: Query,
     props?: RequiredContractDataProps,

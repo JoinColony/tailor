@@ -1,7 +1,7 @@
 /* @flow */
 /* eslint-disable import/no-extraneous-dependencies,global-require */
 
-import type { FSLoaderArgs, Query } from '../flowtypes';
+import type { FSLoaderArgs, GenericQuery } from '../flowtypes';
 import Loader from '../Loader';
 
 const assert = require('assert');
@@ -33,7 +33,7 @@ export default class FSLoader extends Loader {
     this._directory = directory;
   }
 
-  async loadContractData(query: Query) {
+  async loadContractData(query: GenericQuery) {
     const { contractName = '' } = query;
 
     assert(!!contractName, 'A "contractName" property must be provided');

@@ -1,6 +1,6 @@
 /* @flow */
 
-import type { ILoader, ContractData, Query } from '../interface/Loader';
+import type { ILoader, ContractData, GenericQuery } from '../interface/Loader';
 import type { IAdapter } from '../interface/Adapter';
 import type { IParser } from '../interface/Parser';
 import type {
@@ -45,10 +45,10 @@ export type LighthouseArgs = {
   contractData?: ContractData,
   constants?: PartialConstantSpecs,
   events?: PartialEventSpecs,
-  loader?: ILoader | LoaderSpec,
+  loader?: ILoader<*> | LoaderSpec,
   methods?: PartialMethodSpecs,
   parser?: IParser | ParserSpec,
-  query: Query,
+  query: GenericQuery,
 };
 
 export type {
@@ -63,5 +63,5 @@ export type {
   PartialConstantSpecs,
   PartialEventSpecs,
   PartialMethodSpecs,
-  Query,
+  GenericQuery,
 };

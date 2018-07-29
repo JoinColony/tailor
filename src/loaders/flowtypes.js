@@ -1,27 +1,34 @@
 /* @flow */
 
+import type { Address } from '../interface/flowtypes';
+
 import type {
   ContractData,
-  ILoader,
-  Query,
+  GenericQuery,
   RequiredContractDataProps,
 } from '../interface/Loader';
 
+export type { ILoader } from '../interface/Loader';
+
 export type Validator = [(value: *) => boolean, string];
 
-export type { ContractData, ILoader, Query, RequiredContractDataProps };
+export type { ContractData, GenericQuery, RequiredContractDataProps };
 
 export type Schema = {
   [fieldName: string]: Validator,
 };
 
-export type Transform = (jsonObj: Object, query: Query) => ContractData;
+export type Transform = (jsonObj: Object, query: GenericQuery) => ContractData;
 
 export type LoaderArgs = { transform: Transform };
 
 export type HttpLoaderArgs = LoaderArgs & { endpoint: string };
 
 export type FSLoaderArgs = LoaderArgs & { directory: string };
+
+export type EtherscanQuery = {
+  contractAddress: Address,
+};
 
 export type EtherscanResponse = {
   status: '0' | '1',
@@ -33,7 +40,7 @@ export type TruffleArtifact = {
   bytecode: string,
   networks: {
     [network: string | number]: {
-      address: string,
+      address: Address,
     },
   },
 };

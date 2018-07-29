@@ -2,7 +2,7 @@
 
 import type {
   ContractData,
-  Query,
+  // GenericQuery,
   Transform,
   TruffleArtifact,
 } from '../flowtypes';
@@ -13,7 +13,7 @@ import type {
  */
 const transformTruffleArtifact: Transform = (
   { abi = [], bytecode, networks = {} }: TruffleArtifact = {},
-  { network }: Query = {},
+  { network }: * = {},
 ): ContractData => {
   let address;
 

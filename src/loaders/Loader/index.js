@@ -4,7 +4,7 @@ import type {
   ContractData,
   ILoader,
   LoaderArgs,
-  Query,
+  GenericQuery,
   RequiredContractDataProps,
   Transform,
 } from '../flowtypes';
@@ -16,7 +16,7 @@ import transformJson from '../transforms/transformJson';
 
 const assert = require('assert');
 
-export default class Loader implements ILoader {
+export default class Loader implements ILoader<GenericQuery> {
   _transform: Transform;
 
   static get name() {
@@ -31,7 +31,7 @@ export default class Loader implements ILoader {
     this._transform = transform;
   }
 
-  transform(input: *, query: Query): ContractData {
+  transform(input: *, query: *): ContractData {
     return this._transform(input, query);
   }
 
@@ -52,7 +52,7 @@ export default class Loader implements ILoader {
    * Given a query, validate each property and ensure that either
    * contractName or contractAddress is present.
    */
-  static runQueryValidation(query: Query): void {
+  static runQueryValidation(query: *): void {
     Object.entries(query).forEach(([fieldName, value]) => {
       validateQueryField(fieldName, value);
     });
@@ -74,7 +74,7 @@ export default class Loader implements ILoader {
    * use the loader to loadContractData the contract data, and validate the data.
    */
   async load(
-    query: Query,
+    query: *,
     props: RequiredContractDataProps = REQUIRED_CONTRACT_DATA_PROPS,
   ) {
     this.constructor.runQueryValidation(query);
