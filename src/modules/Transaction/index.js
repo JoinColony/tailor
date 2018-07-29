@@ -97,7 +97,7 @@ export default class Transaction extends EventEmitter {
       throw new Error('Cannot set gas for already signed transaction');
 
     this._gas =
-      BigNumber.isBn(gas) || typeof gas === 'number'
+      BigNumber.isBN(gas) || typeof gas === 'number'
         ? new BigNumber(gas)
         : null;
   }
@@ -112,7 +112,7 @@ export default class Transaction extends EventEmitter {
       throw new Error('Cannot set value for already signed transaction');
 
     this._value =
-      BigNumber.isBn(value) || typeof value === 'number'
+      BigNumber.isBN(value) || typeof value === 'number'
         ? new BigNumber(value)
         : null;
   }
