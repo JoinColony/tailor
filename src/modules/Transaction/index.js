@@ -39,11 +39,11 @@ export default class Transaction extends EventEmitter {
 
   async estimate(): Promise<Gas> {
     return this._lh.adapter.estimate({
-      from: 'todo', // TODO: get address from wallet
-      to: 'todo', // TODO: get contract address from lh
+      from: this._lh.wallet.address,
+      to: this._lh.contractAddress,
       data: this._data,
-      gas: this._gas || (await this._lh.adapter.getGasPrice()),
-      value: this._value || 0,
+      gas: this.gas || (await this._lh.adapter.getGasPrice()),
+      value: this.value,
     });
   }
 
