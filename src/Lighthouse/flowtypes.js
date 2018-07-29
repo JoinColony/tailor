@@ -51,6 +51,8 @@ export type LighthouseArgs = {
   query: GenericQuery,
 };
 
+export type { IWallet } from '../interface/Wallet';
+
 export type {
   ConstantSpecs,
   ContractData,

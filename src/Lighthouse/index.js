@@ -22,6 +22,7 @@ import type {
   IAdapter,
   ILoader,
   IParser,
+  IWallet,
   LighthouseArgs,
   LoaderName,
   LoaderSpec,
@@ -55,6 +56,8 @@ export default class Lighthouse {
     events: PartialEventSpecs,
     methods: PartialMethodSpecs,
   };
+
+  wallet: IWallet;
 
   // TODO JoinColony/lighthouse/issues/16
   static getAdapter(
