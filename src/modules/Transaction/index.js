@@ -47,25 +47,32 @@ export default class Transaction extends EventEmitter {
     });
   }
 
+  // eslint-disable-next-line class-methods-use-this
   async sign(): Promise<SignedTransaction> {
+    // TODO implement sign()
     throw new Error('Not yet implemented');
   }
 
   async send(): Promise<TransactionReceipt> {
-    if (!this._signed) this.sign();
+    if (!this.signed) await this.sign();
 
     return new Promise((resolve, reject) => {
-      this._lh.adapter
-        // $FlowFixMe above sign() will cause _signed to exist or throw
-        .sendSignedTransaction(this._signed)
-        .on('transactionHash', hash => this.emit('transactionHash', hash))
-        .on('receipt', receipt => this.emit('receipt', receipt))
-        .on('confirmation', (confirmationNumber, receipt) =>
-          this.emit('confirmation', confirmationNumber, receipt),
-        )
-        .on('error', error => this.emit('error', error))
-        .catch(reject)
-        .then(resolve);
+      // XXX in practise, `this._signed` is always set at this point, but
+      // Flow doesn't know that.
+      if (this.signed) {
+        this._lh.adapter
+          .sendSignedTransaction(this.signed)
+          .on('transactionHash', hash => this.emit('transactionHash', hash))
+          .on('receipt', receipt => this.emit('receipt', receipt))
+          .on('confirmation', (confirmationNumber, receipt) =>
+            this.emit('confirmation', confirmationNumber, receipt),
+          )
+          .on('error', error => this.emit('error', error))
+          .catch(reject)
+          .then(resolve);
+      } else {
+        reject(new Error('Cannot send an unsigned transaction'));
+      }
     });
   }
 
