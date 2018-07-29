@@ -78,15 +78,12 @@ export default class Transaction extends EventEmitter {
 
   toJSON(): TransactionState {
     const state: TransactionState = {
-      functionCall: this._functionCall,
-      gas: this._gas,
-      value: this._value,
-      signed: this._signed || undefined,
-      receipt: this._receipt || undefined,
+      functionCall: this.functionCall,
+      gas: this.gas,
+      value: this.value,
     };
-    Object.keys(state).forEach(
-      key => state[key] === undefined && delete state[key],
-    );
+    if (this.signed) state.signed = this.signed;
+    if (this.receipt) state.receipt = this.receipt;
     return state;
   }
 
