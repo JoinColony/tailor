@@ -4,8 +4,7 @@ import type { PromiEventEmitter } from 'web3-core-promievent';
 import type EventEmitter from 'eventemitter3';
 
 import type { ContractData } from './Loader';
-
-export type Address = string;
+import type { Address } from './flowtypes';
 
 export type FunctionSignature = string; // myFunction(uint256,bool)
 
