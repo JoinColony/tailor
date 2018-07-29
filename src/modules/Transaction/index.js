@@ -1,27 +1,17 @@
 /* @flow */
 
-// TODO: remove this once fully implemented
-/* eslint-disable class-methods-use-this */
-
 import EventEmitter from 'eventemitter3';
 import BigNumber from 'bn.js';
 import type Lighthouse from '../../index';
 import type {
   FunctionCall,
-  TransactionData,
   Gas,
-  Wei,
   SignedTransaction,
+  TransactionData,
   TransactionReceipt,
-} from '../../interface/Adapter';
-
-export type TransactionState = {
-  functionCall: FunctionCall,
-  gas?: Gas,
-  value?: Wei,
-  signed?: SignedTransaction,
-  receipt?: TransactionReceipt,
-};
+  TransactionState,
+  Wei,
+} from './flowtypes';
 
 export default class Transaction extends EventEmitter {
   _lh: Lighthouse;
