@@ -80,10 +80,10 @@ describe('Web3Adapter', () => {
     };
     const encodedFunctionCall = 'encoded function call';
 
-    const mockEncodeABI = jest
+    const mockEncodeABI = sandbox
       .fn()
       .mockImplementation(() => encodedFunctionCall);
-    const mockMethod = jest.fn().mockImplementation(() => ({
+    const mockMethod = sandbox.fn().mockImplementation(() => ({
       encodeABI: mockEncodeABI,
     }));
     mockWeb3.eth.Contract.mockImplementation(() => ({
@@ -372,8 +372,8 @@ describe('Web3Adapter', () => {
       myFirst: 'first',
     };
 
-    const mockCall = jest.fn().mockImplementation(() => callResult);
-    const mockMethod = jest.fn().mockImplementation(() => ({
+    const mockCall = sandbox.fn().mockImplementation(() => callResult);
+    const mockMethod = sandbox.fn().mockImplementation(() => ({
       call: mockCall,
     }));
     mockWeb3.eth.Contract.mockImplementation(() => ({
