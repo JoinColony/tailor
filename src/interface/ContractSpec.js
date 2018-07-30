@@ -1,9 +1,18 @@
 /* @flow */
 
 import type { ParamsSpec } from './Params';
+import type { FunctionSignature, EventSignature } from './Adapter';
+
+export type FunctionParams = {
+  [functionSig: FunctionSignature]: ParamsSpec,
+};
+
+export type EventParams = {
+  [eventSig: EventSignature]: ParamsSpec,
+};
 
 export type MethodSpec = {
-  inputs: Array<ParamsSpec>,
+  input: FunctionParams,
   isPayable: boolean,
   name: string,
   output: ParamsSpec,
@@ -11,12 +20,12 @@ export type MethodSpec = {
 
 export type EventSpec = {
   name: string,
-  outputs: Array<ParamsSpec>,
+  output: EventParams,
 };
 
 export type ConstantSpec = {
+  input: FunctionParams,
   name: string,
-  inputs: Array<ParamsSpec>,
   output: ParamsSpec,
 };
 
@@ -33,7 +42,7 @@ export type ConstantSpecs = {
 };
 
 export type PartialMethodSpec = {
-  inputs?: Array<ParamsSpec>,
+  input?: FunctionParams,
   isPayable?: boolean,
   name?: string,
   output?: ParamsSpec,
@@ -41,12 +50,12 @@ export type PartialMethodSpec = {
 
 export type PartialEventSpec = {
   name?: string,
-  outputs?: Array<ParamsSpec>,
+  output?: EventParams,
 };
 
 export type PartialConstantSpec = {
   name?: string,
-  inputs?: Array<ParamsSpec>,
+  input?: FunctionParams,
   output?: ParamsSpec,
 };
 

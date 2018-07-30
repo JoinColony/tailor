@@ -101,6 +101,15 @@ export default class ABIParser extends Parser {
     });
   }
 
+  static parseFunctionParams(entries: Array<ABIEntry>) {
+    const [{ name }] = entries;
+    return entries.reduce((acc, { inputs = [] }) => {
+      const signature = `${name}(${inputs.map(({ type }) => type).join(',')})`;
+      acc[signature] = this.parseParams(inputs, name);
+      return acc;
+    }, {});
+  }
+
   /*
    * Given ABI entries for a method (presumed to be of the same name,
    * i.e. for overloading), parse the spec.
@@ -108,7 +117,7 @@ export default class ABIParser extends Parser {
   static parseMethodSpec(entries: Array<ABIEntry>): MethodSpec {
     const { name, payable, outputs = [] } = entries[0];
     return {
-      inputs: entries.map(({ inputs = [] }) => this.parseParams(inputs, name)),
+      input: this.parseFunctionParams(entries),
       isPayable: Boolean(payable),
       name,
       output: this.parseParams(outputs, name),
@@ -123,9 +132,7 @@ export default class ABIParser extends Parser {
     const { name } = entries[0];
     return {
       name,
-      outputs: entries.map(({ inputs: outputs = [] }) =>
-        this.parseParams(outputs, name),
-      ),
+      output: this.parseFunctionParams(entries),
     };
   }
 
@@ -136,7 +143,7 @@ export default class ABIParser extends Parser {
   static parseConstantSpec(entries: Array<ABIEntry>): ConstantSpec {
     const { name, outputs = [], inputs: firstInputs = [] } = entries[0];
     return {
-      inputs: entries.map(({ inputs = [] }) => this.parseParams(inputs, name)),
+      input: this.parseFunctionParams(entries),
       name,
       // For public variables: if there are no inputs, and only one (unnamed)
       // output, use the function name as the output name.
