@@ -7,7 +7,7 @@ import type { ContractData } from './Loader';
 
 export type Address = string;
 
-export type FunctionSignature = string;
+export type FunctionSignature = string; // myFunction(uint256,bool)
 
 export type FunctionArguments = Array<*>;
 
@@ -30,7 +30,7 @@ export type GasEstimate = number;
 
 export type SignedTransaction = string;
 
-export type EventSignature = string;
+export type EventSignature = string; // 'MyEvent(uint8)'
 
 export type Event = {
   blockNumber: number,
@@ -46,7 +46,7 @@ export type Event = {
     length: number,
   },
   event: string, // 'MyEvent'
-  eventSignature: EventSignature, // 'MyEvent(uint8)'
+  eventSignature: EventSignature,
 };
 
 export type TransactionReceipt = {
@@ -69,7 +69,7 @@ export type FunctionCallResult = Array<*>;
 
 export type SubscriptionOptions = {
   address?: Address, // defaults to _address
-  event?: string, // all events if omitted
+  event?: EventSignature, // all events if omitted
 };
 
 export interface IAdapter {
