@@ -178,7 +178,7 @@ export default class Lighthouse {
   _defineConstants(specs: ConstantSpecs) {
     const constants = {};
     Object.keys(specs).forEach(name => {
-      constants[name] = constantFactory.call(this, specs[name]);
+      constants[name] = constantFactory(this, specs[name]);
     });
     Object.assign(this, { constants });
   }

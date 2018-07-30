@@ -15,7 +15,6 @@ describe('Constants', () => {
     adapter: {
       call: sandbox.fn().mockResolvedValue([result.z]),
     },
-    constantFactory,
   };
 
   beforeEach(() => {
@@ -69,7 +68,7 @@ describe('Constants', () => {
       output: outputSpec,
     };
 
-    const c = mockLighthouse.constantFactory(spec);
+    const c = constantFactory(mockLighthouse, spec);
     expect(c).toEqual(expect.any(Function));
 
     expect(await c()).toEqual(result);
@@ -84,7 +83,7 @@ describe('Constants', () => {
       },
     };
 
-    const c = mockLighthouse.constantFactory(spec);
+    const c = constantFactory(mockLighthouse, spec);
     expect(c).toEqual(expect.any(Function));
 
     expect(await c(1)).toEqual(result);
@@ -111,7 +110,7 @@ describe('Constants', () => {
       },
     };
 
-    const c = mockLighthouse.constantFactory(spec);
+    const c = constantFactory(mockLighthouse, spec);
     expect(c).toEqual(expect.any(Function));
 
     expect(await c(1)).toEqual(result);
@@ -149,7 +148,7 @@ describe('Constants', () => {
       },
     };
 
-    const c = mockLighthouse.constantFactory(spec);
+    const c = constantFactory(mockLighthouse, spec);
     expect(c).toEqual(expect.any(Function));
 
     expect(await c(1)).toEqual(result);
@@ -171,6 +170,12 @@ describe('Constants', () => {
       'Validation for field "a" failed',
     );
     await expect(c(1, 'bad input')).rejects.toThrow(
+      'Validation for field "b" failed',
+    );
+
+    // Calling the constant with for specific function signature
+    expect(await c['myConstant(uint,bool)'](1, false)).toEqual(result);
+    await expect(c['myConstant(uint,bool)'](1, 1)).rejects.toThrow(
       'Validation for field "b" failed',
     );
   });
