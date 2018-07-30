@@ -42,7 +42,6 @@ export default class Transaction extends EventEmitter {
       from: this._lh.wallet.address,
       to: this._lh.contractAddress,
       data: this._data,
-      gas: this.gas || (await this._lh.adapter.getGasPrice()),
       value: this.value,
     });
   }
