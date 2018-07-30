@@ -2,7 +2,12 @@
 
 module.exports = {
   rootDir: 'src',
-  collectCoverageFrom: ['*.{js}', '**/*.{js}', '!**/flowtypes.{js}'],
+  collectCoverageFrom: [
+    '*.js',
+    '**/*.js',
+    '!**/flowtypes.js',
+    '!**/modules/utils/index.js', // excluded because it's just exporting
+  ],
   coverageDirectory: '../coverage',
   coverageThreshold: {
     global: {

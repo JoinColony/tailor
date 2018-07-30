@@ -12,10 +12,21 @@ import {
 
 describe('Param types', () => {
   test('Address', () => {
+    const emptyAddress = '0x0000000000000000000000000000000000000000';
+
     expect(
       ADDRESS_TYPE.validate('0x7da82c7ab4771ff031b66538d2fb9b0b047f6cf9'),
     ).toBe(true);
+    expect(ADDRESS_TYPE.validate(emptyAddress)).toBe(true);
     expect(() => ADDRESS_TYPE.validate('abc')).toThrow('address');
+
+    // Expand `0x0` to a full-length address (for empty address)
+    expect(ADDRESS_TYPE.convertInput('0x')).toEqual(emptyAddress);
+    expect(ADDRESS_TYPE.convertOutput('0x')).toEqual(emptyAddress);
+
+    // Filter out invalid addresses from the output
+    expect(ADDRESS_TYPE.convertOutput('not a valid address')).toEqual(null);
+    expect(ADDRESS_TYPE.convertOutput(null)).toEqual(null);
   });
   test('Boolean', () => {
     expect(BOOLEAN_TYPE.validate(false)).toBe(true);
