@@ -172,18 +172,20 @@ describe('Lighthouse', () => {
     const contractData = 'some contract data';
     const customRoleType = {};
     const overrides = {
-      methods: {
+      constants: {
         getTaskRole: {
-          input: [
-            {
-              name: 'id',
-              type: PARAM_TYPES.INTEGER,
-            },
-            {
-              name: 'role',
-              type: customRoleType,
-            },
-          ],
+          input: {
+            'getTaskRole(uint,uint)': [
+              {
+                name: 'id',
+                type: PARAM_TYPES.INTEGER,
+              },
+              {
+                name: 'role',
+                type: customRoleType,
+              },
+            ],
+          },
           convertOutput: sandbox.fn(),
         },
       },
@@ -191,18 +193,20 @@ describe('Lighthouse', () => {
     const lh = new Lighthouse(overrides);
 
     const initialSpecs = {
-      methods: {
+      constants: {
         getTaskRole: {
-          input: [
-            {
-              name: 'id',
-              type: PARAM_TYPES.INTEGER,
-            },
-            {
-              name: 'role',
-              type: PARAM_TYPES.INTEGER,
-            },
-          ],
+          input: {
+            'getTaskRole(uint,uint)': [
+              {
+                name: 'id',
+                type: PARAM_TYPES.INTEGER,
+              },
+              {
+                name: 'role',
+                type: PARAM_TYPES.INTEGER,
+              },
+            ],
+          },
           convertInput: sandbox.fn(),
           // there would be other things here, like `output`,
           // but we don't need them for this test
@@ -214,18 +218,18 @@ describe('Lighthouse', () => {
     const iface = lh._defineContractInterface(contractData);
     expect(lh.parser.parse).toHaveBeenCalledWith(contractData);
     expect(iface).toEqual({
-      constants: {},
+      methods: {},
       events: {},
-      methods: {
+      constants: {
         getTaskRole: {
           // Only set in initial specs; should be from initial specs
-          convertInput: initialSpecs.methods.getTaskRole.convertInput,
+          convertInput: initialSpecs.constants.getTaskRole.convertInput,
 
           // Only set in overrides; should be from overrides
-          convertOutput: overrides.methods.getTaskRole.convertOutput,
+          convertOutput: overrides.constants.getTaskRole.convertOutput,
 
           // Set in initial specs and overrides; should be from overrides
-          input: overrides.methods.getTaskRole.input,
+          input: overrides.constants.getTaskRole.input,
         },
       },
     });

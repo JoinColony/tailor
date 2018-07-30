@@ -11,10 +11,12 @@ import { DEFAULT_LOADER, DEFAULT_PARSER, DEFAULT_ADAPTER } from './defaults';
 import Adapter from '../adapters/Adapter';
 import Loader from '../loaders/Loader';
 import Parser from '../parsers/Parser';
+import constantFactory from '../modules/constantFactory';
 
 import type {
   AdapterName,
   AdapterSpec,
+  ConstantSpecs,
   ContractData,
   IAdapter,
   ILoader,
@@ -38,6 +40,10 @@ export default class Lighthouse {
   loader: ILoader;
 
   parser: IParser;
+
+  constants: {
+    [constantName: string]: (...params: any) => Promise<Object>,
+  };
 
   _query: Query;
 
@@ -161,13 +167,36 @@ export default class Lighthouse {
     this._query = query;
   }
 
-  _defineContractInterface(contractData: ContractData) {
+  _getContractSpec(contractData: ContractData) {
     const initialSpecs = this.parser.parse(contractData);
     return deepmerge(initialSpecs, this._overrides, {
       // Arrays should overwrite rather than concatenate
       arrayMerge: (destination, source) => source,
     });
-    // TODO JoinColony/lighthouse/issues/15
+  }
+
+  _defineConstants(specs: ConstantSpecs) {
+    const constants = {};
+    Object.keys(specs).forEach(name => {
+      constants[name] = constantFactory(this, specs[name]);
+    });
+    Object.assign(this, { constants });
+  }
+
+  _defineContractInterface(contractData: ContractData) {
+    const specs = this._getContractSpec(contractData);
+
+    this._defineConstants(specs.constants);
+
+    // TODO JoinColony/lighthouse/issues/20
+    // this._defineEvents(events);
+
+    // TODO JoinColony/lighthouse/issues/21
+    // this._defineMethods(methods);
+
+    // TODO once events and methods are also defined, do not return anything.
+    // Just for testing purposes.
+    return specs;
   }
 
   async initialize() {
