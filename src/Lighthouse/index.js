@@ -11,14 +11,17 @@ import { DEFAULT_LOADER, DEFAULT_PARSER, DEFAULT_ADAPTER } from './defaults';
 import Adapter from '../adapters/Adapter';
 import Loader from '../loaders/Loader';
 import Parser from '../parsers/Parser';
+import Transaction from '../modules/Transaction';
 import constantFactory from '../modules/constantFactory';
+import methodFactory from '../modules/methodFactory';
 
 import type {
   AdapterName,
   AdapterSpec,
+  ConstantSpecs,
   ContractData,
   ContractSpec,
-  ConstantSpecs,
+  GenericQuery,
   IAdapter,
   ILoader,
   IParser,
@@ -26,12 +29,12 @@ import type {
   LighthouseArgs,
   LoaderName,
   LoaderSpec,
+  MethodSpecs,
   ParserName,
   ParserSpec,
   PartialConstantSpecs,
   PartialEventSpecs,
   PartialMethodSpecs,
-  GenericQuery,
 } from './flowtypes';
 
 const assert = require('assert');
@@ -45,6 +48,10 @@ export default class Lighthouse {
 
   constants: {
     [constantName: string]: (...params: any) => Promise<Object>,
+  };
+
+  methods: {
+    [methodName: string]: (...params: any) => Promise<Transaction>,
   };
 
   contractAddress: string;
@@ -189,6 +196,14 @@ export default class Lighthouse {
     Object.assign(this, { constants });
   }
 
+  _defineMethods(specs: MethodSpecs) {
+    const methods = {};
+    Object.keys(specs).forEach(name => {
+      methods[name] = methodFactory(this, specs[name]);
+    });
+    Object.assign(this, { methods });
+  }
+
   _defineContractInterface(contractData: ContractData) {
     this.contractAddress = contractData.address;
 
@@ -199,8 +214,7 @@ export default class Lighthouse {
     // TODO JoinColony/lighthouse/issues/20
     // this._defineEvents(events);
 
-    // TODO JoinColony/lighthouse/issues/21
-    // this._defineMethods(methods);
+    this._defineMethods(specs.methods);
 
     // TODO once events and methods are also defined, do not return anything.
     // Just for testing purposes.

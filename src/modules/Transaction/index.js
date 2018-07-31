@@ -2,7 +2,6 @@
 
 import EventEmitter from 'eventemitter3';
 import BigNumber from 'bn.js';
-import type Lighthouse from '../../index';
 import type {
   FunctionCall,
   Gas,
@@ -14,7 +13,7 @@ import type {
 } from './flowtypes';
 
 export default class Transaction extends EventEmitter {
-  _lh: Lighthouse;
+  _lh: *;
 
   _functionCall: FunctionCall;
 
@@ -28,7 +27,7 @@ export default class Transaction extends EventEmitter {
 
   _receipt: ?TransactionReceipt;
 
-  constructor(lighthouse: Lighthouse, state: TransactionState) {
+  constructor(lighthouse: *, state: TransactionState) {
     super();
     this._lh = lighthouse;
     this._functionCall = state.functionCall;

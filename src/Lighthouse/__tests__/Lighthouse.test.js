@@ -186,13 +186,46 @@ describe('Lighthouse', () => {
               },
             ],
           },
+          // TODO in lighthouse#25 (hooks)
           convertOutput: sandbox.fn(),
+        },
+      },
+      methods: {
+        myMethod: {
+          input: {
+            'myMethod(uint,bool)': [
+              {
+                name: 'id',
+                type: PARAM_TYPES.INTEGER,
+              },
+              {
+                name: 'isTotallyTrue',
+                type: PARAM_TYPES.BOOLEAN,
+              },
+            ],
+          },
         },
       },
     };
     const lh = new Lighthouse(overrides);
 
     const initialSpecs = {
+      methods: {
+        myMethod: {
+          input: {
+            'myMethod(uint,bool)': [
+              {
+                name: 'id',
+                type: PARAM_TYPES.INTEGER,
+              },
+              {
+                name: 'isProbablyTrue',
+                type: PARAM_TYPES.BOOLEAN,
+              },
+            ],
+          },
+        },
+      },
       constants: {
         getTaskRole: {
           input: {
@@ -207,6 +240,7 @@ describe('Lighthouse', () => {
               },
             ],
           },
+          // TODO in lighthouse#25 (hooks)
           convertInput: sandbox.fn(),
           // there would be other things here, like `output`,
           // but we don't need them for this test
@@ -218,7 +252,12 @@ describe('Lighthouse', () => {
     const iface = lh._defineContractInterface(contractData);
     expect(lh.parser.parse).toHaveBeenCalledWith(contractData);
     expect(iface).toEqual({
-      methods: {},
+      methods: {
+        myMethod: {
+          // Set in initial specs and overrides; should be from overrides
+          input: overrides.methods.myMethod.input,
+        },
+      },
       events: {},
       constants: {
         getTaskRole: {

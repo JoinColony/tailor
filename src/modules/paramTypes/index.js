@@ -2,6 +2,7 @@
 
 import BigNumber from 'bn.js';
 import { isAddress, isHexStrict, utf8ToHex } from 'web3-utils';
+import { isEmptyHexString } from '../utils';
 
 import type { ParamType } from '../../interface/Params';
 
@@ -9,8 +10,21 @@ const assert = require('assert');
 
 export const ADDRESS_TYPE: ParamType = {
   validate(value: *) {
-    assert(isAddress(value), 'Must be a valid address');
+    assert(
+      isEmptyHexString(value) || isAddress(value),
+      'Must be a valid address',
+    );
     return true;
+  },
+  convertInput(value: string) {
+    // Expand `0x0` to a full-length address
+    return value.padEnd(42, '0');
+  },
+  convertOutput(value: any) {
+    // Expand `0x0` to a full-length address (for a valid address)
+    return isAddress(value) || isEmptyHexString(value)
+      ? value.padEnd(42, '0')
+      : null;
   },
 };
 
