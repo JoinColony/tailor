@@ -3,6 +3,7 @@
 import type { ILoader, ContractData, GenericQuery } from '../interface/Loader';
 import type { IAdapter } from '../interface/Adapter';
 import type { IParser } from '../interface/Parser';
+import type { IWallet } from '../interface/Wallet';
 import type {
   ConstantSpecs,
   ContractSpec,
@@ -17,6 +18,7 @@ import {
   ADAPTER_NAME_MAP,
   LOADER_NAME_MAP,
   PARSER_NAME_MAP,
+  WALLET_NAME_MAP,
 } from './constants';
 
 export type AdapterName = $Keys<typeof ADAPTER_NAME_MAP>;
@@ -40,6 +42,13 @@ export type ParserSpec = {
   options?: Object,
 };
 
+export type WalletName = $Keys<typeof WALLET_NAME_MAP>;
+
+export type WalletSpec = {
+  name?: WalletName,
+  options?: Object,
+};
+
 export type LighthouseArgs = {
   adapter?: IAdapter | AdapterSpec,
   contractData?: ContractData,
@@ -49,6 +58,7 @@ export type LighthouseArgs = {
   methods?: PartialMethodSpecs,
   parser?: IParser | ParserSpec,
   query: GenericQuery,
+  wallet: IWallet | WalletSpec,
 };
 
 export type { IWallet } from '../interface/Wallet';

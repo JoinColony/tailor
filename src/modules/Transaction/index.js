@@ -21,6 +21,8 @@ export default class Transaction extends EventEmitter {
 
   _gas: ?Gas;
 
+  _gasPrice: ?Wei;
+
   _value: Wei;
 
   _signed: ?SignedTransaction;
@@ -34,6 +36,7 @@ export default class Transaction extends EventEmitter {
     this._data = this._lh.adapter.encodeFunctionCall(state.functionCall);
     this._value = state.value;
     this._gas = state.gas;
+    this._gasPrice = state.gasPrice;
   }
 
   async estimate(): Promise<Gas> {
@@ -45,10 +48,16 @@ export default class Transaction extends EventEmitter {
     });
   }
 
-  // eslint-disable-next-line class-methods-use-this
   async sign(): Promise<SignedTransaction> {
-    // TODO implement sign()
-    throw new Error('Not yet implemented');
+    this._signed = await this._lh.wallet.sign({
+      from: this._lh.wallet.address,
+      to: this._lh.contractAddress,
+      data: this._data,
+      gas: this.gas,
+      gasPrice: await this.gasPrice,
+      value: this.value,
+    });
+    return this._signed;
   }
 
   async send(): Promise<TransactionReceipt> {
@@ -93,14 +102,33 @@ export default class Transaction extends EventEmitter {
     return this._gas || null;
   }
 
-  // provide non-bn for auto gas
-  set gas(gas: Gas | number) {
+  // provide non-number for auto gas
+  set gas(gas: Gas | number | string) {
     if (this._signed)
       throw new Error('Cannot set gas for already signed transaction');
 
     this._gas =
-      BigNumber.isBN(gas) || typeof gas === 'number'
+      BigNumber.isBN(gas) || typeof gas === 'number' || typeof gas === 'string'
         ? new BigNumber(gas)
+        : null;
+  }
+
+  get gasPrice(): Promise<Wei> {
+    return this._gas
+      ? Promise.resolve(this._gas)
+      : this._lh.adapter.getGasPrice();
+  }
+
+  // provide non-number for auto gas price
+  set gasPrice(price: Wei | number | string) {
+    if (this._signed)
+      throw new Error('Cannot set gas price for already signed transaction');
+
+    this._gas =
+      BigNumber.isBN(price) ||
+      typeof price === 'number' ||
+      typeof price === 'string'
+        ? new BigNumber(price)
         : null;
   }
 

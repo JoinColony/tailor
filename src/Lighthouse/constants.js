@@ -10,6 +10,8 @@ import TruffleLoader from '../loaders/TruffleLoader';
 import EtherscanLoader from '../loaders/EtherscanLoader';
 import FSLoader from '../loaders/FSLoader';
 import TruffleParser from '../parsers/TruffleParser';
+import Wallet from '../wallets/Wallet';
+import Web3Wallet from '../wallets/Web3Wallet';
 
 export const ADAPTER_NAME_MAP: {
   [adapterName: string]: Adapter.constructor,
@@ -30,4 +32,10 @@ export const PARSER_NAME_MAP: {
 } = {
   [ABIParser.name]: ABIParser,
   [TruffleParser.name]: TruffleParser,
+};
+
+export const WALLET_NAME_MAP: {
+  [walletName: string]: Wallet.constructor,
+} = {
+  [Web3Wallet.name]: Web3Wallet,
 };

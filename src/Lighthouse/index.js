@@ -6,11 +6,18 @@ import {
   LOADER_NAME_MAP,
   PARSER_NAME_MAP,
   ADAPTER_NAME_MAP,
+  WALLET_NAME_MAP,
 } from './constants';
-import { DEFAULT_LOADER, DEFAULT_PARSER, DEFAULT_ADAPTER } from './defaults';
+import {
+  DEFAULT_LOADER,
+  DEFAULT_PARSER,
+  DEFAULT_ADAPTER,
+  DEFAULT_WALLET,
+} from './defaults';
 import Adapter from '../adapters/Adapter';
 import Loader from '../loaders/Loader';
 import Parser from '../parsers/Parser';
+import Wallet from '../wallets/Wallet';
 import Transaction from '../modules/Transaction';
 import constantFactory from '../modules/constantFactory';
 import methodFactory from '../modules/methodFactory';
@@ -37,6 +44,8 @@ import type {
   PartialConstantSpecs,
   PartialEventSpecs,
   PartialMethodSpecs,
+  WalletName,
+  WalletSpec,
 } from './flowtypes';
 
 const assert = require('assert');
@@ -47,6 +56,8 @@ export default class Lighthouse {
   loader: ILoader<*>;
 
   parser: IParser;
+
+  wallet: IWallet;
 
   constants: {
     [constantName: string]: (...params: any) => Promise<Object>,
@@ -64,13 +75,13 @@ export default class Lighthouse {
 
   _query: GenericQuery;
 
+  _walletPromise: Promise<IWallet>;
+
   _overrides: {
     constants: PartialConstantSpecs,
     events: PartialEventSpecs,
     methods: PartialMethodSpecs,
   };
-
-  wallet: IWallet;
 
   // TODO JoinColony/lighthouse/issues/16
   static getAdapter(
@@ -145,6 +156,30 @@ export default class Lighthouse {
     return new PARSER_NAME_MAP[name](options);
   }
 
+  // TODO JoinColony/lighthouse/issues/16
+  static getWallet(
+    input: IWallet | WalletSpec | WalletName = DEFAULT_WALLET,
+  ): Promise<IWallet> {
+    if (!input) throw new Error('Expected a wallet option');
+
+    if (input instanceof Wallet) return Promise.resolve(input);
+
+    let name: WalletName = '';
+    let options;
+    if (typeof input === 'string') {
+      name = input;
+    } else {
+      const spec: WalletSpec = input;
+      ({ name = '', options } = spec);
+    }
+
+    assert(
+      Object.hasOwnProperty.call(WALLET_NAME_MAP, name),
+      `Wallet with name "${name}" not found`,
+    );
+    return WALLET_NAME_MAP[name].open(options);
+  }
+
   static getLighthouseDefaults({
     adapter,
     constants = {},
@@ -154,6 +189,7 @@ export default class Lighthouse {
     methods = {},
     parser,
     query,
+    wallet,
   }: LighthouseArgs = {}) {
     return {
       adapter: this.getAdapter(adapter),
@@ -164,6 +200,7 @@ export default class Lighthouse {
       methods,
       parser: this.getParser(parser),
       query,
+      walletPromise: this.getWallet(wallet),
     };
   }
 
@@ -177,10 +214,12 @@ export default class Lighthouse {
       methods,
       parser,
       query,
+      walletPromise,
     } = this.constructor.getLighthouseDefaults(args);
     this.adapter = adapter;
     this.loader = loader;
     this.parser = parser;
+    this._walletPromise = walletPromise;
     this._overrides = { constants, events, methods };
     if (contractData) this._defineContractInterface(contractData);
     this._query = query;
@@ -231,6 +270,7 @@ export default class Lighthouse {
 
   async initialize() {
     const contractData = await this.loader.load(this._query);
+    this.wallet = await this._walletPromise;
     this.adapter.initialize(contractData);
     this._defineContractInterface(contractData);
   }
