@@ -136,6 +136,12 @@ describe('Transaction', () => {
     expect(mockOn).toHaveBeenCalledWith('error', expect.anything());
     callbacks[3]('error');
     expect(tx.emit).toHaveBeenCalledWith('error', 'error');
+
+    // decode receipt fails
+    mockLighthouse.adapter.sendSignedTransaction.mockImplementation(() => {
+      throw new Error('fake error');
+    });
+    await expect(tx.send()).rejects.toEqual(new Error('fake error'));
   });
 
   test('To JSON', () => {
