@@ -1,34 +1,32 @@
 // @flow
 import type BigNumber from 'bn.js';
-import type PromiEvent from 'web3-core-promievent';
+import type { PromiEventEmitter } from 'web3-core-promievent';
 import type EventEmitter from 'eventemitter3';
 
 import type { ContractData } from './Loader';
-
-export type Address = string;
+import type { Address } from './flowtypes';
 
 export type FunctionSignature = string; // myFunction(uint256,bool)
 
 export type FunctionArguments = Array<*>;
+export type Gas = BigNumber;
+export type Wei = BigNumber;
+export type TransactionData = string;
+export type SignedTransaction = string;
+export type FunctionCallResult = Array<*>;
 
 export type FunctionCall = {
   functionSignature: FunctionSignature,
   args: FunctionArguments,
 };
 
-export type TransactionData = string;
-
 export type EstimateOptions = {
   from?: Address,
   to?: Address,
   data?: TransactionData,
-  gas?: number,
-  value?: number,
+  gas?: Gas,
+  value?: Wei,
 };
-
-export type GasEstimate = number;
-
-export type SignedTransaction = string;
 
 export type EventSignature = string; // 'MyEvent(uint8)'
 
@@ -46,7 +44,7 @@ export type Event = {
     length: number,
   },
   event: string, // 'MyEvent'
-  eventSignature: EventSignature,
+  eventSignature: EventSignature, // 'MyEvent(uint8)'
 };
 
 export type TransactionReceipt = {
@@ -65,8 +63,6 @@ export type TransactionReceipt = {
   events: { [String]: Event },
 };
 
-export type FunctionCallResult = Array<*>;
-
 export type SubscriptionOptions = {
   address?: Address, // defaults to _address
   event?: EventSignature, // all events if omitted
@@ -79,14 +75,15 @@ export interface IAdapter {
   encodeFunctionCall(functionCall: FunctionCall): TransactionData;
   decodeFunctionCallData(functionCallData: TransactionData): FunctionCall;
 
-  estimate(options: EstimateOptions): Promise<GasEstimate>;
+  estimate(options: EstimateOptions): Promise<Gas>;
   sendSignedTransaction(
     transaction: SignedTransaction,
-  ): PromiEvent<TransactionReceipt>;
+  ): PromiEventEmitter<TransactionReceipt>;
 
   call(functionCall: FunctionCall): Promise<FunctionCallResult>;
 
   subscribe(options: SubscriptionOptions): Promise<EventEmitter>;
 
   getCurrentNetwork(): Promise<number>;
+  getGasPrice(): Promise<Gas>;
 }

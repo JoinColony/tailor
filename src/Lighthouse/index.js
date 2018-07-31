@@ -16,11 +16,13 @@ import constantFactory from '../modules/constantFactory';
 import type {
   AdapterName,
   AdapterSpec,
-  ConstantSpecs,
   ContractData,
+  ContractSpec,
+  ConstantSpecs,
   IAdapter,
   ILoader,
   IParser,
+  IWallet,
   LighthouseArgs,
   LoaderName,
   LoaderSpec,
@@ -29,7 +31,7 @@ import type {
   PartialConstantSpecs,
   PartialEventSpecs,
   PartialMethodSpecs,
-  Query,
+  GenericQuery,
 } from './flowtypes';
 
 const assert = require('assert');
@@ -37,7 +39,7 @@ const assert = require('assert');
 export default class Lighthouse {
   adapter: IAdapter;
 
-  loader: ILoader;
+  loader: ILoader<*>;
 
   parser: IParser;
 
@@ -45,13 +47,17 @@ export default class Lighthouse {
     [constantName: string]: (...params: any) => Promise<Object>,
   };
 
-  _query: Query;
+  contractAddress: string;
+
+  _query: GenericQuery;
 
   _overrides: {
     constants: PartialConstantSpecs,
     events: PartialEventSpecs,
     methods: PartialMethodSpecs,
   };
+
+  wallet: IWallet;
 
   // TODO JoinColony/lighthouse/issues/16
   static getAdapter(
@@ -80,8 +86,8 @@ export default class Lighthouse {
 
   // TODO JoinColony/lighthouse/issues/16
   static getLoader(
-    input: ILoader | LoaderSpec | LoaderName = DEFAULT_LOADER,
-  ): ILoader {
+    input: ILoader<*> | LoaderSpec | LoaderName = DEFAULT_LOADER,
+  ): ILoader<*> {
     if (!input) throw new Error('Expected a loader option');
 
     if (input instanceof Loader) return input;
@@ -167,7 +173,7 @@ export default class Lighthouse {
     this._query = query;
   }
 
-  _getContractSpec(contractData: ContractData) {
+  _getContractSpec(contractData: ContractData): ContractSpec {
     const initialSpecs = this.parser.parse(contractData);
     return deepmerge(initialSpecs, this._overrides, {
       // Arrays should overwrite rather than concatenate
@@ -184,6 +190,8 @@ export default class Lighthouse {
   }
 
   _defineContractInterface(contractData: ContractData) {
+    this.contractAddress = contractData.address;
+
     const specs = this._getContractSpec(contractData);
 
     this._defineConstants(specs.constants);

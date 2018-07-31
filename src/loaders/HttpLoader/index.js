@@ -1,12 +1,12 @@
 /* @flow */
 
 import 'isomorphic-fetch';
-import type { HttpLoaderArgs, Query } from '../flowtypes';
+import type { HttpLoaderArgs } from '../flowtypes';
 import Loader from '../Loader';
 
 const assert = require('assert');
 
-export default class HttpLoader extends Loader {
+export default class HttpLoader<Query: Object> extends Loader {
   _endpoint: string;
 
   static get name() {

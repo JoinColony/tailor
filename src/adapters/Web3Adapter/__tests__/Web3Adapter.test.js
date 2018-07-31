@@ -23,6 +23,7 @@ describe('Web3Adapter', () => {
       Contract: sandbox.fn(),
       estimateGas: sandbox.fn(),
       sendSignedTransaction: sandbox.fn(),
+      getGasPrice: sandbox.fn(),
     },
   };
 
@@ -331,6 +332,29 @@ describe('Web3Adapter', () => {
     // then
     expect(mockThen).toHaveBeenCalledTimes(1);
     callbacks[4]();
+
+    // receipt with decode error
+    decodeSpy.mockImplementationOnce(() => {
+      throw new Error('fake error');
+    });
+    callbacks[1]('receipt');
+    expect(mockEmit).toHaveBeenCalledWith('error', new Error('fake error'));
+    mockEmit.mockClear();
+
+    // confirmation with decode error
+    decodeSpy.mockImplementationOnce(() => {
+      throw new Error('fake error');
+    });
+    callbacks[2]('confirmationNumber', 'receipt');
+    expect(mockEmit).toHaveBeenCalledWith('error', new Error('fake error'));
+    mockEmit.mockClear();
+
+    // then with decode error
+    decodeSpy.mockImplementationOnce(() => {
+      throw new Error('fake error');
+    });
+    callbacks[4]('receipt');
+    expect(mockEmit).toHaveBeenCalledWith('error', new Error('fake error'));
   });
 
   test('Call', async () => {
@@ -431,6 +455,15 @@ describe('Web3Adapter', () => {
     await adapter.getCurrentNetwork();
 
     expect(mockWeb3.eth.net.getId).toHaveBeenCalled();
+  });
+
+  test('Get gas price', async () => {
+    // no init required for getGasPrice
+    const adapter = new Web3Adapter({ web3: mockWeb3 });
+
+    await adapter.getGasPrice();
+
+    expect(mockWeb3.eth.getGasPrice).toHaveBeenCalled();
   });
 
   test('Get contract instance', async () => {

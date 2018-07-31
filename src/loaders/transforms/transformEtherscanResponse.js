@@ -1,10 +1,10 @@
 /* @flow */
 
-import type { EtherscanResponse, Query } from '../flowtypes';
+import type { EtherscanResponse } from '../flowtypes';
 
 export default function etherscanTransform(
   response: EtherscanResponse,
-  query?: Query = {},
+  query: * = {},
 ) {
   if (
     typeof response !== 'object' ||

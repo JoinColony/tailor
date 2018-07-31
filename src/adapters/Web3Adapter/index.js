@@ -1,5 +1,6 @@
 // @flow
 import PromiEvent from 'web3-core-promievent';
+import BigNumber from 'bn.js';
 import type EventEmitter from 'eventemitter3';
 import type {
   EstimateOptions,
@@ -137,26 +138,44 @@ export default class Web3Adapter extends Adapter {
     txPromiEvent.on('transactionHash', hash =>
       promiEvent.eventEmitter.emit('transactionHash', hash),
     );
-    txPromiEvent.on('receipt', receipt =>
-      promiEvent.eventEmitter.emit('receipt', this._decodeReceipt(receipt)),
-    );
-    txPromiEvent.on('confirmation', (confirmationNumber, receipt) =>
-      promiEvent.eventEmitter.emit(
-        'confirmation',
-        confirmationNumber,
-        this._decodeReceipt(receipt),
-      ),
-    );
+    txPromiEvent.on('receipt', receipt => {
+      try {
+        const decoded = this._decodeReceipt(receipt);
+        promiEvent.eventEmitter.emit('receipt', decoded);
+      } catch (error) {
+        promiEvent.eventEmitter.emit('error', error);
+        promiEvent.eventEmitter.emit('receipt', receipt);
+      }
+    });
+    txPromiEvent.on('confirmation', (confirmationNumber, receipt) => {
+      try {
+        const decoded = this._decodeReceipt(receipt);
+        promiEvent.eventEmitter.emit(
+          'confirmation',
+          confirmationNumber,
+          decoded,
+        );
+      } catch (error) {
+        promiEvent.eventEmitter.emit('error', error);
+        promiEvent.eventEmitter.emit('receipt', receipt);
+      }
+    });
     txPromiEvent.on('error', error =>
       promiEvent.eventEmitter.emit('error', error),
     );
 
     txPromiEvent.catch(promiEvent.reject);
-    txPromiEvent.then(receipt =>
-      promiEvent.resolve(this._decodeReceipt(receipt)),
-    );
+    txPromiEvent.then(receipt => {
+      try {
+        const decoded = this._decodeReceipt(receipt);
+        promiEvent.resolve(decoded);
+      } catch (error) {
+        promiEvent.eventEmitter.emit('error', error);
+        promiEvent.resolve(receipt);
+      }
+    });
 
-    return promiEvent;
+    return promiEvent.eventEmitter;
   }
 
   async call({ functionSignature, args }: FunctionCall) {
@@ -199,6 +218,10 @@ export default class Web3Adapter extends Adapter {
 
   getCurrentNetwork() {
     return this._web3.eth.net.getId();
+  }
+
+  async getGasPrice() {
+    return new BigNumber(await this._web3.eth.getGasPrice());
   }
 
   get contract() {
