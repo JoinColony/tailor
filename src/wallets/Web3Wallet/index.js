@@ -37,7 +37,7 @@ export default class Web3Wallet extends Wallet {
   }: {
     web3: Web3,
     otherAddresses: Array<Address>,
-  }) {
+  } = {}) {
     super();
     this._web3 = web3;
     this._otherAddresses = otherAddresses;
