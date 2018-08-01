@@ -3,19 +3,16 @@
 import Wallet from '../Wallet';
 
 import type { Address } from '../../interface/flowtypes';
-
-type Web3WalletOptions = *;
+import type { Web3, Web3WalletOptions } from './flowtypes';
 
 const notSupportedError = methodName => {
   throw new Error(`Web3Wallet does not support the "${methodName}" method`);
 };
 
 export default class Web3Wallet extends Wallet {
-  _web3: Object;
+  _web3: Web3;
 
   _otherAddresses: Array<Address>;
-
-  _defaultGasLimit: ?number;
 
   _defaultAddress: number;
 
@@ -27,7 +24,9 @@ export default class Web3Wallet extends Wallet {
     if (!walletOptions.web3)
       throw new Error('A Web3 instance is required for Web3Wallet');
 
-    const otherAddresses = await walletOptions.web3.eth.getAccounts();
+    const otherAddresses: Array<
+      Address,
+    > = await walletOptions.web3.eth.getAccounts();
 
     return new this({ ...walletOptions, otherAddresses });
   }
@@ -35,19 +34,14 @@ export default class Web3Wallet extends Wallet {
   constructor({
     web3,
     otherAddresses,
-    defaultGasLimit,
-    defaultAddress,
   }: {
-    web3: *,
+    web3: Web3,
     otherAddresses: Array<Address>,
-    defaultGasLimit?: number,
-    defaultAddress?: number,
   }) {
     super();
     this._web3 = web3;
     this._otherAddresses = otherAddresses;
-    this._defaultGasLimit = defaultGasLimit;
-    this._defaultAddress = defaultAddress || 0;
+    this._defaultAddress = 0;
   }
 
   get address() {
@@ -58,10 +52,6 @@ export default class Web3Wallet extends Wallet {
     return this._otherAddresses;
   }
 
-  get defaultGasLimit() {
-    return this._defaultGasLimit;
-  }
-
   async setDefaultAddress(addressIndex: number) {
     if (addressIndex >= 0 && addressIndex < this._otherAddresses.length) {
       this._defaultAddress = addressIndex;
@@ -70,18 +60,28 @@ export default class Web3Wallet extends Wallet {
     return false;
   }
 
-  async sign(transactionObject: {}): Promise<string> {
-    const tx = Object.assign(
-      {},
-      { from: this.address, gas: this._defaultGasLimit },
-      transactionObject,
-    );
-    const signedTx = await this._web3.eth.signTransaction(tx);
-    return signedTx.raw;
+  async sign(transactionObject: {}) {
+    const tx = Object.assign({}, { from: this.address }, transactionObject);
+    const { raw }: { raw: string } = await this._web3.eth.signTransaction(tx);
+    return raw;
   }
 
   async signMessage(messageObject: *) {
     return this._web3.eth.sign(messageObject.message, this.address);
+  }
+
+  async verifyMessage({
+    message,
+    signature,
+  }: {
+    message: string,
+    signature: string,
+  }) {
+    const addr: string = await this._web3.eth.personal.ecRecover(
+      message,
+      signature,
+    );
+    return addr.toLowerCase() === this.address.toLowerCase();
   }
 
   /* unsupported methods */
@@ -100,10 +100,6 @@ export default class Web3Wallet extends Wallet {
 
   get publicKey() {
     return notSupportedError('get publicKey');
-  }
-
-  verifyMessage(verificationObject: *) {
-    return notSupportedError('verifyMessage');
   }
   /* eslint-enable no-unused-vars,class-methods-use-this */
 }

@@ -1,12 +1,10 @@
 /* @flow */
 
-import type { Address, Gas } from './flowtypes';
+import type { Address } from './flowtypes';
 
 export interface IWallet {
   +address: Address;
   +otherAddresses?: Array<Address>;
-
-  defaultGasLimit?: Gas;
 
   keystore: Promise<string>;
   +mnemonic?: string;

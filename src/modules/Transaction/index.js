@@ -107,15 +107,17 @@ export default class Transaction extends EventEmitter {
     if (this._signed)
       throw new Error('Cannot set gas for already signed transaction');
 
-    this._gas =
+    const bn =
       BigNumber.isBN(gas) || typeof gas === 'number' || typeof gas === 'string'
         ? new BigNumber(gas)
         : null;
+
+    this._gas = BigNumber.isBN(bn) ? bn : null;
   }
 
   get gasPrice(): Promise<Wei> {
-    return this._gas
-      ? Promise.resolve(this._gas)
+    return this._gasPrice
+      ? Promise.resolve(this._gasPrice)
       : this._lh.adapter.getGasPrice();
   }
 
@@ -124,12 +126,14 @@ export default class Transaction extends EventEmitter {
     if (this._signed)
       throw new Error('Cannot set gas price for already signed transaction');
 
-    this._gas =
+    const bn =
       BigNumber.isBN(price) ||
       typeof price === 'number' ||
       typeof price === 'string'
         ? new BigNumber(price)
         : null;
+
+    this._gasPrice = BigNumber.isBN(bn) ? bn : null;
   }
 
   get value(): Wei {
@@ -141,10 +145,14 @@ export default class Transaction extends EventEmitter {
     if (this._signed)
       throw new Error('Cannot set value for already signed transaction');
 
-    this._value =
-      BigNumber.isBN(value) || typeof value === 'number'
+    const bn =
+      BigNumber.isBN(value) ||
+      typeof value === 'number' ||
+      typeof value === 'string'
         ? new BigNumber(value)
         : null;
+
+    this._value = BigNumber.isBN(bn) ? bn : null;
   }
 
   get signed(): ?SignedTransaction {

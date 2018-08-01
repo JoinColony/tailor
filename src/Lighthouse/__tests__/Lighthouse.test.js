@@ -4,18 +4,24 @@
 import createSandbox from 'jest-sandbox';
 import Web3 from 'web3';
 import Lighthouse from '../index';
-import Web3Adapter from '../../adapters/Web3Adapter';
-import Loader from '../../loaders/Loader';
-import TruffleLoader from '../../loaders/TruffleLoader';
-import TrufflepigLoader from '../../loaders/TrufflepigLoader';
+import Adapter from '../../adapters/Adapter';
 import ABIParser from '../../parsers/ABIParser';
-import TruffleParser from '../../parsers/TruffleParser';
+import Wallet from '../../wallets/Wallet';
 import PARAM_TYPES from '../../modules/paramTypes';
+
+import { getAdapter, getLoader, getParser, getWallet } from '../factory';
 
 jest.mock('web3', () => () => ({
   eth: {
     Contract: jest.fn(),
   },
+}));
+
+jest.mock('../factory', () => ({
+  getAdapter: jest.fn(),
+  getLoader: jest.fn(),
+  getParser: jest.fn(),
+  getWallet: jest.fn(),
 }));
 
 describe('Lighthouse', () => {
@@ -25,138 +31,81 @@ describe('Lighthouse', () => {
     sandbox.clear();
   });
 
-  test('Getting an adapter', () => {
-    expect(() => Lighthouse.getAdapter(null)).toThrow('Expected an adapter');
-    expect(() => Lighthouse.getAdapter({ name: undefined })).toThrow(
-      'not found',
-    );
-    expect(() => Lighthouse.getAdapter('schmadapter')).toThrow('not found');
-
-    const web3 = new Web3();
-    const adapterInstance = new Web3Adapter({ web3 });
-
-    const withName = Lighthouse.getAdapter('web3');
-    expect(withName).toBeInstanceOf(Web3Adapter);
-
-    const withSpec = Lighthouse.getAdapter({
-      name: 'web3',
-      options: { web3 },
-    });
-    expect(withSpec).toBeInstanceOf(Web3Adapter);
-    // TODO: check constructor arguments, see below about "ideal world"
-
-    const withInstance = Lighthouse.getAdapter(adapterInstance);
-    expect(withInstance).toBe(adapterInstance);
-  });
-
-  test('Getting a loader', () => {
-    expect(() => Lighthouse.getLoader(null)).toThrow('Expected a loader');
-    expect(() => Lighthouse.getLoader({ name: undefined })).toThrow(
-      'not found',
-    );
-    expect(() => Lighthouse.getLoader('schmloader')).toThrow('not found');
-
-    const directory = 'custom directory';
-    const loaderInstance = new TruffleLoader({ directory });
-
-    const withName = Lighthouse.getLoader('truffle');
-    expect(withName).toBeInstanceOf(TruffleLoader);
-
-    const withSpec = Lighthouse.getLoader({
-      name: 'truffle',
-      options: { directory },
-    });
-    expect(withSpec).toBeInstanceOf(TruffleLoader);
-    // In an ideal world, we would test which args the mocked constructor
-    // was called with, but we also need to check `instanceof`, so
-    // let's just check a property of the loader we created.
-    expect(withSpec).toHaveProperty('_directory', directory);
-
-    const withInstance = Lighthouse.getLoader(loaderInstance);
-    expect(withInstance).toBe(loaderInstance);
-  });
-
-  test('Getting a parser', () => {
-    expect(() => Lighthouse.getParser(null)).toThrow('Expected a parser');
-    expect(() => Lighthouse.getParser({ name: undefined })).toThrow(
-      'not found',
-    );
-    expect(() => Lighthouse.getParser('schmparser')).toThrow('not found');
-
-    const parserInstance = new TruffleParser();
-
-    const withName = Lighthouse.getParser('truffle');
-    expect(withName).toBeInstanceOf(TruffleParser);
-
-    const withSpec = Lighthouse.getParser({
-      name: 'truffle',
-    });
-    expect(withSpec).toBeInstanceOf(TruffleParser);
-
-    const withInstance = Lighthouse.getParser(parserInstance);
-    expect(withInstance).toBe(parserInstance);
-  });
-
-  test('Getting default arguments', () => {
-    const lh = new Lighthouse();
-    sandbox.spyOn(lh.constructor, 'getAdapter');
-    sandbox.spyOn(lh.constructor, 'getLoader');
-    sandbox.spyOn(lh.constructor, 'getParser');
+  test('Creating a Lighthouse', async () => {
     const web3 = new Web3();
     const args = {
-      query: { contractName: 'MyContract' },
       adapter: {
         name: 'web3',
         options: { web3 },
       },
-      loader: 'trufflepig',
       parser: 'abi',
+      wallet: {
+        name: 'web3',
+        options: { web3 },
+      },
     };
-    const defaults = lh.constructor.getLighthouseDefaults(args);
-    expect(lh.constructor.getAdapter).toHaveBeenCalledWith(args.adapter);
-    expect(lh.constructor.getLoader).toHaveBeenCalledWith(args.loader);
-    expect(lh.constructor.getParser).toHaveBeenCalledWith(args.parser);
-    expect(defaults).toEqual({
-      adapter: expect.any(Web3Adapter),
-      constants: {},
-      contractData: undefined,
-      events: {},
-      loader: expect.any(TrufflepigLoader),
-      methods: {},
-      parser: expect.any(ABIParser),
-      query: args.query,
+    const dataArgs = Object.assign({}, args, {
+      contractData: 'contract data',
     });
+    const loaderArgs = Object.assign({}, args, {
+      loader: 'loader',
+      query: { contractName: 'MyContract' },
+    });
+
+    sandbox
+      .spyOn(Lighthouse.prototype, '_defineContractInterface')
+      .mockImplementation(() => {});
+
+    const mockAdapterInit = sandbox.fn();
+    const mockLoaderLoad = sandbox.fn();
+    getAdapter.mockReturnValue({ initialize: mockAdapterInit });
+    getLoader.mockReturnValue({ load: mockLoaderLoad });
+
+    // no args
+    await expect(Lighthouse.create()).rejects.toThrow('contractData or loader');
+
+    // contractData
+    await Lighthouse.create(dataArgs);
+    expect(mockLoaderLoad).not.toHaveBeenCalled();
+
+    // loader
+    await Lighthouse.create(loaderArgs);
+    expect(mockLoaderLoad).toHaveBeenCalled();
+
+    expect(getAdapter).toHaveBeenCalledWith(args.adapter);
+    expect(getParser).toHaveBeenCalledWith(args.parser);
+    expect(getWallet).toHaveBeenCalledWith(args.wallet);
+    expect(mockAdapterInit).toHaveBeenCalled();
   });
 
   test('Instantiating a Lighthouse', () => {
-    sandbox.spyOn(Lighthouse, 'getLighthouseDefaults');
     sandbox
       .spyOn(Lighthouse.prototype, '_defineContractInterface')
       .mockImplementation(() => {});
 
     const args = {
-      loader: new Loader(),
+      adapter: new Adapter(),
       parser: new ABIParser(),
-      query: { contractName: 'MyContract' },
+      wallet: new Wallet(),
       methods: {
         getTask: { convertOutput: sandbox.fn() },
       },
+      contractData: 'contract data',
     };
     const lh1 = new Lighthouse(args);
 
-    expect(lh1.constructor.getLighthouseDefaults).toHaveBeenCalledWith(args);
     expect(lh1).toBeInstanceOf(Lighthouse);
-    expect(lh1).toHaveProperty('loader', expect.any(Loader));
+    expect(lh1).toHaveProperty('adapter', expect.any(Adapter));
     expect(lh1).toHaveProperty('parser', expect.any(ABIParser));
-    expect(lh1).toHaveProperty('_query', args.query);
+    expect(lh1).toHaveProperty('wallet', expect.any(Wallet));
     expect(lh1).toHaveProperty('_overrides', {
       constants: {},
       methods: args.methods,
       events: {},
     });
-    expect(
-      Lighthouse.prototype._defineContractInterface,
-    ).not.toHaveBeenCalled();
+    expect(Lighthouse.prototype._defineContractInterface).toHaveBeenCalledWith(
+      args.contractData,
+    );
 
     // With contract data
     const contractData = 'some contract data';
@@ -171,44 +120,6 @@ describe('Lighthouse', () => {
   test('Defining the contract interface', () => {
     const contractData = 'some contract data';
     const customRoleType = {};
-    const overrides = {
-      constants: {
-        getTaskRole: {
-          input: {
-            'getTaskRole(uint,uint)': [
-              {
-                name: 'id',
-                type: PARAM_TYPES.INTEGER,
-              },
-              {
-                name: 'role',
-                type: customRoleType,
-              },
-            ],
-          },
-          // TODO in lighthouse#25 (hooks)
-          convertOutput: sandbox.fn(),
-        },
-      },
-      methods: {
-        myMethod: {
-          input: {
-            'myMethod(uint,bool)': [
-              {
-                name: 'id',
-                type: PARAM_TYPES.INTEGER,
-              },
-              {
-                name: 'isTotallyTrue',
-                type: PARAM_TYPES.BOOLEAN,
-              },
-            ],
-          },
-        },
-      },
-    };
-    const lh = new Lighthouse(overrides);
-
     const initialSpecs = {
       methods: {
         myMethod: {
@@ -274,7 +185,77 @@ describe('Lighthouse', () => {
         },
       },
     };
-    sandbox.spyOn(lh.parser, 'parse').mockImplementation(() => initialSpecs);
+    const args = {
+      parser: {
+        parse: sandbox.fn().mockImplementation(() => initialSpecs),
+      },
+      constants: {
+        getTaskRole: {
+          input: {
+            'getTaskRole(uint,uint)': [
+              {
+                name: 'id',
+                type: PARAM_TYPES.INTEGER,
+              },
+              {
+                name: 'role',
+                type: customRoleType,
+              },
+            ],
+          },
+          // TODO in lighthouse#25 (hooks)
+          convertOutput: sandbox.fn(),
+        },
+      },
+      events: {
+        MyEvent: {
+          output: {
+            'MyEvent()': [],
+            'MyEvent(uint256,uint256)': [
+              {
+                name: 'a',
+                type: PARAM_TYPES.INTEGER,
+              },
+              {
+                name: 'b',
+                type: PARAM_TYPES.INTEGER,
+              },
+            ],
+            'MyEvent(bool,bool)': [
+              {
+                name: 'a',
+                type: PARAM_TYPES.BOOLEAN,
+              },
+              {
+                name: 'b',
+                type: PARAM_TYPES.BOOLEAN,
+              },
+            ],
+          },
+        },
+      },
+      methods: {
+        myMethod: {
+          input: {
+            'myMethod(uint,bool)': [
+              {
+                name: 'id',
+                type: PARAM_TYPES.INTEGER,
+              },
+              {
+                name: 'isTotallyTrue',
+                type: PARAM_TYPES.BOOLEAN,
+              },
+            ],
+          },
+        },
+      },
+    };
+
+    jest
+      .spyOn(Lighthouse.prototype, '_defineContractInterface')
+      .mockImplementationOnce(() => {});
+    const lh = new Lighthouse(args);
 
     const iface = lh._defineContractInterface(contractData);
     expect(lh.parser.parse).toHaveBeenCalledWith(contractData);
@@ -282,7 +263,7 @@ describe('Lighthouse', () => {
       methods: {
         myMethod: {
           // Set in initial specs and overrides; should be from overrides
-          input: overrides.methods.myMethod.input,
+          input: args.methods.myMethod.input,
         },
       },
       events: {
@@ -294,41 +275,12 @@ describe('Lighthouse', () => {
           convertInput: initialSpecs.constants.getTaskRole.convertInput,
 
           // Only set in overrides; should be from overrides
-          convertOutput: overrides.constants.getTaskRole.convertOutput,
+          convertOutput: args.constants.getTaskRole.convertOutput,
 
           // Set in initial specs and overrides; should be from overrides
-          input: overrides.constants.getTaskRole.input,
+          input: args.constants.getTaskRole.input,
         },
       },
     });
-  });
-
-  test('Initializing an instance', async () => {
-    const query = {
-      contractName: 'MyContract',
-    };
-    const contractData = {
-      abi: 'the loaded abi',
-      address: 'the loaded address',
-    };
-
-    const web3 = new Web3();
-
-    const lh = new Lighthouse({
-      adapter: new Web3Adapter({ web3 }),
-      loader: new Loader(),
-      parser: new ABIParser(),
-      query,
-    });
-
-    sandbox.spyOn(lh, '_defineContractInterface').mockImplementation(() => {});
-    sandbox
-      .spyOn(lh.loader, 'load')
-      .mockImplementation(async () => contractData);
-
-    await lh.initialize();
-
-    expect(lh.loader.load).toHaveBeenCalledWith(lh._query);
-    expect(lh._defineContractInterface).toHaveBeenCalledWith(contractData);
   });
 });

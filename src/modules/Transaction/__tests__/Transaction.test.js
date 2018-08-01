@@ -17,6 +17,7 @@ describe('Transaction', () => {
   };
   const encodedFunctionCall = 'encoded function call';
   const gasEstimate = 31415926535;
+  const signedTransaction = 'signed tx';
 
   const mockEncodeFunctionCall = sandbox
     .fn()
@@ -26,9 +27,11 @@ describe('Transaction', () => {
       estimate: sandbox.fn().mockResolvedValue(gasEstimate),
       encodeFunctionCall: mockEncodeFunctionCall,
       sendSignedTransaction: sandbox.fn(),
+      getGasPrice: sandbox.fn().mockReturnValue('auto gas price'),
     },
     wallet: {
       address: '0x123',
+      sign: sandbox.fn().mockResolvedValue(signedTransaction),
     },
     contractAddress: '0x456',
   };
@@ -57,7 +60,9 @@ describe('Transaction', () => {
   test('Sign', async () => {
     const tx = new Transaction(mockLighthouse, { functionCall });
 
-    await expect(tx.sign()).rejects.toEqual(new Error('Not yet implemented'));
+    const signedTx = await tx.sign();
+
+    expect(signedTx).toBe(signedTransaction);
   });
 
   test('Send', async () => {
@@ -198,6 +203,11 @@ describe('Transaction', () => {
     BigNumber.isBN
       .mockImplementationOnce(() => false)
       .mockImplementationOnce(() => true)
+      .mockImplementationOnce(() => false)
+      .mockImplementationOnce(() => true)
+      .mockImplementationOnce(() => true)
+      .mockImplementationOnce(() => true)
+      .mockImplementationOnce(() => false)
       .mockImplementationOnce(() => false);
 
     const tx = new Transaction(mockLighthouse, { functionCall });
@@ -206,19 +216,71 @@ describe('Transaction', () => {
     tx.gas = 123456;
     expect(BigNumber).toHaveBeenCalledWith(123456);
 
+    // set with string
+    tx.gas = '123456';
+    expect(BigNumber).toHaveBeenCalledWith('123456');
+
     // set with bn
     const bn = { big: 'number' };
     tx.gas = bn;
     expect(BigNumber).toHaveBeenCalledWith(bn);
 
     // set with not valid
-    tx.gas = 'not valid';
+    tx.gas = null;
     expect(tx._gas).toBe(null);
 
     // set already signed
     tx._signed = 'signed';
     expect(() => {
       tx.gas = 123456;
+    }).toThrow('already signed');
+  });
+
+  test('Get gas price', async () => {
+    const tx = new Transaction(mockLighthouse, { functionCall });
+
+    // unspecified
+    expect(await tx.gasPrice).toBe('auto gas price');
+
+    // specified
+    tx._gasPrice = 123456;
+    expect(await tx.gasPrice).toBe(123456);
+  });
+
+  test('Set gas price', () => {
+    BigNumber.isBN
+      .mockImplementationOnce(() => false)
+      .mockImplementationOnce(() => true)
+      .mockImplementationOnce(() => false)
+      .mockImplementationOnce(() => true)
+      .mockImplementationOnce(() => true)
+      .mockImplementationOnce(() => true)
+      .mockImplementationOnce(() => false)
+      .mockImplementationOnce(() => false);
+
+    const tx = new Transaction(mockLighthouse, { functionCall });
+
+    // set with number
+    tx.gasPrice = 123456;
+    expect(BigNumber).toHaveBeenCalledWith(123456);
+
+    // set with string
+    tx.gasPrice = '123456';
+    expect(BigNumber).toHaveBeenCalledWith('123456');
+
+    // set with bn
+    const bn = { big: 'number' };
+    tx.gasPrice = bn;
+    expect(BigNumber).toHaveBeenCalledWith(bn);
+
+    // set with not valid
+    tx.gasPrice = null;
+    expect(tx._gasPrice).toBe(null);
+
+    // set already signed
+    tx._signed = 'signed';
+    expect(() => {
+      tx.gasPrice = 123456;
     }).toThrow('already signed');
   });
 

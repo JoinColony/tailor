@@ -49,7 +49,7 @@ export type WalletSpec = {
   options?: Object,
 };
 
-export type LighthouseArgs = {
+export type LighthouseCreateArgs = {
   adapter?: IAdapter | AdapterSpec,
   contractData?: ContractData,
   constants?: PartialConstantSpecs,
@@ -57,8 +57,18 @@ export type LighthouseArgs = {
   loader?: ILoader<*> | LoaderSpec,
   methods?: PartialMethodSpecs,
   parser?: IParser | ParserSpec,
-  query: GenericQuery,
-  wallet: IWallet | WalletSpec,
+  query?: GenericQuery,
+  wallet?: IWallet | WalletSpec,
+};
+
+export type LighthouseArgs = {
+  adapter: IAdapter,
+  contractData: ContractData,
+  constants?: PartialConstantSpecs,
+  events?: PartialEventSpecs,
+  methods?: PartialMethodSpecs,
+  parser: IParser,
+  wallet: IWallet,
 };
 
 export type { IWallet } from '../interface/Wallet';
