@@ -23,6 +23,7 @@ import type {
   PartialConstantSpecs,
   PartialEventSpecs,
   PartialMethodSpecs,
+  WalletSpec,
 } from './flowtypes';
 
 export default class Lighthouse {
@@ -91,6 +92,11 @@ export default class Lighthouse {
     this.wallet = wallet;
     this._overrides = { constants, events, methods };
     this._defineContractInterface(contractData);
+  }
+
+  async setWallet(wallet: IWallet | WalletSpec): Promise<IWallet> {
+    this.wallet = await getWallet(wallet);
+    return this.wallet;
   }
 
   _getContractSpec(contractData: ContractData): ContractSpec {

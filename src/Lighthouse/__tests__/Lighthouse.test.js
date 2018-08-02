@@ -28,7 +28,7 @@ describe('Lighthouse', () => {
   const sandbox = createSandbox();
 
   beforeEach(() => {
-    sandbox.clear();
+    sandbox.restore();
   });
 
   test('Creating a Lighthouse', async () => {
@@ -115,6 +115,30 @@ describe('Lighthouse', () => {
     );
     expect(lh2).toBeInstanceOf(Lighthouse);
     Lighthouse.prototype._defineContractInterface.mockRestore();
+  });
+
+  test('Setting the wallet', async () => {
+    sandbox
+      .spyOn(Lighthouse.prototype, '_defineContractInterface')
+      .mockImplementation(() => {});
+
+    const oldWallet = new Wallet();
+    const newWalletSpec = 'wallet';
+    const args = {
+      adapter: new Adapter(),
+      parser: new ABIParser(),
+      wallet: oldWallet,
+      contractData: 'contract data',
+    };
+    const lh = new Lighthouse(args);
+
+    getWallet.mockResolvedValueOnce(new Wallet());
+
+    const newWallet = await lh.setWallet(newWalletSpec);
+
+    expect(newWallet).not.toBe(oldWallet);
+    expect(newWallet).toEqual(expect.any(Wallet));
+    expect(getWallet).toHaveBeenCalledWith(newWalletSpec);
   });
 
   test('Defining the contract interface', () => {
