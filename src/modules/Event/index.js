@@ -14,13 +14,6 @@ import { convertResultObj, convertOutput } from '../paramConversion';
 
 type EventCallback = (...*) => *;
 
-// TODO later use the spec as a generic and make this more type-safe
-type TypedEvent = {
-  signature: EventSignature,
-  event: EventLog,
-  data: Object,
-};
-
 type TypedEventCallback = (error?: Error, event?: TypedEvent) => void;
 
 export default class Event {
@@ -40,6 +33,17 @@ export default class Event {
     this._wrappedHandlers = new Map();
   }
 
+  handleEvent(event: EventLog) {
+    const { signature: sigHash, returnValues } = event;
+    const signature = this._findSignatureByHash(sigHash);
+    const spec = this._spec.output[signature];
+    const data = convertOutput(
+      spec,
+      ...convertResultObj(spec.length, returnValues),
+    );
+    return { event, signature, data };
+  }
+
   _findSignatureByHash(hash: string): string {
     const signatures = Object.keys(this._spec.output);
     const found = signatures.find(signature => sha3(signature) === hash);
@@ -52,15 +56,7 @@ export default class Event {
     return (arg: EventLog | Error) => {
       if (arg instanceof Error) return handlerFunction(arg);
 
-      const { signature: sigHash, returnValues } = arg;
-      const signature = this._findSignatureByHash(sigHash);
-      const spec = this._spec.output[signature];
-      const data = convertOutput(
-        spec,
-        ...convertResultObj(spec.length, returnValues),
-      );
-
-      return handlerFunction(undefined, { event: arg, signature, data });
+      return handlerFunction(undefined, this.handleEvent(arg));
     };
   }
 
