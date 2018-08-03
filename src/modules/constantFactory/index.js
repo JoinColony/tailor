@@ -7,7 +7,14 @@ import type {
 import getFunctionCall from '../getFunctionCall';
 import { convertOutput } from '../paramConversion';
 
-function getConstantFn(lighthouse: *, functionParams: FunctionParams, output) {
+// eslint-disable-next-line import/no-cycle
+import type Lighthouse from '../../Lighthouse';
+
+function getConstantFn(
+  lighthouse: Lighthouse,
+  functionParams: FunctionParams,
+  output,
+) {
   return async function constant(...inputParams: any) {
     const fnCall = getFunctionCall(functionParams, ...inputParams);
     const callResult = await lighthouse.adapter.call(fnCall);
@@ -20,7 +27,7 @@ function getConstantFn(lighthouse: *, functionParams: FunctionParams, output) {
  * which can be called with any valid input.
  */
 export default function constantFactory(
-  lighthouse: *,
+  lighthouse: Lighthouse,
   { name, input = {}, output = [] }: ConstantSpec,
 ) {
   const functionSignatures = Object.keys(input);
