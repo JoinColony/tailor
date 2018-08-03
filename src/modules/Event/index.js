@@ -55,9 +55,7 @@ export default class Event {
       const { signature: sigHash, returnValues } = arg;
       const signature = this._findSignatureByHash(sigHash);
       const spec = this._spec.output[signature];
-      const data = signature
-        ? convertOutput(spec, ...convertResultObj(returnValues))
-        : {};
+      const data = convertOutput(spec, ...convertResultObj(returnValues));
 
       return handlerFunction(undefined, { event: arg, signature, data });
     };
@@ -86,7 +84,9 @@ export default class Event {
   async addListener(handlerFunction: TypedEventCallback) {
     if (this._wrappedHandlers.get(handlerFunction)) return;
 
-    if (this._emitters.length === 0) this._createEmitters();
+    if (this._emitters.length === 0) {
+      this._createEmitters();
+    }
 
     const wrappedHandlerFunction = this.wrapHandlerFunction(handlerFunction);
 
