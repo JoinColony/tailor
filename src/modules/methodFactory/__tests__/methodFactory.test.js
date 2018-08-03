@@ -98,7 +98,7 @@ describe('Methods', () => {
     expect(tx._lh).toBe(mockLighthouse);
     expect(tx.gas).toBe(null);
 
-    const txWithOptions = method(1, { gas: 1000 });
+    const txWithOptions = method(1, { gas: new BigNumber(1000) });
     expect(txWithOptions.gas.toNumber()).toEqual(1000);
   });
 

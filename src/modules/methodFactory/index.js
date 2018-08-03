@@ -1,5 +1,7 @@
 /* @flow */
 
+import BigNumber from 'bn.js';
+
 import type { MethodSpec, FunctionParams } from '../../interface/ContractSpec';
 import getFunctionCall from '../getFunctionCall';
 // eslint-disable-next-line import/no-cycle
@@ -10,14 +12,17 @@ import Lighthouse from '../../Lighthouse';
 function isOptions(input: any) {
   return (
     typeof input === 'object' &&
-    (typeof input.gas === 'number' || typeof input.value === 'number')
+    ['value', 'gas', 'gasLimit'].some(
+      option =>
+        BigNumber.isBN(input[option]) || typeof input[option] === 'number',
+    )
   );
 }
 
 function getMethodFn(
   lighthouse: Lighthouse,
   functionParams: FunctionParams,
-  isPayable,
+  isPayable?: boolean,
 ) {
   return function method(...inputParams: any) {
     const options = isOptions(inputParams[inputParams.length - 1])
@@ -39,7 +44,7 @@ function getMethodFn(
  * which can be called with any valid input.
  */
 export default function methodFactory(
-  lighthouse: *,
+  lighthouse: Lighthouse,
   { name, input = {}, isPayable }: MethodSpec,
 ) {
   const functionSignatures = Object.keys(input);
