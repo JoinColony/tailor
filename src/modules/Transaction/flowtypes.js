@@ -10,11 +10,13 @@ import type {
   TransactionReceipt,
   Wei,
 } from '../../interface/flowtypes';
+import type { TypedEvents } from '../Event/flowtypes';
 
 type Confirmations = Array<TransactionReceipt>;
 
 type TransactionState = {
   createdAt: Date,
+  events?: TypedEvents,
   functionCall: FunctionCall,
   to: Address,
   data: TransactionData,
@@ -41,5 +43,6 @@ export type {
   TransactionData,
   TransactionReceipt,
   TransactionState,
+  TypedEvents,
   Wei,
 };

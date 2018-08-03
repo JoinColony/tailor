@@ -5,6 +5,8 @@ import createSandbox from 'jest-sandbox';
 import BigNumber from 'bn.js';
 
 import Transaction from '../index';
+import Event from '../../Event';
+import { BOOLEAN_TYPE } from '../../paramTypes';
 
 describe('Transaction', () => {
   const sandbox = createSandbox();
@@ -39,6 +41,24 @@ describe('Transaction', () => {
     },
     wallet,
     contractAddress: 'contract address',
+  };
+
+  mockLighthouse.events = {
+    MyEvent: new Event(mockLighthouse, {
+      name: 'MyEvent',
+      output: { 'MyEvent()': [] },
+    }),
+    MyOtherEvent: new Event(mockLighthouse, {
+      name: 'MyOtherEvent',
+      output: {
+        'MyOtherEvent(bool)': [
+          {
+            name: 'someValue',
+            type: BOOLEAN_TYPE,
+          },
+        ],
+      },
+    }),
   };
 
   beforeEach(() => {
@@ -159,6 +179,8 @@ describe('Transaction', () => {
   });
 
   test('To JSON', () => {
+    const confirmations = ['confirmation'];
+    const events = { MyEvent: { myValue: 1 } };
     const value = new BigNumber(999);
     const receipt = 'receipt';
     const from = 'wallet address';
@@ -185,6 +207,7 @@ describe('Transaction', () => {
     tx.value = value;
     tx._state.confirmations = [receipt];
     tx._state.confirmedAt = new Date();
+    tx._state.events = events;
     tx._state.from = from;
     tx._state.hash = 'transaction hash';
     tx._state.receipt = receipt;
@@ -198,6 +221,7 @@ describe('Transaction', () => {
       confirmedAt: expect.any(String),
       createdAt: expect.any(String),
       data: encodedFunctionCall,
+      events,
       from,
       functionCall,
       gas: `${gasEstimate}`,
@@ -304,5 +328,56 @@ describe('Transaction', () => {
 
     expect(tx.emit).toHaveBeenCalledWith('error', error);
     expect(tx.sentAt).toBe(undefined);
+  });
+
+  test('Handling receipts', () => {
+    const tx = new Transaction(mockLighthouse, { functionCall });
+    sandbox.spyOn(tx, 'emit');
+    sandbox.spyOn(Event.prototype, 'handleEvent');
+
+    const receipt = {
+      events: {
+        MyEvent: {
+          signature:
+            // eslint-disable-next-line max-len
+            '0x4dbfb68b43dddfa12b51ebe99ab8fded620f9a0ac23142879a4f192a1b7952d2',
+          returnValues: {},
+        },
+        MyOtherEvent: {
+          signature:
+            // eslint-disable-next-line max-len
+            '0x54552747a8ff700c6bab19a89633321fa93fa8cde42a60f5d3679e146768c727',
+          returnValues: {
+            '0': true,
+          },
+        },
+      },
+    };
+
+    tx._handleReceipt(receipt);
+
+    expect(tx.emit).toHaveBeenCalledWith('receipt', receipt);
+    expect(tx).toHaveProperty('receipt', receipt);
+    expect(tx).toHaveProperty('events', {
+      MyEvent: {
+        data: {},
+        event: receipt.events.MyEvent,
+        signature: 'MyEvent()',
+      },
+      MyOtherEvent: {
+        data: {
+          someValue: true,
+        },
+        event: receipt.events.MyOtherEvent,
+        signature: 'MyOtherEvent(bool)',
+      },
+    });
+    expect(Event.prototype.handleEvent).toHaveBeenCalledTimes(2);
+    expect(Event.prototype.handleEvent).toHaveBeenCalledWith(
+      receipt.events.MyEvent,
+    );
+    expect(Event.prototype.handleEvent).toHaveBeenCalledWith(
+      receipt.events.MyOtherEvent,
+    );
   });
 });

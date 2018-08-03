@@ -6,7 +6,10 @@ import { parseBigNumber } from '../utils';
 
 // eslint-disable-next-line import/no-cycle
 import type Lighthouse from '../../Lighthouse';
-import type { UnsignedTransaction } from '../../interface/flowtypes';
+import type {
+  TypedEvents,
+  UnsignedTransaction,
+} from '../../interface/flowtypes';
 
 export default class Transaction extends EventEmitter {
   _lh: Lighthouse;
@@ -22,6 +25,7 @@ export default class Transaction extends EventEmitter {
       to = lh.contractAddress,
       confirmations = [],
       createdAt = new Date(),
+      events = {},
       gas,
       gasPrice,
       nonce,
@@ -41,6 +45,7 @@ export default class Transaction extends EventEmitter {
         confirmations,
         createdAt,
         data,
+        events,
         from,
         functionCall,
         to,
@@ -178,6 +183,14 @@ export default class Transaction extends EventEmitter {
 
   _handleReceipt(receipt: TransactionReceipt) {
     this._state.receipt = receipt;
+    if (receipt.events) {
+      if (!this._state.events) this._state.events = {};
+      Object.keys(receipt.events).forEach(eventName => {
+        const event = this._lh.events[eventName];
+        this._state.events[eventName] = event.handleEvent(receipt.events[eventName]);
+      });
+    }
+    this.emit('receipt', receipt);
     this.emit('receipt', receipt);
   }
 
