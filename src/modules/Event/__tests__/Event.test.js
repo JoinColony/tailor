@@ -111,6 +111,7 @@ describe('Event', () => {
 
   test('Event listeners', () => {
     const event = new Event(mockAdapter, spec);
+    expect(event._emitters.length).toBe(0);
 
     sandbox.spyOn(event, '_addListener');
     sandbox.spyOn(event, '_createEmitters');
@@ -123,6 +124,7 @@ describe('Event', () => {
     expect(event._createEmitters).toHaveBeenCalled();
     expect(event.wrapHandlerFunction).toHaveBeenCalledWith(handler);
     expect(event._addListener).toHaveBeenCalledWith(expect.any(Function));
+    expect(event._emitters.length).toBe(3);
 
     expect(event._wrappedHandlers.has(handler)).toBe(true);
 
@@ -174,5 +176,29 @@ describe('Event', () => {
       expect.any(Function),
     );
     expect(event._wrappedHandlers.has(handler)).toBe(false);
+  });
+
+  test('Removing a non-existent event listener', () => {
+    const event = new Event(mockAdapter, spec);
+    sandbox.spyOn(event, '_removeListener');
+    sandbox.spyOn(event._wrappedHandlers, 'get');
+    sandbox.spyOn(event._wrappedHandlers, 'delete');
+
+    const handler = sandbox.fn();
+    event.removeListener(handler);
+    expect(event._removeListener).not.toHaveBeenCalled();
+    expect(event._wrappedHandlers.delete).not.toHaveBeenCalledWith();
+    expect(event._wrappedHandlers.get).toHaveBeenCalledWith(handler);
+  });
+
+  test('Adding an event listener after emitters are created', () => {
+    const event = new Event(mockAdapter, spec);
+    event._emitters = [new EventEmitter()];
+
+    sandbox.spyOn(event, '_createEmitters');
+    const handler = sandbox.fn();
+
+    event.addListener(handler);
+    expect(event._createEmitters).not.toHaveBeenCalled();
   });
 });
