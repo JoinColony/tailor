@@ -82,7 +82,7 @@ export interface IAdapter {
 
   call(functionCall: FunctionCall): Promise<FunctionCallResult>;
 
-  subscribe(options: SubscriptionOptions, callback?: Function): EventEmitter;
+  subscribe(options: SubscriptionOptions): EventEmitter;
 
   getCurrentNetwork(): Promise<number>;
   getGasPrice(): Promise<Gas>;
