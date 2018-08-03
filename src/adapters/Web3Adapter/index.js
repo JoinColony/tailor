@@ -190,7 +190,7 @@ export default class Web3Adapter extends Adapter {
       ...args,
     ).call();
 
-    return convertResultObj(rawResult);
+    return convertResultObj(args.length, rawResult);
   }
 
   subscribe(options: SubscriptionOptions = {}): EventEmitter {

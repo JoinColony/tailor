@@ -55,7 +55,10 @@ export default class Event {
       const { signature: sigHash, returnValues } = arg;
       const signature = this._findSignatureByHash(sigHash);
       const spec = this._spec.output[signature];
-      const data = convertOutput(spec, ...convertResultObj(returnValues));
+      const data = convertOutput(
+        spec,
+        ...convertResultObj(spec.length, returnValues),
+      );
 
       return handlerFunction(undefined, { event: arg, signature, data });
     };

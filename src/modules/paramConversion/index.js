@@ -47,12 +47,14 @@ export function convertInput(spec: ParamsSpec = [], ...input: any): Array<any> {
   );
 }
 
-export function convertResultObj(resultObj: {
-  [paramIndexOrName: number | string]: *,
+export function convertResultObj(
   length: number,
-}): Array<*> {
+  resultObj: {
+    [paramIndexOrName: number | string]: *,
+  },
+): Array<*> {
   const output = [];
-  for (let i = 0; i < resultObj.length; i += 1) {
+  for (let i = 0; i < length; i += 1) {
     output[i] = resultObj[i];
   }
   return output;
