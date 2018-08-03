@@ -92,6 +92,13 @@ describe('Integration testing', () => {
     expect(hashListener).toHaveBeenCalledWith(expect.any(String));
 
     expect(errorListener).not.toHaveBeenCalled();
+
+    expect(tx).toHaveProperty('events', {
+      'OverloadedEvent()': {},
+      'OverloadedEvent(uint256)': { a: 2 },
+      'OverloadedEvent(uint256,uint256)': { a: 2, b: 2 },
+      'OverloadedEvent(bool,bool)': { a: true, b: true },
+    });
   });
 
   // TODO in #51
