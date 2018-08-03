@@ -53,17 +53,27 @@ export default class Lighthouse {
     methods: PartialMethodSpecs,
   };
 
-  static async create(args: LighthouseCreateArgs = {}): Promise<this> {
-    if (!(args.contractData || args.loader))
+  static async create({
+    contractData: providedContractData,
+    loader,
+    adapter: providedAdapter,
+    parser: providedParser,
+    wallet: providedWallet,
+    constants,
+    events,
+    methods,
+    query,
+  }: LighthouseCreateArgs = {}): Promise<this> {
+    if (!(providedContractData || loader))
       throw new Error('Expected either contractData or loader');
 
     const contractData =
-      args.contractData ||
-      (await getLoader(args.loader).load(Object.assign({}, args.query)));
+      providedContractData ||
+      (await getLoader(loader).load(Object.assign({}, query)));
 
-    const adapter = getAdapter(args.adapter);
-    const parser = getParser(args.parser);
-    const wallet = await getWallet(args.wallet);
+    const adapter = getAdapter(providedAdapter);
+    const parser = getParser(providedParser);
+    const wallet = await getWallet(providedWallet);
 
     await adapter.initialize(contractData);
 
@@ -71,9 +81,9 @@ export default class Lighthouse {
       adapter,
       parser,
       wallet,
-      constants: args.constants,
-      events: args.events,
-      methods: args.methods,
+      constants,
+      events,
+      methods,
       contractData,
     });
   }
