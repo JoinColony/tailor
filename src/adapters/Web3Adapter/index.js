@@ -13,6 +13,7 @@ import type {
 } from '../../interface/Adapter';
 import type { ContractData } from '../../interface/Loader';
 import Adapter from '../Adapter';
+import { convertResultObj } from '../../modules/paramConversion';
 
 export default class Web3Adapter extends Adapter {
   _web3: any;
@@ -182,38 +183,29 @@ export default class Web3Adapter extends Adapter {
     if (!this.contract.methods[functionSignature])
       throw new Error(
         // eslint-disable-next-line max-len
-        `Method with signature "${functionSignature}" not defined on this contract`,
+        `Function with signature "${functionSignature}" not defined on this contract`,
       );
 
     const rawResult = await this.contract.methods[functionSignature](
       ...args,
     ).call();
 
-    // convert Result object to array
-    const result = [];
-    for (let i = 0; i < args.length; i += 1) {
-      result.push(rawResult[i]);
-    }
-
-    return result;
+    return convertResultObj(rawResult);
   }
 
-  async subscribe(options: SubscriptionOptions = {}) {
+  subscribe(options: SubscriptionOptions = {}): EventEmitter {
     const contract = this.contract.clone();
 
-    if (options.address) {
-      contract.options.address = options.address;
-    }
+    if (options.address) contract.options.address = options.address;
 
     if (options.event) {
       if (!contract.events[options.event])
-        // TODO check event sig
         throw new Error(
           `Event "${options.event}" not defined on this contract`,
         );
-      return (contract.events[options.event](): EventEmitter);
+      return contract.events[options.event]();
     }
-    return (contract.events.allEvents(): EventEmitter);
+    return contract.events.allEvents();
   }
 
   getCurrentNetwork() {

@@ -39,12 +39,12 @@ export type Event = {
   topics: Array<string>, // topic hashes
   transactionHash: string,
   logIndex: number,
-  args: {
+  returnValues: {
     [paramIndexOrName: number | string]: *,
     length: number,
   },
   event: string, // 'MyEvent'
-  eventSignature: EventSignature, // 'MyEvent(uint8)'
+  signature: string, // hashed event signature
 };
 
 export type TransactionReceipt = {
@@ -82,7 +82,7 @@ export interface IAdapter {
 
   call(functionCall: FunctionCall): Promise<FunctionCallResult>;
 
-  subscribe(options: SubscriptionOptions): Promise<EventEmitter>;
+  subscribe(options: SubscriptionOptions, callback?: Function): EventEmitter;
 
   getCurrentNetwork(): Promise<number>;
   getGasPrice(): Promise<Gas>;
