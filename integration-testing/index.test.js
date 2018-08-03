@@ -11,6 +11,8 @@ const directory = path.resolve(
   'contracts',
 );
 
+jest.setTimeout(60000);
+
 describe('Integration testing', () => {
   const sandbox = createSandbox();
 
@@ -25,7 +27,7 @@ describe('Integration testing', () => {
       adapter: {
         name: 'web3',
         options: {
-          web3: new Web3('http://localhost:8545'),
+          web3: new Web3('ws://localhost:8545'),
         },
       },
       query: { contractName: 'MetaCoin' },
@@ -65,12 +67,60 @@ describe('Integration testing', () => {
     });
   });
 
+  test('Listening to overloaded events', async () => {
+    const from = Object.keys(global.ganacheAccounts.accounts)[0];
+
+    const handlerFunction = sandbox.fn();
+    client.events.OverloadedEvent.addListener(handlerFunction);
+
+    const tx1 = client.adapter.contract.methods.emitOverloadedEvents();
+    await tx1.send({ from });
+
+    expect(handlerFunction).toHaveBeenCalledTimes(4);
+
+    expect(handlerFunction).toHaveBeenCalledWith(
+      undefined,
+      expect.objectContaining({ signature: 'OverloadedEvent()', data: {} }),
+    );
+    expect(handlerFunction).toHaveBeenCalledWith(
+      undefined,
+      expect.objectContaining({
+        signature: 'OverloadedEvent(uint256)',
+        data: { a: 2 },
+      }),
+    );
+    expect(handlerFunction).toHaveBeenCalledWith(
+      undefined,
+      expect.objectContaining({
+        signature: 'OverloadedEvent(uint256,uint256)',
+        data: { a: 2, b: 2 },
+      }),
+    );
+    expect(handlerFunction).toHaveBeenCalledWith(
+      undefined,
+      expect.objectContaining({
+        signature: 'OverloadedEvent(bool,bool)',
+        data: {
+          a: true,
+          b: true,
+        },
+      }),
+    );
+    handlerFunction.mockReset();
+
+    client.events.OverloadedEvent.removeListener(handlerFunction);
+
+    const tx2 = client.adapter.contract.methods.emitOverloadedEvents();
+    await tx2.send({ from });
+
+    expect(handlerFunction).not.toHaveBeenCalled();
+  });
+
   // TODO add tests for:
   // JoinColony/lighthouse#9
   // JoinColony/lighthouse#16
   // JoinColony/lighthouse#17
   // JoinColony/lighthouse#19
-  // JoinColony/lighthouse#20
   // JoinColony/lighthouse#21
   // JoinColony/lighthouse#25
 });

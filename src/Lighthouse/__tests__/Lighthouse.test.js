@@ -226,6 +226,33 @@ describe('Lighthouse', () => {
           },
         },
       },
+      events: {
+        MyEvent: {
+          output: {
+            'MyEvent()': [],
+            'MyEvent(uint256,uint256)': [
+              {
+                name: 'a',
+                type: PARAM_TYPES.INTEGER,
+              },
+              {
+                name: 'b',
+                type: PARAM_TYPES.INTEGER,
+              },
+            ],
+            'MyEvent(bool,bool)': [
+              {
+                name: 'a',
+                type: PARAM_TYPES.BOOLEAN,
+              },
+              {
+                name: 'b',
+                type: PARAM_TYPES.BOOLEAN,
+              },
+            ],
+          },
+        },
+      },
       constants: {
         getTaskRole: {
           input: {
@@ -258,7 +285,9 @@ describe('Lighthouse', () => {
           input: overrides.methods.myMethod.input,
         },
       },
-      events: {},
+      events: {
+        MyEvent: initialSpecs.events.MyEvent,
+      },
       constants: {
         getTaskRole: {
           // Only set in initial specs; should be from initial specs

@@ -132,7 +132,7 @@ module.exports = async () => {
     await global.ganacheServer.listen(ganacheServerPort);
     console.log(
       chalk.green.bold('Ganache Server started on'),
-      chalk.bold(`${chalk.gray('http://')}localhost:${ganacheServerPort}`),
+      chalk.bold(`${chalk.gray('ws://')}localhost:${ganacheServerPort}`),
     );
 
     /*

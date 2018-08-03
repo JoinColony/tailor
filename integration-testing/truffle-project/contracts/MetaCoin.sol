@@ -14,8 +14,26 @@ contract MetaCoin {
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
 
+    event OverloadedEvent();
+    event OverloadedEvent(uint a);
+    event OverloadedEvent(uint a, uint b);
+    event OverloadedEvent(bool a, bool b);
+
+    event EventWithUnnamedParams(uint, bool);
+
     constructor() public {
         balances[tx.origin] = 10000;
+    }
+
+    function emitOverloadedEvents() public {
+        emit OverloadedEvent();
+        emit OverloadedEvent(2);
+        emit OverloadedEvent(2, 2);
+        emit OverloadedEvent(true, true);
+    }
+
+    function emitUnnamedParamsEvent() public {
+        emit EventWithUnnamedParams(2, true);
     }
 
     /// @notice This is a notice

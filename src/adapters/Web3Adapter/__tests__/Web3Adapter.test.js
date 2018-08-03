@@ -135,6 +135,7 @@ describe('Web3Adapter', () => {
       '0': 'first',
       '1': 'second',
       myFirst: 'first',
+      length: 4,
     }));
 
     const adapter = new Web3Adapter({ web3: mockWeb3 });
@@ -192,6 +193,7 @@ describe('Web3Adapter', () => {
         args: {
           '0': 'called',
           '1': 'once',
+          length: 2,
         },
       },
       {
@@ -199,6 +201,7 @@ describe('Web3Adapter', () => {
         args: {
           '0': 'called',
           '1': 'again',
+          length: 2,
         },
       },
       {
@@ -206,13 +209,16 @@ describe('Web3Adapter', () => {
         args: {
           '0': 'called',
           '1': 'once more',
+          length: 2,
         },
       },
       {
         args: {
           '0': 'anonymous',
           '1': 'event',
-          named: 'first',
+          named0: 'anonymous',
+          named1: 'event',
+          length: 2,
         },
       },
     ];
@@ -370,6 +376,8 @@ describe('Web3Adapter', () => {
       '0': 'first',
       '1': 'second',
       myFirst: 'first',
+      mySecond: 'second',
+      length: 2,
     };
 
     const mockCall = sandbox.fn().mockImplementation(() => callResult);
@@ -393,20 +401,20 @@ describe('Web3Adapter', () => {
     // non-existing function
     await expect(adapter.call(badFunctionCall)).rejects.toEqual(
       new Error(
-        `Method with signature "${
+        `Function with signature "${
           badFunctionCall.functionSignature
         }" not defined on this contract`,
       ),
     );
   });
 
-  test('Subscribe', async () => {
+  test('Subscribe', () => {
     const options = {
       address: 'after address',
-      event: 'MyEvent',
+      event: 'MyEvent()',
     };
     const badOptions = {
-      event: 'BadEvent',
+      event: 'BadEvent()',
     };
     const singleEventSub = 'single event sub';
     const allEventsSub = 'all events sub';
@@ -418,7 +426,7 @@ describe('Web3Adapter', () => {
         address: 'before address',
       },
       events: {
-        MyEvent: mockEvent,
+        'MyEvent()': mockEvent,
         allEvents: mockAllEvents,
       },
     };
@@ -430,19 +438,19 @@ describe('Web3Adapter', () => {
     adapter.initialize(contractData);
 
     // existing event
-    const result = await adapter.subscribe(options);
+    const result = adapter.subscribe(options);
 
     // TODO: expect contract.options.address to have changed
     expect(mockEvent).toHaveBeenCalled();
     expect(result).toBe(singleEventSub);
 
     // non-existing event
-    await expect(adapter.subscribe(badOptions)).rejects.toEqual(
-      new Error(`Event "${badOptions.event}" not defined on this contract`),
-    );
+    expect(() => {
+      adapter.subscribe(badOptions);
+    }).toThrow(`Event "${badOptions.event}" not defined on this contract`);
 
     // all events
-    const allResult = await adapter.subscribe();
+    const allResult = adapter.subscribe();
 
     expect(mockAllEvents).toHaveBeenCalled();
     expect(allResult).toBe(allEventsSub);

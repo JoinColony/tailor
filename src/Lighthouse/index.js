@@ -14,6 +14,7 @@ import Parser from '../parsers/Parser';
 import Transaction from '../modules/Transaction';
 import constantFactory from '../modules/constantFactory';
 import methodFactory from '../modules/methodFactory';
+import Event from '../modules/Event';
 
 import type {
   AdapterName,
@@ -21,6 +22,7 @@ import type {
   ConstantSpecs,
   ContractData,
   ContractSpec,
+  EventSpecs,
   GenericQuery,
   IAdapter,
   ILoader,
@@ -48,6 +50,10 @@ export default class Lighthouse {
 
   constants: {
     [constantName: string]: (...params: any) => Promise<Object>,
+  };
+
+  events: {
+    [eventName: string]: Event,
   };
 
   methods: {
@@ -204,21 +210,23 @@ export default class Lighthouse {
     Object.assign(this, { methods });
   }
 
+  _defineEvents(specs: EventSpecs) {
+    const events = {};
+    Object.keys(specs).forEach(name => {
+      events[name] = new Event(this.adapter, specs[name]);
+    });
+    Object.assign(this, { events });
+  }
+
   _defineContractInterface(contractData: ContractData) {
     this.contractAddress = contractData.address;
 
-    const specs = this._getContractSpec(contractData);
+    const spec = this._getContractSpec(contractData);
+    this._defineConstants(spec.constants);
+    this._defineEvents(spec.events);
+    this._defineMethods(spec.methods);
 
-    this._defineConstants(specs.constants);
-
-    // TODO JoinColony/lighthouse/issues/20
-    // this._defineEvents(events);
-
-    this._defineMethods(specs.methods);
-
-    // TODO once events and methods are also defined, do not return anything.
-    // Just for testing purposes.
-    return specs;
+    return spec;
   }
 
   async initialize() {
