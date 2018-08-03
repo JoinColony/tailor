@@ -47,14 +47,22 @@ export function convertInput(spec: ParamsSpec = [], ...input: any): Array<any> {
   );
 }
 
+export function convertResultObj(resultObj: {
+  [paramIndexOrName: number | string]: *,
+  length: number,
+}): Array<*> {
+  const output = [];
+  for (let i = 0; i < resultObj.length; i += 1) {
+    output[i] = resultObj[i];
+  }
+  return output;
+}
+
 /*
  * Given a specification for parameters and output values, use the spec
  * to collect the matching output values, converting them if necessary.
  */
-export function convertOutput(
-  spec: ParamsSpec = [],
-  ...output: Array<any>
-): Object {
+export function convertOutput(spec: ParamsSpec = [], ...output: Array<any>) {
   return spec.reduce((acc, { name, type }, index) => {
     const value = output[index];
     acc[name] = type.convertOutput ? type.convertOutput(value) : value;
