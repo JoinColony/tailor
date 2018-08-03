@@ -4,12 +4,11 @@ import type { PromiEventEmitter } from 'web3-core-promievent';
 import type EventEmitter from 'eventemitter3';
 
 import type { ContractData } from './Loader';
-import type { Address } from './flowtypes';
+import type { Address, Gas } from './flowtypes';
 
 export type FunctionSignature = string; // myFunction(uint256,bool)
 
 export type FunctionArguments = Array<*>;
-export type Gas = BigNumber;
 export type Wei = BigNumber;
 export type TransactionData = string;
 export type SignedTransaction = string;

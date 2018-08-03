@@ -74,7 +74,7 @@ describe('Methods', () => {
     expect(tx.gas).toBe(null);
 
     const txWithOptions = method({ gas: 1000 });
-    expect(txWithOptions.gas).toBe(1000);
+    expect(txWithOptions.gas.toNumber()).toBe(1000);
   });
 
   test('Creating a method function (with input)', async () => {
@@ -95,7 +95,7 @@ describe('Methods', () => {
     expect(tx.gas).toBe(null);
 
     const txWithOptions = method(1, { gas: 1000 });
-    expect(txWithOptions.gas).toEqual(1000);
+    expect(txWithOptions.gas.toNumber()).toEqual(1000);
   });
 
   test('Creating a method function (payable)', async () => {
@@ -117,7 +117,7 @@ describe('Methods', () => {
     expect(tx.value).toBe(0);
 
     const txWithOptions = payableMethod(1, { value: 1000 });
-    expect(txWithOptions.value).toEqual(1000);
+    expect(txWithOptions.value.toNumber()).toEqual(1000);
 
     const nonPayableMethod = methodFactory(
       mockLighthouse,

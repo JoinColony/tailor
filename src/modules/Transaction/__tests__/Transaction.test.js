@@ -17,6 +17,7 @@ describe('Transaction', () => {
   };
   const encodedFunctionCall = 'encoded function call';
   const gasEstimate = 31415926535;
+  const signedTransaction = 'signed tx';
 
   const mockEncodeFunctionCall = sandbox
     .fn()
@@ -26,15 +27,27 @@ describe('Transaction', () => {
       estimate: sandbox.fn().mockResolvedValue(gasEstimate),
       encodeFunctionCall: mockEncodeFunctionCall,
       sendSignedTransaction: sandbox.fn(),
+      getGasPrice: sandbox.fn().mockReturnValue('auto gas price'),
     },
     wallet: {
       address: '0x123',
+      sign: sandbox.fn().mockResolvedValue(signedTransaction),
     },
     contractAddress: '0x456',
   };
 
   beforeEach(() => {
     sandbox.clear();
+  });
+
+  test('Constructor', () => {
+    expect(
+      () =>
+        new Transaction(mockLighthouse, {
+          functionCall,
+          to: 'not the wallet address',
+        }),
+    ).toThrow('address does not match');
   });
 
   test('Estimate', async () => {
@@ -57,7 +70,9 @@ describe('Transaction', () => {
   test('Sign', async () => {
     const tx = new Transaction(mockLighthouse, { functionCall });
 
-    await expect(tx.sign()).rejects.toEqual(new Error('Not yet implemented'));
+    const signedTx = await tx.sign();
+
+    expect(signedTx).toBe(signedTransaction);
   });
 
   test('Send', async () => {
@@ -99,9 +114,18 @@ describe('Transaction', () => {
 
     expect(tx.sign).toHaveBeenCalled();
 
+    // signed by different address
+    tx._signed = signed;
+    tx._from = 'not the wallet address';
+
+    await tx.send();
+
+    expect(tx.sign).toHaveBeenCalled();
+
     // pre signed
     tx.sign.mockReset();
     tx._signed = signed;
+    tx._from = mockLighthouse.wallet.address;
 
     await tx.send();
 
@@ -148,6 +172,7 @@ describe('Transaction', () => {
     const value = 999;
     const signed = 'signed transaction';
     const receipt = 'receipt';
+    const from = '0x123';
 
     const tx = new Transaction(mockLighthouse, { functionCall });
 
@@ -157,12 +182,14 @@ describe('Transaction', () => {
     expect(json).toEqual({
       functionCall,
       gas: null,
+      to: mockLighthouse.contractAddress,
       value: 0,
     });
 
     // everything
     tx._gas = gasEstimate;
     tx._value = value;
+    tx._from = from;
     tx._signed = signed;
     tx._receipt = receipt;
 
@@ -171,7 +198,9 @@ describe('Transaction', () => {
     expect(json).toEqual({
       functionCall,
       gas: gasEstimate,
+      to: mockLighthouse.contractAddress,
       value,
+      from,
       signed,
       receipt,
     });
@@ -195,30 +224,91 @@ describe('Transaction', () => {
   });
 
   test('Set gas', () => {
-    BigNumber.isBN
-      .mockImplementationOnce(() => false)
-      .mockImplementationOnce(() => true)
-      .mockImplementationOnce(() => false);
-
     const tx = new Transaction(mockLighthouse, { functionCall });
 
     // set with number
+    BigNumber.isBN
+      .mockImplementationOnce(() => false)
+      .mockImplementationOnce(() => true);
     tx.gas = 123456;
     expect(BigNumber).toHaveBeenCalledWith(123456);
 
+    // set with string
+    BigNumber.isBN
+      .mockImplementationOnce(() => false)
+      .mockImplementationOnce(() => true);
+    tx.gas = '123456';
+    expect(BigNumber).toHaveBeenCalledWith('123456');
+
     // set with bn
+    BigNumber.isBN
+      .mockImplementationOnce(() => true)
+      .mockImplementationOnce(() => true);
     const bn = { big: 'number' };
     tx.gas = bn;
     expect(BigNumber).toHaveBeenCalledWith(bn);
 
     // set with not valid
-    tx.gas = 'not valid';
+    BigNumber.isBN
+      .mockImplementationOnce(() => false)
+      .mockImplementationOnce(() => false);
+    tx.gas = null;
     expect(tx._gas).toBe(null);
 
     // set already signed
     tx._signed = 'signed';
     expect(() => {
       tx.gas = 123456;
+    }).toThrow('already signed');
+  });
+
+  test('Get gas price', async () => {
+    const tx = new Transaction(mockLighthouse, { functionCall });
+
+    // unspecified
+    expect(await tx.gasPrice).toBe('auto gas price');
+
+    // specified
+    tx._gasPrice = 123456;
+    expect(await tx.gasPrice).toBe(123456);
+  });
+
+  test('Set gas price', () => {
+    const tx = new Transaction(mockLighthouse, { functionCall });
+
+    // set with number
+    BigNumber.isBN
+      .mockImplementationOnce(() => false)
+      .mockImplementationOnce(() => true);
+    tx.gasPrice = 123456;
+    expect(BigNumber).toHaveBeenCalledWith(123456);
+
+    // set with string
+    BigNumber.isBN
+      .mockImplementationOnce(() => false)
+      .mockImplementationOnce(() => true);
+    tx.gasPrice = '123456';
+    expect(BigNumber).toHaveBeenCalledWith('123456');
+
+    // set with bn
+    BigNumber.isBN
+      .mockImplementationOnce(() => true)
+      .mockImplementationOnce(() => true);
+    const bn = { big: 'number' };
+    tx.gasPrice = bn;
+    expect(BigNumber).toHaveBeenCalledWith(bn);
+
+    // set with not valid
+    BigNumber.isBN
+      .mockImplementationOnce(() => false)
+      .mockImplementationOnce(() => false);
+    tx.gasPrice = null;
+    expect(tx._gasPrice).toBe(null);
+
+    // set already signed
+    tx._signed = 'signed';
+    expect(() => {
+      tx.gasPrice = 123456;
     }).toThrow('already signed');
   });
 
@@ -234,23 +324,27 @@ describe('Transaction', () => {
   });
 
   test('Set value', () => {
-    BigNumber.isBN
-      .mockImplementationOnce(() => false)
-      .mockImplementationOnce(() => true)
-      .mockImplementationOnce(() => false);
-
     const tx = new Transaction(mockLighthouse, { functionCall });
 
     // set with number
+    BigNumber.isBN
+      .mockImplementationOnce(() => false)
+      .mockImplementationOnce(() => true);
     tx.value = 123456;
     expect(BigNumber).toHaveBeenCalledWith(123456);
 
     // set with bn
+    BigNumber.isBN
+      .mockImplementationOnce(() => true)
+      .mockImplementationOnce(() => true);
     const bn = { big: 'number' };
     tx.value = bn;
     expect(BigNumber).toHaveBeenCalledWith(bn);
 
     // set with not valid
+    BigNumber.isBN
+      .mockImplementationOnce(() => false)
+      .mockImplementationOnce(() => false);
     tx.value = 'not valid';
     expect(tx._value).toBe(null);
 

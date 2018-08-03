@@ -22,13 +22,12 @@ describe('Integration testing', () => {
 
   let client;
 
-  test('Initializing a client', async () => {
-    client = new Lighthouse({
+  test('Creating a client', async () => {
+    const web3 = new Web3('ws://localhost:8545');
+    client = await Lighthouse.create({
       adapter: {
         name: 'web3',
-        options: {
-          web3: new Web3('ws://localhost:8545'),
-        },
+        options: { web3 },
       },
       query: { contractName: 'MetaCoin' },
       parser: 'truffle',
@@ -38,14 +37,11 @@ describe('Integration testing', () => {
           directory,
         },
       },
+      wallet: {
+        name: 'web3',
+        options: { web3 },
+      },
     });
-
-    // The specs should not be set
-    expect(client).not.toHaveProperty('constants');
-    expect(client).not.toHaveProperty('events');
-    expect(client).not.toHaveProperty('methods');
-
-    await client.initialize();
 
     expect(client).toHaveProperty('constants', {
       getBalance: expect.any(Function),

@@ -2,51 +2,36 @@
 
 import deepmerge from 'deepmerge';
 
-import {
-  LOADER_NAME_MAP,
-  PARSER_NAME_MAP,
-  ADAPTER_NAME_MAP,
-} from './constants';
-import { DEFAULT_LOADER, DEFAULT_PARSER, DEFAULT_ADAPTER } from './defaults';
-import Adapter from '../adapters/Adapter';
-import Loader from '../loaders/Loader';
-import Parser from '../parsers/Parser';
 import Transaction from '../modules/Transaction';
 import constantFactory from '../modules/constantFactory';
 import methodFactory from '../modules/methodFactory';
 import Event from '../modules/Event';
 
+import { getAdapter, getLoader, getParser, getWallet } from './factory';
+
 import type {
-  AdapterName,
-  AdapterSpec,
   ConstantSpecs,
   ContractData,
   ContractSpec,
   EventSpecs,
-  GenericQuery,
   IAdapter,
-  ILoader,
   IParser,
   IWallet,
   LighthouseArgs,
-  LoaderName,
-  LoaderSpec,
+  LighthouseCreateArgs,
   MethodSpecs,
-  ParserName,
-  ParserSpec,
   PartialConstantSpecs,
   PartialEventSpecs,
   PartialMethodSpecs,
+  WalletSpec,
 } from './flowtypes';
-
-const assert = require('assert');
 
 export default class Lighthouse {
   adapter: IAdapter;
 
-  loader: ILoader<*>;
-
   parser: IParser;
+
+  wallet: IWallet;
 
   constants: {
     [constantName: string]: (...params: any) => Promise<Object>,
@@ -62,128 +47,66 @@ export default class Lighthouse {
 
   contractAddress: string;
 
-  _query: GenericQuery;
-
   _overrides: {
     constants: PartialConstantSpecs,
     events: PartialEventSpecs,
     methods: PartialMethodSpecs,
   };
 
-  wallet: IWallet;
-
-  // TODO JoinColony/lighthouse/issues/16
-  static getAdapter(
-    // TODO default adapter options doesn't include a web3 instance...
-    input: IAdapter | AdapterSpec | AdapterName = DEFAULT_ADAPTER,
-  ): IAdapter {
-    if (!input) throw new Error('Expected an adapter option');
-
-    if (input instanceof Adapter) return input;
-
-    let name: AdapterName = '';
-    let options;
-    if (typeof input === 'string') {
-      name = input;
-    } else {
-      const spec: AdapterSpec = input;
-      ({ name = '', options } = spec);
-    }
-
-    assert(
-      Object.hasOwnProperty.call(ADAPTER_NAME_MAP, name),
-      `Adapter with name "${name}" not found`,
-    );
-    return new ADAPTER_NAME_MAP[name](options);
-  }
-
-  // TODO JoinColony/lighthouse/issues/16
-  static getLoader(
-    input: ILoader<*> | LoaderSpec | LoaderName = DEFAULT_LOADER,
-  ): ILoader<*> {
-    if (!input) throw new Error('Expected a loader option');
-
-    if (input instanceof Loader) return input;
-
-    let name: LoaderName = '';
-    let options;
-    if (typeof input === 'string') {
-      name = input;
-    } else {
-      const spec: LoaderSpec = input;
-      ({ name = '', options } = spec);
-    }
-
-    assert(
-      Object.hasOwnProperty.call(LOADER_NAME_MAP, name),
-      `Loader with name "${name}" not found`,
-    );
-    return new LOADER_NAME_MAP[name](options);
-  }
-
-  // TODO JoinColony/lighthouse/issues/16
-  static getParser(
-    input: IParser | ParserSpec | ParserName = DEFAULT_PARSER,
-  ): IParser {
-    if (!input) throw new Error('Expected a parser option');
-
-    if (input instanceof Parser) return input;
-
-    let name: ParserName = '';
-    let options;
-    if (typeof input === 'string') {
-      name = input;
-    } else {
-      const spec: ParserSpec = input;
-      ({ name = '', options } = spec);
-    }
-
-    assert(
-      Object.hasOwnProperty.call(PARSER_NAME_MAP, name),
-      `Parser with name "${name}" not found`,
-    );
-    return new PARSER_NAME_MAP[name](options);
-  }
-
-  static getLighthouseDefaults({
-    adapter,
-    constants = {},
-    contractData,
-    events = {},
+  static async create({
+    contractData: providedContractData,
     loader,
-    methods = {},
-    parser,
+    adapter: providedAdapter,
+    parser: providedParser,
+    wallet: providedWallet,
+    constants,
+    events,
+    methods,
     query,
-  }: LighthouseArgs = {}) {
-    return {
-      adapter: this.getAdapter(adapter),
+  }: LighthouseCreateArgs = {}): Promise<this> {
+    if (!(providedContractData || loader))
+      throw new Error('Expected either contractData or loader');
+
+    const contractData =
+      providedContractData ||
+      (await getLoader(loader).load(Object.assign({}, query)));
+
+    const adapter = getAdapter(providedAdapter);
+    const parser = getParser(providedParser);
+    const wallet = await getWallet(providedWallet);
+
+    await adapter.initialize(contractData);
+
+    return new this({
+      adapter,
+      parser,
+      wallet,
       constants,
-      contractData,
       events,
-      loader: this.getLoader(loader),
       methods,
-      parser: this.getParser(parser),
-      query,
-    };
+      contractData,
+    });
   }
 
-  constructor(args: LighthouseArgs) {
-    const {
-      adapter,
-      constants,
-      contractData,
-      events,
-      loader,
-      methods,
-      parser,
-      query,
-    } = this.constructor.getLighthouseDefaults(args);
+  constructor({
+    adapter,
+    parser,
+    wallet,
+    constants = {},
+    events = {},
+    methods = {},
+    contractData,
+  }: LighthouseArgs) {
     this.adapter = adapter;
-    this.loader = loader;
     this.parser = parser;
+    this.wallet = wallet;
     this._overrides = { constants, events, methods };
-    if (contractData) this._defineContractInterface(contractData);
-    this._query = query;
+    this._defineContractInterface(contractData);
+  }
+
+  async setWallet(wallet: IWallet | WalletSpec): Promise<IWallet> {
+    this.wallet = await getWallet(wallet);
+    return this.wallet;
   }
 
   _getContractSpec(contractData: ContractData): ContractSpec {
@@ -227,11 +150,5 @@ export default class Lighthouse {
     this._defineMethods(spec.methods);
 
     return spec;
-  }
-
-  async initialize() {
-    const contractData = await this.loader.load(this._query);
-    this.adapter.initialize(contractData);
-    this._defineContractInterface(contractData);
   }
 }
