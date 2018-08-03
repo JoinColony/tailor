@@ -2,6 +2,7 @@
 
 import deepmerge from 'deepmerge';
 
+// eslint-disable-next-line import/no-cycle
 import constantFactory from '../modules/constantFactory';
 import Event from '../modules/Event';
 
