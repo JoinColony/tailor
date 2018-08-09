@@ -2,6 +2,7 @@
 
 import type { ILoader, ContractData, GenericQuery } from '../interface/Loader';
 import type { IAdapter } from '../interface/Adapter';
+import type { FunctionArguments } from '../interface/flowtypes';
 import type { IParser } from '../interface/Parser';
 import type { IWallet } from '../interface/Wallet';
 import type {
@@ -71,16 +72,16 @@ export type LighthouseArgs = {
   wallet: IWallet,
 };
 
-export type { IWallet } from '../interface/Wallet';
-
 export type {
   ConstantSpecs,
   ContractData,
   ContractSpec,
   EventSpecs,
+  FunctionArguments,
   IAdapter,
   ILoader,
   IParser,
+  IWallet,
   MethodSpecs,
   PartialConstantSpecs,
   PartialEventSpecs,

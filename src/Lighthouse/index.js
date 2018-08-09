@@ -18,6 +18,7 @@ import type {
   ContractData,
   ContractSpec,
   EventSpecs,
+  FunctionArguments,
   IAdapter,
   IParser,
   IWallet,
@@ -57,7 +58,7 @@ export default class Lighthouse {
     methods: PartialMethodSpecs,
   };
 
-  static async create({
+  static async getConstructorArgs({
     contractData: providedContractData,
     loader,
     adapter: providedAdapter,
@@ -67,7 +68,7 @@ export default class Lighthouse {
     events,
     methods,
     query,
-  }: LighthouseCreateArgs = {}): Promise<this> {
+  }: LighthouseCreateArgs = {}): Promise<LighthouseArgs> {
     if (!(providedContractData || loader))
       throw new Error('Expected either contractData or loader');
 
@@ -81,7 +82,7 @@ export default class Lighthouse {
 
     await adapter.initialize(contractData);
 
-    return new this({
+    return {
       adapter,
       parser,
       wallet,
@@ -89,7 +90,31 @@ export default class Lighthouse {
       events,
       methods,
       contractData,
+    };
+  }
+
+  static async create(args: LighthouseCreateArgs = {}): Promise<this> {
+    return new this(await this.getConstructorArgs(args));
+  }
+
+  static async deploy(
+    args: LighthouseCreateArgs = {},
+    deployArgs: FunctionArguments,
+  ): Promise<this> {
+    // $FlowFixMe why does only work with two `await`s?
+    const constructorArgs = await this.getConstructorArgs(args);
+
+    const deployData = constructorArgs.adapter.encodeDeploy(deployArgs);
+    const signed = await constructorArgs.wallet.sign({
+      from: constructorArgs.wallet.address,
+      data: deployData,
     });
+    const receipt = await constructorArgs.adapter.sendSignedTransaction(signed);
+
+    constructorArgs.contractData.address = receipt.contractAddress;
+    await constructorArgs.adapter.initialize(constructorArgs.contractData);
+
+    return new this(constructorArgs);
   }
 
   constructor({
