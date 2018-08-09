@@ -20,6 +20,8 @@ import type {
 import type { IWallet } from './Wallet';
 
 export interface IAdapter {
+  wallet: IWallet;
+
   initialize(contractData: ContractData): void;
 
   encodeDeploy(args: FunctionArguments): TransactionData;
@@ -27,9 +29,12 @@ export interface IAdapter {
   decodeFunctionCallData(functionCallData: TransactionData): FunctionCall;
 
   estimate(options: EstimateOptions): Promise<Gas>;
-  sendSignedTransaction(
-    transaction: SignedTransaction,
-  ): PromiEventEmitter<TransactionReceipt>;
+
+  getNonce(address?: Address): Promise<Nonce>;
+
+  getSendTransaction(
+    unsignedTransaction: UnsignedTransaction,
+  ): Promise<() => PromiEventEmitter<TransactionReceipt>>;
 
   call(functionCall: FunctionCall): Promise<FunctionCallResult>;
 

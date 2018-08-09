@@ -14,19 +14,23 @@ import type {
 import type { ContractData } from '../../interface/Loader';
 import Adapter from '../Adapter';
 import { convertResultObj } from '../../modules/paramConversion';
+import type { IWallet } from '../../interface/Wallet';
 
 export default class Web3Adapter extends Adapter {
   _web3: any;
 
   _contract: any;
 
+  wallet: IWallet;
+
   static get name() {
     return 'web3';
   }
 
-  constructor({ web3 }: { web3: any } = {}) {
+  constructor({ web3, wallet }: { web3: any, wallet: IWallet } = {}) {
     super();
     this._web3 = web3;
+    this.wallet = wallet;
   }
 
   initialize(contractData: ContractData) {
@@ -130,6 +134,20 @@ export default class Web3Adapter extends Adapter {
     });
 
     return decodedReceipt;
+  }
+
+  async getNonce(address: * = this.wallet.address) {
+    return this._web3.eth.getTransactionCount(address);
+  }
+
+  async getSendTransaction(unsignedTransaction: *) {
+    // Some wallets have a separate sign method; use this if necessary
+    if (this.wallet.sign) {
+      const signedTransaction = await this.wallet.sign(unsignedTransaction);
+      return this.sendSignedTransaction.bind(this, signedTransaction);
+    }
+
+    return this._web3.eth.sendTransaction.bind(this, unsignedTransaction);
   }
 
   sendSignedTransaction(transaction: SignedTransaction) {
