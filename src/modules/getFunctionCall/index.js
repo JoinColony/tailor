@@ -1,6 +1,9 @@
 /* @flow */
 
-import type { FunctionCall, FunctionSignature } from '../../interface/Adapter';
+import type {
+  FunctionCall,
+  FunctionSignature,
+} from '../../interface/flowtypes';
 import type { FunctionParams } from '../../interface/ContractSpec';
 import {
   convertInput,

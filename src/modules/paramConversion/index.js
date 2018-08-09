@@ -2,7 +2,7 @@
 
 import type { ParamsSpec } from '../../interface/Params';
 import type { FunctionParams } from '../../interface/ContractSpec';
-import type { FunctionSignature } from '../../interface/Adapter';
+import type { FunctionSignature } from '../../interface/flowtypes';
 
 /*
  * Given a specification for parameters and input values, use the spec to

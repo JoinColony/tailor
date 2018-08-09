@@ -10,7 +10,7 @@ import type {
   SubscriptionOptions,
   TransactionData,
   TransactionReceipt,
-} from '../../interface/Adapter';
+} from '../../interface/flowtypes';
 import type { ContractData } from '../../interface/Loader';
 import Adapter from '../Adapter';
 import { convertResultObj } from '../../modules/paramConversion';

@@ -1,7 +1,7 @@
 /* @flow */
 
 import type { ParamsSpec } from './Params';
-import type { FunctionSignature, EventSignature } from './Adapter';
+import type { FunctionSignature, EventSignature } from './flowtypes';
 
 export type FunctionParams = {
   [functionSig: FunctionSignature]: ParamsSpec,
