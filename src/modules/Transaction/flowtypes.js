@@ -8,15 +8,15 @@ import type {
   SignedTransaction,
   TransactionData,
   TransactionReceipt,
+  TypedEvents,
   Wei,
 } from '../../interface/flowtypes';
-import type { TypedEvents } from '../Event/flowtypes';
 
 type Confirmations = Array<TransactionReceipt>;
 
 type TransactionState = {
   createdAt: Date,
-  events?: TypedEvents,
+  events: TypedEvents,
   functionCall: FunctionCall,
   to: Address,
   data: TransactionData,
