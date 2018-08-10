@@ -22,9 +22,15 @@ describe('Web3Adapter', () => {
       },
       Contract: sandbox.fn(),
       estimateGas: sandbox.fn(),
+      sendTransaction: sandbox.fn(),
       sendSignedTransaction: sandbox.fn(),
       getGasPrice: sandbox.fn(),
+      getTransactionCount: sandbox.fn(),
     },
+  };
+
+  const mockWallet = {
+    address: 'wallet address',
   };
 
   const contractData = {
@@ -41,8 +47,15 @@ describe('Web3Adapter', () => {
     expect(Web3Adapter.name).toEqual('web3');
   });
 
+  test('Initialize without arguments', () => {
+    expect(() => new Web3Adapter()).toThrow();
+  });
+
   test('Initialize', () => {
-    const adapter = new Web3Adapter({ web3: mockWeb3 });
+    const adapter = new Web3Adapter({ web3: mockWeb3, wallet: mockWallet });
+    expect(adapter).toHaveProperty('_web3', mockWeb3);
+    expect(adapter).toHaveProperty('wallet', mockWallet);
+
     adapter.initialize(contractData);
 
     expect(mockWeb3.eth.Contract).toHaveBeenCalledWith(
@@ -484,5 +497,62 @@ describe('Web3Adapter', () => {
     adapter._contract = 'the contract';
 
     expect(adapter.contract).toBe(adapter._contract);
+  });
+
+  test('Get nonce', async () => {
+    const adapter = new Web3Adapter({ web3: mockWeb3, wallet: mockWallet });
+
+    mockWeb3.eth.getTransactionCount.mockImplementationOnce(async () => 4);
+    expect(await adapter.getNonce()).toEqual(4);
+    expect(mockWeb3.eth.getTransactionCount).toHaveBeenCalledWith(
+      adapter.wallet.address,
+    );
+    mockWeb3.eth.getTransactionCount.mockReset();
+
+    mockWeb3.eth.getTransactionCount.mockImplementationOnce(async () => 0);
+    expect(await adapter.getNonce('other address')).toEqual(0);
+    expect(mockWeb3.eth.getTransactionCount).toHaveBeenCalledWith(
+      'other address',
+    );
+    mockWeb3.eth.getTransactionCount.mockReset();
+  });
+
+  test('Get sendTransaction method', async () => {
+    const adapter = new Web3Adapter({ web3: mockWeb3, wallet: mockWallet });
+    const tx = 'unsigned transaction';
+
+    const promiEvent = { promiEvent: true };
+    mockWeb3.eth.sendTransaction.mockImplementation(async () => promiEvent);
+    sandbox
+      .spyOn(adapter, 'sendSignedTransaction')
+      .mockImplementation(async () => promiEvent);
+
+    // Without a sign method on the wallet
+    const sendTx1 = await adapter.getSendTransaction(tx);
+    expect(sendTx1).toEqual(expect.any(Function));
+
+    await sendTx1();
+    expect(adapter.sendSignedTransaction).not.toHaveBeenCalled();
+    expect(adapter._web3.eth.sendTransaction).toHaveBeenCalledWith(tx);
+    adapter.sendSignedTransaction.mockReset();
+    mockWeb3.eth.sendTransaction.mockReset();
+
+    // With a sign method on the wallet
+    const signedTx = 'signed transaction';
+    const fancyWallet = {
+      sign: sandbox.fn().mockImplementation(async () => signedTx),
+    };
+    adapter.wallet = fancyWallet;
+
+    const sendTx2 = await adapter.getSendTransaction(tx);
+    expect(sendTx2).toEqual(expect.any(Function));
+
+    await sendTx2();
+    expect(fancyWallet.sign).toHaveBeenCalledWith(tx);
+    expect(adapter.sendSignedTransaction).toHaveBeenCalledWith(signedTx);
+    expect(mockWeb3.eth.sendTransaction).not.toHaveBeenCalled();
+    expect(adapter.sendSignedTransaction).toHaveBeenCalledWith(signedTx);
+    adapter.sendSignedTransaction.mockReset();
+    mockWeb3.eth.sendTransaction.mockReset();
   });
 });

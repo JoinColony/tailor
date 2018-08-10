@@ -1,6 +1,6 @@
 /* @flow */
 
-import type { Address } from './flowtypes';
+import type { Address, UnsignedTransaction } from './flowtypes';
 
 export interface IWallet {
   +address: Address;
@@ -13,7 +13,9 @@ export interface IWallet {
   +publicKey: Promise<string>;
 
   setDefaultAddress(addressIndex: number): Promise<boolean>;
-  sign(transactionObject: {}): Promise<string>;
-  signMessage(messageObject: {}): Promise<string>;
-  verifyMessage(verificationObject: {}): Promise<boolean>;
+  signMessage(messageObject: Object): Promise<string>;
+  verifyMessage(verificationObject: Object): Promise<boolean>;
+
+  // This should be optional, but interfaces don't support optional methods
+  sign(unsignedTransaction: UnsignedTransaction): Promise<string>;
 }

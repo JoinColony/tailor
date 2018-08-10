@@ -2,6 +2,7 @@
 /* eslint-disable no-underscore-dangle */
 
 import createSandbox from 'jest-sandbox';
+import BigNumber from 'bn.js';
 
 import methodFactory from '../index';
 import PARAM_TYPES from '../../paramTypes';
@@ -14,6 +15,9 @@ describe('Methods', () => {
 
   const mockLighthouse = {
     adapter: {
+      wallet: {
+        address: 'wallet address',
+      },
       call: sandbox.fn().mockResolvedValue([result.z]),
       encodeFunctionCall: sandbox
         .fn()
@@ -114,7 +118,7 @@ describe('Methods', () => {
     expect(tx).toBeInstanceOf(Transaction);
     expect(tx._lh).toBe(mockLighthouse);
     expect(tx.gas).toBe(null);
-    expect(tx.value).toBe(0);
+    expect(tx.value).toEqual(new BigNumber(0));
 
     const txWithOptions = payableMethod(1, { value: 1000 });
     expect(txWithOptions.value.toNumber()).toEqual(1000);

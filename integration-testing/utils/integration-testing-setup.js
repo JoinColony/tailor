@@ -78,8 +78,9 @@ module.exports = async () => {
   const ganacheServerPort = '8545';
   const ganacheServerOptions = {
     default_balance_ether: 100,
-    total_accounts: 10,
     gasLimit: 7000000,
+    noVMErrorsOnRPCResponse: true,
+    total_accounts: 10,
   };
   const ganacheServerDebugOptions = {
     debug: true,

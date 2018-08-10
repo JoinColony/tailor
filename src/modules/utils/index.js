@@ -1,6 +1,6 @@
 /* @flow */
 
 import isEmptyHexString from './isEmptyHexString';
+import parseBigNumber from './parseBigNumber';
 
-// eslint-disable-next-line import/prefer-default-export
-export { isEmptyHexString };
+export { isEmptyHexString, parseBigNumber };

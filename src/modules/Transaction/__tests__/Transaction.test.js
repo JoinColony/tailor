@@ -6,8 +6,6 @@ import BigNumber from 'bn.js';
 
 import Transaction from '../index';
 
-jest.mock('bn.js');
-
 describe('Transaction', () => {
   const sandbox = createSandbox();
 
@@ -17,23 +15,30 @@ describe('Transaction', () => {
   };
   const encodedFunctionCall = 'encoded function call';
   const gasEstimate = 31415926535;
+  const gasPrice = 4;
+  const nonce = 0;
+  const chainId = 1;
   const signedTransaction = 'signed tx';
 
   const mockEncodeFunctionCall = sandbox
     .fn()
     .mockImplementation(() => encodedFunctionCall);
+  const wallet = {
+    address: 'wallet address',
+    sign: sandbox.fn().mockResolvedValue(signedTransaction),
+  };
   const mockLighthouse = {
     adapter: {
       estimate: sandbox.fn().mockResolvedValue(gasEstimate),
       encodeFunctionCall: mockEncodeFunctionCall,
       sendSignedTransaction: sandbox.fn(),
-      getGasPrice: sandbox.fn().mockReturnValue('auto gas price'),
+      getGasPrice: sandbox.fn().mockReturnValue(gasPrice),
+      getNonce: sandbox.fn().mockReturnValue(nonce),
+      getCurrentNetwork: sandbox.fn().mockReturnValue(chainId),
+      wallet,
     },
-    wallet: {
-      address: '0x123',
-      sign: sandbox.fn().mockResolvedValue(signedTransaction),
-    },
-    contractAddress: '0x456',
+    wallet,
+    contractAddress: 'contract address',
   };
 
   beforeEach(() => {
@@ -47,7 +52,7 @@ describe('Transaction', () => {
           functionCall,
           to: 'not the wallet address',
         }),
-    ).toThrow('address does not match');
+    ).toThrow('"to" address does not match contract address');
   });
 
   test('Estimate', async () => {
@@ -63,21 +68,35 @@ describe('Transaction', () => {
       from: mockLighthouse.wallet.address,
       to: mockLighthouse.contractAddress,
       data: encodedFunctionCall,
-      value: 0,
+      value: expect.any(BigNumber),
     });
   });
 
-  test('Sign', async () => {
+  test('Preparing to send', async () => {
     const tx = new Transaction(mockLighthouse, { functionCall });
 
-    const signedTx = await tx.sign();
+    sandbox.spyOn(tx, 'estimate').mockImplementation(async () => gasEstimate);
+    sandbox.spyOn(tx, '_checkNotSent');
+    sandbox.spyOn(tx, '_send').mockImplementation(() => {});
 
-    expect(signedTx).toBe(signedTransaction);
+    await tx.send();
+
+    // The gas/gasPrice/nonce/chainId should have been set
+    expect(tx._checkNotSent).toHaveBeenCalled();
+    expect(tx.estimate).toHaveBeenCalled();
+    expect(mockLighthouse.adapter.getGasPrice).toHaveBeenCalled();
+    expect(mockLighthouse.adapter.getNonce).toHaveBeenCalledWith(tx.from);
+    expect(mockLighthouse.adapter.getCurrentNetwork).toHaveBeenCalled();
+    expect(tx).toHaveProperty('gas', new BigNumber(gasEstimate));
+    expect(tx).toHaveProperty('gasPrice', new BigNumber(gasPrice));
+    expect(tx).toHaveProperty('nonce', new BigNumber(nonce));
+    expect(tx).toHaveProperty('chainId', chainId);
+
+    // The tx should have been sent...
+    expect(tx._send).toHaveBeenCalled();
   });
 
-  test('Send', async () => {
-    const signed = 'signed';
-
+  test('Sending', async () => {
     const callbacks = [];
     const eventEmitter = {};
     const mockOn = sandbox.fn().mockImplementation((event, cb) => {
@@ -92,50 +111,20 @@ describe('Transaction', () => {
     eventEmitter.on = mockOn;
     eventEmitter.catch = mockCatch;
     eventEmitter.then = mockThen;
-    mockLighthouse.adapter.sendSignedTransaction.mockImplementation(
-      () => eventEmitter,
-    );
+    const mockSendTransaction = () => eventEmitter;
+    mockLighthouse.adapter.getSendTransaction = sandbox
+      .fn()
+      .mockImplementation(() => mockSendTransaction);
 
     const tx = new Transaction(mockLighthouse, { functionCall });
-
-    // not pre signed and fails
-    sandbox.spyOn(tx, 'sign').mockImplementation(() => null);
-
-    await expect(tx.send()).rejects.toEqual(
-      new Error('Cannot send an unsigned transaction'),
-    );
-
-    // not pre signed
-    sandbox.spyOn(tx, 'sign').mockImplementation(() => {
-      tx._signed = 'signed';
-    });
-
-    await tx.send();
-
-    expect(tx.sign).toHaveBeenCalled();
-
-    // signed by different address
-    tx._signed = signed;
-    tx._from = 'not the wallet address';
-
-    await tx.send();
-
-    expect(tx.sign).toHaveBeenCalled();
-
-    // pre signed
-    tx.sign.mockReset();
-    tx._signed = signed;
-    tx._from = mockLighthouse.wallet.address;
-
-    await tx.send();
-
-    expect(tx.sign).not.toHaveBeenCalled();
-
-    expect(mockLighthouse.adapter.sendSignedTransaction).toHaveBeenCalledWith(
-      signed,
-    );
+    tx.gas = gasEstimate;
+    tx.gasPrice = gasPrice;
+    tx.nonce = nonce;
+    tx.chainId = chainId;
 
     sandbox.spyOn(tx, 'emit').mockImplementation(() => null);
+
+    await tx._send();
 
     // transaction hash
     expect(mockOn).toHaveBeenCalledWith('transactionHash', expect.anything());
@@ -162,47 +151,62 @@ describe('Transaction', () => {
     expect(tx.emit).toHaveBeenCalledWith('error', 'error');
 
     // decode receipt fails
-    mockLighthouse.adapter.sendSignedTransaction.mockImplementation(() => {
+    tx._state.sentAt = undefined;
+    mockLighthouse.adapter.getSendTransaction.mockImplementation(() => () => {
       throw new Error('fake error');
     });
     await expect(tx.send()).rejects.toEqual(new Error('fake error'));
   });
 
   test('To JSON', () => {
-    const value = 999;
-    const signed = 'signed transaction';
+    const value = new BigNumber(999);
     const receipt = 'receipt';
-    const from = '0x123';
+    const from = 'wallet address';
 
     const tx = new Transaction(mockLighthouse, { functionCall });
 
     // bare minimum
-    let json = tx.toJSON();
+    let json = JSON.parse(tx.toJSON());
 
     expect(json).toEqual({
+      confirmations: [],
+      createdAt: expect.any(String),
+      data: encodedFunctionCall,
+      from,
       functionCall,
-      gas: null,
       to: mockLighthouse.contractAddress,
-      value: 0,
+      value: '0',
     });
 
     // everything
-    tx._gas = gasEstimate;
-    tx._value = value;
-    tx._from = from;
-    tx._signed = signed;
-    tx._receipt = receipt;
+    tx.chainId = 1;
+    tx.gas = gasEstimate;
+    tx.gasPrice = 4;
+    tx.value = value;
+    tx._state.confirmations = [receipt];
+    tx._state.confirmedAt = new Date();
+    tx._state.from = from;
+    tx._state.hash = 'transaction hash';
+    tx._state.receipt = receipt;
+    tx._state.sentAt = new Date();
 
-    json = tx.toJSON();
+    json = JSON.parse(tx.toJSON());
 
     expect(json).toEqual({
-      functionCall,
-      gas: gasEstimate,
-      to: mockLighthouse.contractAddress,
-      value,
+      chainId: 1,
+      confirmations: [receipt],
+      confirmedAt: expect.any(String),
+      createdAt: expect.any(String),
+      data: encodedFunctionCall,
       from,
-      signed,
+      functionCall,
+      gas: `${gasEstimate}`,
+      gasPrice: '4',
+      hash: 'transaction hash',
       receipt,
+      sentAt: expect.any(String),
+      to: mockLighthouse.contractAddress,
+      value: '999',
     });
   });
 
@@ -212,168 +216,93 @@ describe('Transaction', () => {
     expect(tx.functionCall).toBe(functionCall);
   });
 
-  test('Get gas', () => {
+  test('Numeric properties', () => {
     const tx = new Transaction(mockLighthouse, { functionCall });
 
-    // unspecified
-    expect(tx.gas).toBe(null);
+    ['gas', 'gasPrice', 'value'].forEach(propName => {
+      // set with number
+      tx[propName] = 123456;
+      expect(tx[propName]).toEqual(new BigNumber(123456));
 
-    // specified
-    tx._gas = 123456;
-    expect(tx.gas).toBe(123456);
-  });
+      // set with string
+      tx[propName] = '234567';
+      expect(tx[propName]).toEqual(new BigNumber(234567));
 
-  test('Set gas', () => {
-    const tx = new Transaction(mockLighthouse, { functionCall });
+      // set with bn
+      const bn = new BigNumber(345678);
+      tx[propName] = bn;
+      expect(tx[propName]).toEqual(bn);
 
-    // set with number
-    BigNumber.isBN
-      .mockImplementationOnce(() => false)
-      .mockImplementationOnce(() => true);
-    tx.gas = 123456;
-    expect(BigNumber).toHaveBeenCalledWith(123456);
+      // set with not valid
+      tx[propName] = 'not a valid input';
+      expect(tx[propName]).toBe(null);
 
-    // set with string
-    BigNumber.isBN
-      .mockImplementationOnce(() => false)
-      .mockImplementationOnce(() => true);
-    tx.gas = '123456';
-    expect(BigNumber).toHaveBeenCalledWith('123456');
-
-    // set with bn
-    BigNumber.isBN
-      .mockImplementationOnce(() => true)
-      .mockImplementationOnce(() => true);
-    const bn = { big: 'number' };
-    tx.gas = bn;
-    expect(BigNumber).toHaveBeenCalledWith(bn);
-
-    // set with not valid
-    BigNumber.isBN
-      .mockImplementationOnce(() => false)
-      .mockImplementationOnce(() => false);
-    tx.gas = null;
-    expect(tx._gas).toBe(null);
-
-    // set already signed
-    tx._signed = 'signed';
-    expect(() => {
-      tx.gas = 123456;
-    }).toThrow('already signed');
-  });
-
-  test('Get gas price', async () => {
-    const tx = new Transaction(mockLighthouse, { functionCall });
-
-    // unspecified
-    expect(await tx.gasPrice).toBe('auto gas price');
-
-    // specified
-    tx._gasPrice = 123456;
-    expect(await tx.gasPrice).toBe(123456);
-  });
-
-  test('Set gas price', () => {
-    const tx = new Transaction(mockLighthouse, { functionCall });
-
-    // set with number
-    BigNumber.isBN
-      .mockImplementationOnce(() => false)
-      .mockImplementationOnce(() => true);
-    tx.gasPrice = 123456;
-    expect(BigNumber).toHaveBeenCalledWith(123456);
-
-    // set with string
-    BigNumber.isBN
-      .mockImplementationOnce(() => false)
-      .mockImplementationOnce(() => true);
-    tx.gasPrice = '123456';
-    expect(BigNumber).toHaveBeenCalledWith('123456');
-
-    // set with bn
-    BigNumber.isBN
-      .mockImplementationOnce(() => true)
-      .mockImplementationOnce(() => true);
-    const bn = { big: 'number' };
-    tx.gasPrice = bn;
-    expect(BigNumber).toHaveBeenCalledWith(bn);
-
-    // set with not valid
-    BigNumber.isBN
-      .mockImplementationOnce(() => false)
-      .mockImplementationOnce(() => false);
-    tx.gasPrice = null;
-    expect(tx._gasPrice).toBe(null);
-
-    // set already signed
-    tx._signed = 'signed';
-    expect(() => {
-      tx.gasPrice = 123456;
-    }).toThrow('already signed');
-  });
-
-  test('Get value', () => {
-    const tx = new Transaction(mockLighthouse, { functionCall });
-
-    // not set
-    expect(tx.value).toBe(0);
-
-    // set
-    tx._value = 123456;
-    expect(tx.value).toBe(123456);
-  });
-
-  test('Set value', () => {
-    const tx = new Transaction(mockLighthouse, { functionCall });
-
-    // set with number
-    BigNumber.isBN
-      .mockImplementationOnce(() => false)
-      .mockImplementationOnce(() => true);
-    tx.value = 123456;
-    expect(BigNumber).toHaveBeenCalledWith(123456);
-
-    // set with bn
-    BigNumber.isBN
-      .mockImplementationOnce(() => true)
-      .mockImplementationOnce(() => true);
-    const bn = { big: 'number' };
-    tx.value = bn;
-    expect(BigNumber).toHaveBeenCalledWith(bn);
-
-    // set with not valid
-    BigNumber.isBN
-      .mockImplementationOnce(() => false)
-      .mockImplementationOnce(() => false);
-    tx.value = 'not valid';
-    expect(tx._value).toBe(null);
-
-    // set already signed
-    tx._signed = 'signed';
-    expect(() => {
-      tx.value = 123456;
-    }).toThrow('already signed');
-  });
-
-  test('Get signed transaction', () => {
-    const tx = new Transaction(mockLighthouse, { functionCall });
-
-    // not set
-    expect(tx.signed).toBe(null);
-
-    // set
-    tx._signed = 'signed';
-    expect(tx.signed).toBe('signed');
+      // set when already sent
+      tx._state.sentAt = new Date();
+      expect(() => {
+        tx[propName] = 123456;
+      }).toThrow('Unable to set');
+      tx._state.sentAt = undefined;
+    });
   });
 
   test('Get receipt', () => {
     const tx = new Transaction(mockLighthouse, { functionCall });
 
     // not set
-    expect(tx.receipt).toBe(null);
+    expect(tx.receipt).toBe(undefined);
 
     // set
-    tx._receipt = { receipt: true };
+    tx._state.receipt = { receipt: true };
     expect(tx.receipt).toEqual({ receipt: true });
+  });
+
+  test('Checking not sent', () => {
+    const tx = new Transaction(mockLighthouse, { functionCall });
+
+    expect(() => tx._checkNotSent()).not.toThrow();
+
+    tx._state.sentAt = new Date();
+    expect(() => tx._checkNotSent()).toThrow('Unable to perform action');
+    expect(() =>
+      tx._checkNotSent('do an action with a custom message'),
+    ).toThrow('Unable to do an action with a custom message');
+  });
+
+  test('Handling confirmations', () => {
+    const tx = new Transaction(mockLighthouse, { functionCall });
+    expect(tx).toHaveProperty('confirmedAt', undefined);
+
+    const receipt0 = { receipt0: true };
+    const receipt1 = { receipt1: true };
+    sandbox.spyOn(tx, 'emit');
+
+    tx._handleConfirmation(0, receipt0);
+
+    expect(tx.emit).toHaveBeenCalledWith('confirmation', 0, receipt0);
+    expect(tx).toHaveProperty('confirmedAt', expect.any(Date));
+    expect(tx).toHaveProperty('confirmations', [receipt0]);
+    tx.emit.mockReset();
+
+    // Further confirmations should add a confirmation and not change the date
+    const confirmedAt = new Date(tx.confirmedAt);
+    tx._handleConfirmation(1, receipt1);
+
+    expect(tx.emit).toHaveBeenCalledWith('confirmation', 1, receipt1);
+    expect(tx).toHaveProperty('confirmations', [receipt0, receipt1]);
+    expect(tx).toHaveProperty('confirmedAt', confirmedAt);
+  });
+
+  test('Handling errors while sending', () => {
+    const tx = new Transaction(mockLighthouse, { functionCall });
+
+    tx._state.sentAt = new Date();
+    sandbox.spyOn(tx, 'emit');
+
+    const error = new Error('some error while sending');
+    tx._handleSendError(error);
+
+    expect(tx.emit).toHaveBeenCalledWith('error', error);
+    expect(tx.sentAt).toBe(undefined);
   });
 });

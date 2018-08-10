@@ -38,18 +38,20 @@ const assert = require('assert');
 export function getAdapter(
   // TODO default adapter options doesn't include a web3 instance...
   input: IAdapter | AdapterSpec | AdapterName = DEFAULT_ADAPTER,
+  wallet: IWallet,
 ): IAdapter {
   if (!input) throw new Error('Expected an adapter option');
 
   if (input instanceof Adapter) return input;
 
   let name: AdapterName = '';
-  let options;
+  let options = { wallet };
   if (typeof input === 'string') {
     name = input;
   } else {
     const spec: AdapterSpec = input;
-    ({ name = '', options } = spec);
+    name = spec.name || '';
+    options = Object.assign({}, options, spec.options);
   }
 
   assert(

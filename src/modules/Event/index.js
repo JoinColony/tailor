@@ -3,11 +3,11 @@
 
 import EventEmitter from 'eventemitter3';
 import { sha3 } from 'web3-utils';
+import type { IAdapter } from '../../interface/Adapter';
 import type {
   Event as EventLog,
   EventSignature,
-  IAdapter,
-} from '../../interface/Adapter';
+} from '../../interface/flowtypes';
 import type { EventSpec } from '../../interface/ContractSpec';
 
 import { convertResultObj, convertOutput } from '../paramConversion';

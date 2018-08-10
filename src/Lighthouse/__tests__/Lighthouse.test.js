@@ -27,6 +27,8 @@ jest.mock('../factory', () => ({
 describe('Lighthouse', () => {
   const sandbox = createSandbox();
 
+  const wallet = new Wallet();
+
   beforeEach(() => {
     sandbox.restore();
   });
@@ -36,13 +38,10 @@ describe('Lighthouse', () => {
     const args = {
       adapter: {
         name: 'web3',
-        options: { web3 },
+        options: { web3, wallet },
       },
       parser: 'abi',
-      wallet: {
-        name: 'web3',
-        options: { web3 },
-      },
+      wallet,
     };
     const dataArgs = Object.assign({}, args, {
       contractData: 'contract data',
@@ -60,6 +59,7 @@ describe('Lighthouse', () => {
     const mockLoaderLoad = sandbox.fn();
     getAdapter.mockReturnValue({ initialize: mockAdapterInit });
     getLoader.mockReturnValue({ load: mockLoaderLoad });
+    getWallet.mockReturnValue(wallet);
 
     // no args
     await expect(Lighthouse.create()).rejects.toThrow('contractData or loader');
@@ -72,7 +72,7 @@ describe('Lighthouse', () => {
     await Lighthouse.create(loaderArgs);
     expect(mockLoaderLoad).toHaveBeenCalled();
 
-    expect(getAdapter).toHaveBeenCalledWith(args.adapter);
+    expect(getAdapter).toHaveBeenCalledWith(args.adapter, args.wallet);
     expect(getParser).toHaveBeenCalledWith(args.parser);
     expect(getWallet).toHaveBeenCalledWith(args.wallet);
     expect(mockAdapterInit).toHaveBeenCalled();

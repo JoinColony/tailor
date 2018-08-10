@@ -30,15 +30,21 @@ describe('Lighthouse factory', () => {
 
     const web3 = new Web3();
     const adapterInstance = new Web3Adapter({ web3 });
+    const wallet = new Web3Wallet({ web3 });
 
     const withName = getAdapter('web3');
     expect(withName).toBeInstanceOf(Web3Adapter);
 
-    const withSpec = getAdapter({
-      name: 'web3',
-      options: { web3 },
-    });
+    const withSpec = getAdapter(
+      {
+        name: 'web3',
+        options: { web3 },
+      },
+      wallet,
+    );
     expect(withSpec).toBeInstanceOf(Web3Adapter);
+    expect(withSpec).toHaveProperty('wallet', wallet);
+    expect(withSpec).toHaveProperty('_web3', web3);
     // TODO: check constructor arguments, see below about "ideal world"
 
     const withInstance = getAdapter(adapterInstance);

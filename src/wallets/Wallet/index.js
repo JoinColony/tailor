@@ -2,7 +2,6 @@
 /* eslint-disable no-unused-vars,class-methods-use-this */
 
 import { IWallet } from '../../interface/Wallet';
-import type { Address } from '../../interface/flowtypes';
 
 const notDefinedError = methodName => {
   throw new Error(`Expected "${methodName}" to be defined in a derived class`);

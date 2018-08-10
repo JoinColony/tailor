@@ -23,5 +23,7 @@ describe('Adapter', () => {
     expect(() => adapter.subscribe()).toThrow('subscribe');
     expect(() => adapter.getCurrentNetwork()).toThrow('getCurrentNetwork');
     expect(() => adapter.getGasPrice()).toThrow('getGasPrice');
+    expect(() => adapter.getNonce()).toThrow('getNonce');
+    expect(() => adapter.getSendTransaction()).toThrow('getSendTransaction');
   });
 });

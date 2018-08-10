@@ -2,7 +2,10 @@
 
 import type { MethodSpec, FunctionParams } from '../../interface/ContractSpec';
 import getFunctionCall from '../getFunctionCall';
+// eslint-disable-next-line import/no-cycle
 import Transaction from '../Transaction';
+// eslint-disable-next-line import/no-cycle
+import Lighthouse from '../../Lighthouse';
 
 function isOptions(input: any) {
   return (
@@ -11,7 +14,11 @@ function isOptions(input: any) {
   );
 }
 
-function getMethodFn(lighthouse: *, functionParams: FunctionParams, isPayable) {
+function getMethodFn(
+  lighthouse: Lighthouse,
+  functionParams: FunctionParams,
+  isPayable,
+) {
   return function method(...inputParams: any) {
     const options = isOptions(inputParams[inputParams.length - 1])
       ? inputParams.pop()

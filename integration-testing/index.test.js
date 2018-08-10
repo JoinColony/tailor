@@ -2,6 +2,7 @@ import path from 'path';
 import createSandbox from 'jest-sandbox';
 import Web3 from 'web3';
 
+import TestWallet from './utils/TestWallet';
 import Lighthouse from '../src';
 
 const directory = path.resolve(
@@ -22,6 +23,15 @@ describe('Integration testing', () => {
 
   let client;
 
+  const walletAddresses = Object.keys(global.ganacheAccounts.accounts);
+  const [walletAddress] = walletAddresses;
+  const {
+    secretKey: { data: privateKeyData },
+  } = global.ganacheAccounts.accounts[walletAddress];
+  const privateKey = Buffer.from(privateKeyData);
+
+  const wallet = new TestWallet(walletAddress, privateKey);
+
   test('Creating a client', async () => {
     const web3 = new Web3('ws://localhost:8545');
     client = await Lighthouse.create({
@@ -37,10 +47,7 @@ describe('Integration testing', () => {
           directory,
         },
       },
-      wallet: {
-        name: 'web3',
-        options: { web3 },
-      },
+      wallet,
     });
 
     expect(client).toHaveProperty('constants', {
@@ -63,14 +70,37 @@ describe('Integration testing', () => {
     });
   });
 
-  test('Listening to overloaded events', async () => {
-    const from = Object.keys(global.ganacheAccounts.accounts)[0];
+  test('Calling a method', async () => {
+    const tx = client.methods.emitOverloadedEvents();
 
+    const receiptListener = sandbox.fn();
+    const errorListener = sandbox.fn();
+    const hashListener = sandbox.fn();
+    tx.addListener('receipt', receiptListener);
+    tx.addListener('error', errorListener);
+    tx.addListener('transactionHash', hashListener);
+
+    await tx.send();
+
+    expect(tx).toHaveProperty('receipt', expect.any(Object));
+    expect(tx).toHaveProperty('hash', expect.any(String));
+
+    expect(receiptListener).toHaveBeenCalledTimes(1);
+    expect(receiptListener).toHaveBeenCalledWith(expect.any(Object));
+
+    expect(hashListener).toHaveBeenCalledTimes(1);
+    expect(hashListener).toHaveBeenCalledWith(expect.any(String));
+
+    expect(errorListener).not.toHaveBeenCalled();
+  });
+
+  // TODO in #51
+  test.skip('Listening to overloaded events', async () => {
     const handlerFunction = sandbox.fn();
     client.events.OverloadedEvent.addListener(handlerFunction);
 
-    const tx1 = client.adapter.contract.methods.emitOverloadedEvents();
-    await tx1.send({ from });
+    const tx1 = client.methods.emitOverloadedEvents();
+    await tx1.send();
 
     expect(handlerFunction).toHaveBeenCalledTimes(4);
 
@@ -106,8 +136,8 @@ describe('Integration testing', () => {
 
     client.events.OverloadedEvent.removeListener(handlerFunction);
 
-    const tx2 = client.adapter.contract.methods.emitOverloadedEvents();
-    await tx2.send({ from });
+    const tx2 = client.methods.emitOverloadedEvents();
+    await tx2.send();
 
     expect(handlerFunction).not.toHaveBeenCalled();
   });
