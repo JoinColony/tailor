@@ -5,6 +5,8 @@ import createSandbox from 'jest-sandbox';
 import BigNumber from 'bn.js';
 
 import Transaction from '../index';
+import Event from '../../Event';
+import { BOOLEAN_TYPE } from '../../paramTypes';
 
 describe('Transaction', () => {
   const sandbox = createSandbox();
@@ -39,6 +41,24 @@ describe('Transaction', () => {
     },
     wallet,
     contractAddress: 'contract address',
+  };
+
+  mockLighthouse.events = {
+    MyEvent: new Event(mockLighthouse, {
+      name: 'MyEvent',
+      output: { 'MyEvent()': [] },
+    }),
+    MyOtherEvent: new Event(mockLighthouse, {
+      name: 'MyOtherEvent',
+      output: {
+        'MyOtherEvent(bool)': [
+          {
+            name: 'someValue',
+            type: BOOLEAN_TYPE,
+          },
+        ],
+      },
+    }),
   };
 
   beforeEach(() => {
@@ -124,7 +144,8 @@ describe('Transaction', () => {
 
     sandbox.spyOn(tx, 'emit').mockImplementation(() => null);
 
-    await tx._send();
+    const sent = await tx._send();
+    expect(sent).toBe(tx);
 
     // transaction hash
     expect(mockOn).toHaveBeenCalledWith('transactionHash', expect.anything());
@@ -159,6 +180,8 @@ describe('Transaction', () => {
   });
 
   test('To JSON', () => {
+    const confirmations = ['confirmation'];
+    const events = { MyEvent: { myValue: 1 } };
     const value = new BigNumber(999);
     const receipt = 'receipt';
     const from = 'wallet address';
@@ -172,6 +195,7 @@ describe('Transaction', () => {
       confirmations: [],
       createdAt: expect.any(String),
       data: encodedFunctionCall,
+      events: [],
       from,
       functionCall,
       to: mockLighthouse.contractAddress,
@@ -183,8 +207,9 @@ describe('Transaction', () => {
     tx.gas = gasEstimate;
     tx.gasPrice = 4;
     tx.value = value;
-    tx._state.confirmations = [receipt];
+    tx._state.confirmations = confirmations;
     tx._state.confirmedAt = new Date();
+    tx._state.events = events;
     tx._state.from = from;
     tx._state.hash = 'transaction hash';
     tx._state.receipt = receipt;
@@ -194,10 +219,11 @@ describe('Transaction', () => {
 
     expect(json).toEqual({
       chainId: 1,
-      confirmations: [receipt],
+      confirmations,
       confirmedAt: expect.any(String),
       createdAt: expect.any(String),
       data: encodedFunctionCall,
+      events,
       from,
       functionCall,
       gas: `${gasEstimate}`,
@@ -304,5 +330,66 @@ describe('Transaction', () => {
 
     expect(tx.emit).toHaveBeenCalledWith('error', error);
     expect(tx.sentAt).toBe(undefined);
+  });
+
+  test('Handling receipts', () => {
+    const tx = new Transaction(mockLighthouse, { functionCall });
+    sandbox.spyOn(tx, 'emit');
+    sandbox.spyOn(tx, '_handleReceiptEvents');
+    sandbox.spyOn(Event.prototype, 'handleEvent');
+
+    const receipt = {
+      events: {
+        MyEvent: [
+          {
+            signature:
+              // eslint-disable-next-line max-len
+              '0x4dbfb68b43dddfa12b51ebe99ab8fded620f9a0ac23142879a4f192a1b7952d2',
+            returnValues: {},
+            event: 'MyEvent',
+          },
+        ],
+        MyOtherEvent: [
+          {
+            signature:
+              // eslint-disable-next-line max-len
+              '0x54552747a8ff700c6bab19a89633321fa93fa8cde42a60f5d3679e146768c727',
+            returnValues: {
+              '0': true,
+            },
+            event: 'MyOtherEvent',
+          },
+        ],
+      },
+    };
+
+    tx._handleReceipt(receipt);
+
+    expect(tx._handleReceiptEvents).toHaveBeenCalledWith(receipt);
+    expect(tx.emit).toHaveBeenCalledWith('receipt', receipt);
+    expect(tx).toHaveProperty('receipt', receipt);
+    expect(tx).toHaveProperty('events', [
+      {
+        data: {},
+        event: receipt.events.MyEvent[0],
+        signature: 'MyEvent()',
+        name: 'MyEvent',
+      },
+      {
+        data: {
+          someValue: true,
+        },
+        event: receipt.events.MyOtherEvent[0],
+        signature: 'MyOtherEvent(bool)',
+        name: 'MyOtherEvent',
+      },
+    ]);
+    expect(Event.prototype.handleEvent).toHaveBeenCalledTimes(2);
+    expect(Event.prototype.handleEvent).toHaveBeenCalledWith(
+      receipt.events.MyEvent[0],
+    );
+    expect(Event.prototype.handleEvent).toHaveBeenCalledWith(
+      receipt.events.MyOtherEvent[0],
+    );
   });
 });

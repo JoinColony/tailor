@@ -22,6 +22,7 @@ export default class Transaction extends EventEmitter {
       to = lh.contractAddress,
       confirmations = [],
       createdAt = new Date(),
+      events = [],
       gas,
       gasPrice,
       nonce,
@@ -41,6 +42,7 @@ export default class Transaction extends EventEmitter {
         confirmations,
         createdAt,
         data,
+        events,
         from,
         functionCall,
         to,
@@ -69,6 +71,10 @@ export default class Transaction extends EventEmitter {
 
   get createdAt() {
     return this._state.createdAt;
+  }
+
+  get events() {
+    return this._state.events;
   }
 
   get data() {
@@ -176,8 +182,19 @@ export default class Transaction extends EventEmitter {
     this.emit('transactionHash', hash);
   }
 
+  _handleReceiptEvents(receipt: TransactionReceipt) {
+    return Object.keys(receipt.events || {}).reduce((acc, eventName) => {
+      const eventCls = this._lh.events[eventName];
+      receipt.events[eventName].forEach(rawEvent => {
+        acc.push(eventCls.handleEvent(rawEvent));
+      });
+      return acc;
+    }, []);
+  }
+
   _handleReceipt(receipt: TransactionReceipt) {
     this._state.receipt = receipt;
+    this._state.events = this._handleReceiptEvents(receipt);
     this.emit('receipt', receipt);
   }
 
@@ -191,6 +208,7 @@ export default class Transaction extends EventEmitter {
       confirmations: this.confirmations,
       createdAt: this.createdAt,
       data: this.data,
+      events: this.events,
       from: this.from,
       functionCall: this.functionCall,
       to: this.to,
@@ -212,7 +230,7 @@ export default class Transaction extends EventEmitter {
     return this._lh.adapter.estimate(this.rawTransaction);
   }
 
-  async send(): Promise<TransactionReceipt> {
+  async send(): Promise<this> {
     this._checkNotSent('send transaction');
 
     if (this.gas == null) this.gas = await this.estimate();
@@ -239,7 +257,10 @@ export default class Transaction extends EventEmitter {
         )
         .on('error', error => this._handleSendError(error))
         .catch(reject)
-        .then(resolve);
+        .then(() => {
+          // Return the Transaction itself (with updated state)
+          resolve(this);
+        });
     });
   }
 }

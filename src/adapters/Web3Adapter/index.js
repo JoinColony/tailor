@@ -97,7 +97,7 @@ export default class Web3Adapter extends Adapter {
 
     const logs = receipt.logs.map(log =>
       // eslint-disable-next-line no-underscore-dangle
-      this.contract._decodeEventABI(
+      this.contract._decodeEventABI.call(
         {
           name: 'ALLEVENTS',
           jsonInterface: this.contract.options.jsonInterface,

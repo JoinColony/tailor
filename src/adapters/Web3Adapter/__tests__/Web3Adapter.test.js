@@ -254,22 +254,10 @@ describe('Web3Adapter', () => {
     // with logs
     const decoded = adapter._decodeReceipt(receipt);
 
-    expect(mockDecodeEventABI).toHaveBeenCalledWith(
-      expect.anything(),
-      receipt.logs[0],
-    );
-    expect(mockDecodeEventABI).toHaveBeenCalledWith(
-      expect.anything(),
-      receipt.logs[1],
-    );
-    expect(mockDecodeEventABI).toHaveBeenCalledWith(
-      expect.anything(),
-      receipt.logs[2],
-    );
-    expect(mockDecodeEventABI).toHaveBeenCalledWith(
-      expect.anything(),
-      receipt.logs[3],
-    );
+    expect(mockDecodeEventABI).toHaveBeenCalledWith(receipt.logs[0]);
+    expect(mockDecodeEventABI).toHaveBeenCalledWith(receipt.logs[1]);
+    expect(mockDecodeEventABI).toHaveBeenCalledWith(receipt.logs[2]);
+    expect(mockDecodeEventABI).toHaveBeenCalledWith(receipt.logs[3]);
     expect(mockDecodeEventABI).toHaveBeenCalledTimes(4);
 
     expect(decoded).toEqual(
