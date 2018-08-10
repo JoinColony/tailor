@@ -230,7 +230,7 @@ export default class Transaction extends EventEmitter {
     return this._lh.adapter.estimate(this.rawTransaction);
   }
 
-  async send(): Promise<TransactionReceipt> {
+  async send(): Promise<this> {
     this._checkNotSent('send transaction');
 
     if (this.gas == null) this.gas = await this.estimate();
@@ -257,7 +257,10 @@ export default class Transaction extends EventEmitter {
         )
         .on('error', error => this._handleSendError(error))
         .catch(reject)
-        .then(resolve);
+        .then(() => {
+          // Return the Transaction itself (with updated state)
+          resolve(this);
+        });
     });
   }
 }

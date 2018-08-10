@@ -144,7 +144,8 @@ describe('Transaction', () => {
 
     sandbox.spyOn(tx, 'emit').mockImplementation(() => null);
 
-    await tx._send();
+    const sent = await tx._send();
+    expect(sent).toBe(tx);
 
     // transaction hash
     expect(mockOn).toHaveBeenCalledWith('transactionHash', expect.anything());
