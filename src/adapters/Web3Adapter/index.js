@@ -27,7 +27,7 @@ export default class Web3Adapter extends Adapter {
     return 'web3';
   }
 
-  constructor({ web3, wallet }: { web3: any, wallet: IWallet } = {}) {
+  constructor({ web3, wallet }: { web3: any, wallet: IWallet }) {
     super();
     this._web3 = web3;
     this.wallet = wallet;
