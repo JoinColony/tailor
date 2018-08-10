@@ -74,9 +74,9 @@ export default class Lighthouse {
       providedContractData ||
       (await getLoader(loader).load(Object.assign({}, query)));
 
-    const adapter = getAdapter(providedAdapter);
     const parser = getParser(providedParser);
     const wallet = await getWallet(providedWallet);
+    const adapter = getAdapter(providedAdapter, wallet);
 
     await adapter.initialize(contractData);
 

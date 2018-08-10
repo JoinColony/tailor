@@ -37,7 +37,7 @@ describe('Integration testing', () => {
     client = await Lighthouse.create({
       adapter: {
         name: 'web3',
-        options: { web3, wallet },
+        options: { web3 },
       },
       query: { contractName: 'MetaCoin' },
       parser: 'truffle',
