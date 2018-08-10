@@ -93,21 +93,45 @@ describe('Integration testing', () => {
 
     expect(errorListener).not.toHaveBeenCalled();
 
-    expect(tx).toHaveProperty('events', {
-      'OverloadedEvent()': {},
-      'OverloadedEvent(uint256)': { a: 2 },
-      'OverloadedEvent(uint256,uint256)': { a: 2, b: 2 },
-      'OverloadedEvent(bool,bool)': { a: true, b: true },
-    });
+    expect(tx).toHaveProperty('events', expect.any(Array));
   });
 
-  // TODO in #51
-  test.skip('Listening to overloaded events', async () => {
+  test('Listening to overloaded events', async () => {
     const handlerFunction = sandbox.fn();
     client.events.OverloadedEvent.addListener(handlerFunction);
 
     const tx1 = client.methods.emitOverloadedEvents();
     await tx1.send();
+
+    expect(tx1).toHaveProperty(
+      'events',
+      expect.arrayContaining([
+        {
+          data: {},
+          event: expect.any(Object),
+          name: 'OverloadedEvent',
+          signature: 'OverloadedEvent()',
+        },
+        {
+          data: { a: 2 },
+          event: expect.any(Object),
+          name: 'OverloadedEvent',
+          signature: 'OverloadedEvent(uint256)',
+        },
+        {
+          data: { a: 2, b: 2 },
+          event: expect.any(Object),
+          name: 'OverloadedEvent',
+          signature: 'OverloadedEvent(uint256,uint256)',
+        },
+        {
+          data: { a: true, b: true },
+          event: expect.any(Object),
+          name: 'OverloadedEvent',
+          signature: 'OverloadedEvent(bool,bool)',
+        },
+      ]),
+    );
 
     expect(handlerFunction).toHaveBeenCalledTimes(4);
 
