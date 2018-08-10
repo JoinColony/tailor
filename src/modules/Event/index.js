@@ -4,10 +4,7 @@
 import EventEmitter from 'eventemitter3';
 import { sha3 } from 'web3-utils';
 import type { IAdapter } from '../../interface/Adapter';
-import type {
-  Event as EventLog,
-  EventSignature,
-} from '../../interface/flowtypes';
+import type { Event as EventLog, TypedEvent } from '../../interface/flowtypes';
 import type { EventSpec } from '../../interface/ContractSpec';
 
 import { convertResultObj, convertOutput } from '../paramConversion';
@@ -41,7 +38,7 @@ export default class Event {
       spec,
       ...convertResultObj(spec.length, returnValues),
     );
-    return { event, signature, data };
+    return { event, signature, data, name: event.event };
   }
 
   _findSignatureByHash(hash: string): string {

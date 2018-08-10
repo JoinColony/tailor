@@ -76,10 +76,19 @@ export type TransactionReceipt = {
   status: number, // 0 => failure, 1 => success
   transactionHash: string,
   transactionIndex: number,
-  events: { [String]: Event },
+  events: { [string]: Array<Event> },
 };
 
 export type SubscriptionOptions = {
   address?: Address, // defaults to _address
   event?: EventSignature, // all events if omitted
 };
+
+export type TypedEvent = {
+  signature: EventSignature,
+  event: Event,
+  data: Object,
+  name: string,
+};
+
+export type TypedEvents = Array<TypedEvent>;
