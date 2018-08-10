@@ -44,7 +44,7 @@ export function getAdapter(
   if (input instanceof Adapter) return input;
 
   let name: AdapterName = '';
-  let options;
+  let options = {};
   if (typeof input === 'string') {
     name = input;
   } else {
