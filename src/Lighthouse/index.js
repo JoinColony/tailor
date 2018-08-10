@@ -2,10 +2,13 @@
 
 import deepmerge from 'deepmerge';
 
-import Transaction from '../modules/Transaction';
 import constantFactory from '../modules/constantFactory';
-import methodFactory from '../modules/methodFactory';
 import Event from '../modules/Event';
+
+// eslint-disable-next-line import/no-cycle
+import Transaction from '../modules/Transaction';
+// eslint-disable-next-line import/no-cycle
+import methodFactory from '../modules/methodFactory';
 
 import { getAdapter, getLoader, getParser, getWallet } from './factory';
 
