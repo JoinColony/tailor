@@ -1,188 +1,245 @@
 /* @flow */
 
 import EventEmitter from 'eventemitter3';
-import BigNumber from 'bn.js';
-import type {
-  Address,
-  FunctionCall,
-  Gas,
-  SignedTransaction,
-  TransactionData,
-  TransactionReceipt,
-  TransactionState,
-  Wei,
-} from './flowtypes';
+import type { Gas, TransactionReceipt, TransactionState } from './flowtypes';
+import { parseBigNumber } from '../utils';
+
+// eslint-disable-next-line import/no-cycle
+import type Lighthouse from '../../Lighthouse';
+import type { UnsignedTransaction } from '../../interface/flowtypes';
 
 export default class Transaction extends EventEmitter {
-  _lh: *;
+  _lh: Lighthouse;
 
-  _functionCall: FunctionCall;
+  _state: TransactionState;
 
-  _data: TransactionData;
-
-  _gas: ?Gas;
-
-  _gasPrice: ?Wei;
-
-  _value: Wei;
-
-  // TODO eventually: change SignedTransaction to object, thus removing
-  // the need to seperately store the `from` address when signed.
-  _from: ?Address;
-
-  _signed: ?SignedTransaction;
-
-  _receipt: ?TransactionReceipt;
-
-  constructor(lh: *, state: TransactionState) {
+  constructor(
+    lh: Lighthouse,
+    {
+      functionCall,
+      data = lh.adapter.encodeFunctionCall(functionCall),
+      from = lh.adapter.wallet.address,
+      to = lh.contractAddress,
+      confirmations = [],
+      createdAt = new Date(),
+      gas,
+      gasPrice,
+      nonce,
+      value,
+      ...state
+    }: Object,
+  ) {
     super();
 
-    if (state.to && state.to.toLowerCase() !== lh.contractAddress.toLowerCase())
-      throw new Error(
-        'State "to" address does not match Lighthouse "contractAddress',
-      );
+    if (to && to.toLowerCase() !== lh.contractAddress.toLowerCase())
+      throw new Error('"to" address does not match contract address');
 
     this._lh = lh;
-    this._from = state.from;
-    this._functionCall = state.functionCall;
-    this._data = this._lh.adapter.encodeFunctionCall(state.functionCall);
-    this.value = state.value;
-    this.gas = state.gas;
-    this.gasPrice = state.gasPrice;
+    this._state = Object.assign(
+      {},
+      {
+        confirmations,
+        createdAt,
+        data,
+        from,
+        functionCall,
+        to,
+        ...state,
+      },
+    );
+
+    // Use setters to sanitise these values
+    this.gas = gas;
+    this.gasPrice = gasPrice;
+    this.nonce = nonce;
+    this.value = value || 0;
+  }
+
+  get chainId() {
+    return this._state.chainId;
+  }
+
+  get confirmations() {
+    return this._state.confirmations;
+  }
+
+  get confirmedAt() {
+    return this._state.confirmedAt;
+  }
+
+  get createdAt() {
+    return this._state.createdAt;
+  }
+
+  get data() {
+    return this._state.data;
+  }
+
+  get from() {
+    return this._state.from;
+  }
+
+  get functionCall() {
+    return this._state.functionCall;
+  }
+
+  get gas() {
+    return this._state.gas;
+  }
+
+  get gasPrice() {
+    return this._state.gasPrice;
+  }
+
+  get hash() {
+    return this._state.hash;
+  }
+
+  get receipt() {
+    return this._state.receipt;
+  }
+
+  get sentAt() {
+    return this._state.sentAt;
+  }
+
+  get to() {
+    return this._state.to;
+  }
+
+  get value() {
+    return this._state.value;
+  }
+
+  get nonce() {
+    return this._state.nonce;
+  }
+
+  get rawTransaction() {
+    const rawTx: UnsignedTransaction = {
+      data: this.data,
+      from: this.from,
+      to: this.to,
+      value: this.value,
+    };
+
+    if (this.chainId) rawTx.chainId = this.chainId;
+    if (this.gas) rawTx.gas = this.gas;
+    if (this.gasPrice) rawTx.gasPrice = this.gasPrice;
+    if (this.nonce) rawTx.nonce = this.nonce;
+
+    return rawTx;
+  }
+
+  set nonce(nonce: any) {
+    this._checkNotSent('set nonce');
+    this._state.nonce = parseBigNumber(nonce);
+  }
+
+  set gas(gas: any) {
+    this._checkNotSent('set gas limit');
+    this._state.gas = parseBigNumber(gas);
+  }
+
+  set gasPrice(gasPrice: any) {
+    this._checkNotSent('set gas price');
+    this._state.gasPrice = parseBigNumber(gasPrice);
+  }
+
+  set chainId(chainId: number) {
+    this._checkNotSent('set network ID');
+    this._state.chainId = chainId;
+  }
+
+  set value(value: any) {
+    this._checkNotSent('set value');
+    this._state.value = parseBigNumber(value);
+  }
+
+  _checkNotSent(action: string = 'perform action') {
+    if (this.sentAt) {
+      throw new Error(
+        `Unable to ${action}: the transaction has already been sent`,
+      );
+    }
+  }
+
+  _handleConfirmation(confirmationNumber: number, receipt: TransactionReceipt) {
+    if (!this.confirmedAt) this._state.confirmedAt = new Date();
+    this._state.confirmations.push(receipt);
+    this.emit('confirmation', confirmationNumber, receipt);
+  }
+
+  _handleTransactionHash(hash: string) {
+    this._state.sentAt = new Date();
+    this._state.hash = hash;
+    this.emit('transactionHash', hash);
+  }
+
+  _handleReceipt(receipt: TransactionReceipt) {
+    this._state.receipt = receipt;
+    this.emit('receipt', receipt);
+  }
+
+  _handleSendError(error: Error) {
+    if (!this.receipt) this._state.sentAt = undefined;
+    this.emit('error', error);
+  }
+
+  toJSON() {
+    const state: TransactionState = {
+      confirmations: this.confirmations,
+      createdAt: this.createdAt,
+      data: this.data,
+      from: this.from,
+      functionCall: this.functionCall,
+      to: this.to,
+      value: this.value.toString(),
+    };
+
+    if (this.confirmedAt) state.confirmedAt = this.confirmedAt;
+    if (this.gas) state.gas = this.gas.toString();
+    if (this.gasPrice) state.gasPrice = this.gasPrice.toString();
+    if (this.hash) state.hash = this.hash;
+    if (this.chainId) state.chainId = this.chainId;
+    if (this.receipt) state.receipt = this.receipt;
+    if (this.sentAt) state.sentAt = this.sentAt;
+
+    return JSON.stringify(state);
   }
 
   async estimate(): Promise<Gas> {
-    return this._lh.adapter.estimate({
-      from: this._lh.wallet.address,
-      to: this._lh.contractAddress,
-      data: this._data,
-      value: this.value,
-    });
-  }
-
-  async sign(): Promise<SignedTransaction> {
-    this._signed = await this._lh.wallet.sign({
-      from: this._lh.wallet.address,
-      to: this._lh.contractAddress,
-      data: this._data,
-      gas: this.gas,
-      gasPrice: await this.gasPrice,
-      value: this.value,
-    });
-    this._from = this._lh.wallet.address;
-    return this._signed;
+    return this._lh.adapter.estimate(this.rawTransaction);
   }
 
   async send(): Promise<TransactionReceipt> {
-    // if not signed or signed with different wallet, sign it again!
-    if (
-      !this.signed ||
-      (this._from &&
-        this._from.toLowerCase() !== this._lh.wallet.address.toLowerCase())
-    )
-      await this.sign();
+    this._checkNotSent('send transaction');
 
+    if (this.gas == null) this.gas = await this.estimate();
+    if (this.gasPrice == null)
+      this.gasPrice = await this._lh.adapter.getGasPrice();
+    if (this.nonce == null)
+      this.nonce = await this._lh.adapter.getNonce(this.from);
+    if (this.chainId == null)
+      this.chainId = await this._lh.adapter.getCurrentNetwork();
+
+    return this._send();
+  }
+
+  async _send() {
+    const sendTransaction = await this._lh.adapter.getSendTransaction(
+      this.rawTransaction,
+    );
     return new Promise((resolve, reject) => {
-      // XXX in practise, `this._signed` is always set at this point, but
-      // Flow doesn't know that.
-      if (this.signed) {
-        this._lh.adapter
-          .sendSignedTransaction(this.signed)
-          .on('transactionHash', hash => this.emit('transactionHash', hash))
-          .on('receipt', receipt => this.emit('receipt', receipt))
-          .on('confirmation', (confirmationNumber, receipt) =>
-            this.emit('confirmation', confirmationNumber, receipt),
-          )
-          .on('error', error => this.emit('error', error))
-          .catch(reject)
-          .then(resolve);
-      } else {
-        reject(new Error('Cannot send an unsigned transaction'));
-      }
+      sendTransaction()
+        .on('transactionHash', hash => this._handleTransactionHash(hash))
+        .on('receipt', receipt => this._handleReceipt(receipt))
+        .on('confirmation', (confirmationNumber, receipt) =>
+          this._handleConfirmation(confirmationNumber, receipt),
+        )
+        .on('error', error => this._handleSendError(error))
+        .catch(reject)
+        .then(resolve);
     });
-  }
-
-  toJSON(): TransactionState {
-    const state: TransactionState = {
-      functionCall: this.functionCall,
-      gas: this.gas,
-      to: this._lh.contractAddress,
-      value: this.value,
-    };
-    if (this.signed && this._from) {
-      state.from = this._from;
-      state.signed = this.signed;
-    }
-    if (this.receipt) state.receipt = this.receipt;
-    return state;
-  }
-
-  get functionCall(): FunctionCall {
-    return this._functionCall;
-  }
-
-  get gas(): Gas {
-    return this._gas || null;
-  }
-
-  // provide non-number for auto gas
-  set gas(gas: Gas | number | string) {
-    if (this._signed)
-      throw new Error('Cannot set gas for already signed transaction');
-
-    const bn =
-      BigNumber.isBN(gas) || typeof gas === 'number' || typeof gas === 'string'
-        ? new BigNumber(gas)
-        : null;
-
-    this._gas = BigNumber.isBN(bn) ? bn : null;
-  }
-
-  get gasPrice(): Promise<Wei> {
-    return this._gasPrice
-      ? Promise.resolve(this._gasPrice)
-      : this._lh.adapter.getGasPrice();
-  }
-
-  // provide non-number for auto gas price
-  set gasPrice(price: Wei | number | string) {
-    if (this._signed)
-      throw new Error('Cannot set gas price for already signed transaction');
-
-    const bn =
-      BigNumber.isBN(price) ||
-      typeof price === 'number' ||
-      typeof price === 'string'
-        ? new BigNumber(price)
-        : null;
-
-    this._gasPrice = BigNumber.isBN(bn) ? bn : null;
-  }
-
-  get value(): Wei {
-    return this._value || 0;
-  }
-
-  // provide non-bn for auto gas
-  set value(value: Wei | number | string) {
-    if (this._signed)
-      throw new Error('Cannot set value for already signed transaction');
-
-    const bn =
-      BigNumber.isBN(value) ||
-      typeof value === 'number' ||
-      typeof value === 'string'
-        ? new BigNumber(value)
-        : null;
-
-    this._value = BigNumber.isBN(bn) ? bn : null;
-  }
-
-  get signed(): ?SignedTransaction {
-    return this._signed || null;
-  }
-
-  get receipt(): ?TransactionReceipt {
-    return this._receipt || null;
   }
 }

@@ -1,29 +1,42 @@
 /* @flow */
 
 import type {
+  Address,
   FunctionCall,
+  Gas,
+  Nonce,
   SignedTransaction,
   TransactionData,
   TransactionReceipt,
   Wei,
-} from '../../interface/Adapter';
-import type { Gas, Address } from '../../interface/flowtypes';
+} from '../../interface/flowtypes';
+
+type Confirmations = Array<TransactionReceipt>;
 
 type TransactionState = {
-  from?: Address,
+  createdAt: Date,
   functionCall: FunctionCall,
+  to: Address,
+  data: TransactionData,
+  confirmations: Confirmations,
+  confirmedAt?: Date,
+  from?: Address,
   gas?: Gas,
   gasPrice?: Wei,
   receipt?: TransactionReceipt,
-  signed?: SignedTransaction,
-  to?: Address,
-  value?: Wei,
+  sentAt?: Date,
+  hash?: string,
+  chainId?: number,
+  nonce?: Nonce,
+  value: Wei,
 };
 
 export type {
   Address,
+  Confirmations,
   FunctionCall,
   Gas,
+  Nonce,
   SignedTransaction,
   TransactionData,
   TransactionReceipt,
