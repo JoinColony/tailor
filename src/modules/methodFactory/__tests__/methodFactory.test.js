@@ -6,7 +6,7 @@ import BigNumber from 'bn.js';
 
 import methodFactory from '../index';
 import PARAM_TYPES from '../../paramTypes';
-import Transaction from '../../Transaction';
+import Transaction from '../../transactions/ContractTransaction';
 
 describe('Methods', () => {
   const sandbox = createSandbox();

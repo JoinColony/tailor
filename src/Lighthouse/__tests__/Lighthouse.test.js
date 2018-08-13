@@ -10,6 +10,7 @@ import Wallet from '../../wallets/Wallet';
 import PARAM_TYPES from '../../modules/paramTypes';
 
 import { getAdapter, getLoader, getParser, getWallet } from '../factory';
+import DeployTransaction from '../../modules/transactions/DeployTransaction';
 
 jest.mock('web3', () => () => ({
   eth: {
@@ -23,6 +24,8 @@ jest.mock('../factory', () => ({
   getParser: jest.fn(),
   getWallet: jest.fn(),
 }));
+
+jest.mock('../../modules/transactions/DeployTransaction');
 
 describe('Lighthouse', () => {
   const sandbox = createSandbox();
@@ -138,16 +141,7 @@ describe('Lighthouse', () => {
     // with args
     await Lighthouse.deploy(createArgs, deployArgs);
     expect(Lighthouse.getConstructorArgs).toHaveBeenCalledWith(createArgs);
-    expect(mockEncodeDeploy).toHaveBeenCalledWith(deployArgs);
-    expect(mockSign).toHaveBeenCalledWith({
-      from: fromAddress,
-      data: deployData,
-    });
-    expect(mockSendSignedTransaction).toHaveBeenCalledWith(signed);
-    expect(mockInitialize).toHaveBeenCalledWith({
-      abi: [],
-      address: contractAddress,
-    });
+    expect(DeployTransaction.prototype.send).toHaveBeenCalled();
   });
 
   test('Instantiating a Lighthouse', () => {

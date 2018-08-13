@@ -5,8 +5,8 @@ import createSandbox from 'jest-sandbox';
 import BigNumber from 'bn.js';
 
 import Transaction from '../index';
-import Event from '../../Event';
-import { BOOLEAN_TYPE } from '../../paramTypes';
+import Event from '../../../Event';
+import { BOOLEAN_TYPE } from '../../../paramTypes';
 
 describe('Transaction', () => {
   const sandbox = createSandbox();

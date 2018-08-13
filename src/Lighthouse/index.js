@@ -5,20 +5,18 @@ import deepmerge from 'deepmerge';
 // eslint-disable-next-line import/no-cycle
 import constantFactory from '../modules/constantFactory';
 import Event from '../modules/Event';
-
-// eslint-disable-next-line import/no-cycle
-import Transaction from '../modules/Transaction';
 // eslint-disable-next-line import/no-cycle
 import methodFactory from '../modules/methodFactory';
-
+// eslint-disable-next-line import/no-cycle
+import DeployTransaction from '../modules/transactions/DeployTransaction';
 import { getAdapter, getLoader, getParser, getWallet } from './factory';
 
+import type Transaction from '../modules/transactions/Transaction';
 import type {
   ConstantSpecs,
   ContractData,
   ContractSpec,
   EventSpecs,
-  FunctionArguments,
   IAdapter,
   IParser,
   IWallet,
@@ -98,23 +96,13 @@ export default class Lighthouse {
   }
 
   static async deploy(
-    args: LighthouseCreateArgs = {},
-    deployArgs: FunctionArguments,
-  ): Promise<this> {
-    // $FlowFixMe why does only work with two `await`s?
+    args: LighthouseCreateArgs & {
+      deployArgs?: Array<any>,
+    } & Object = {},
+  ): Promise<DeployTransaction> {
     const constructorArgs = await this.getConstructorArgs(args);
-
-    const deployData = constructorArgs.adapter.encodeDeploy(deployArgs);
-    const signed = await constructorArgs.wallet.sign({
-      from: constructorArgs.wallet.address,
-      data: deployData,
-    });
-    const receipt = await constructorArgs.adapter.sendSignedTransaction(signed);
-
-    constructorArgs.contractData.address = receipt.contractAddress;
-    await constructorArgs.adapter.initialize(constructorArgs.contractData);
-
-    return new this(constructorArgs);
+    const tx = new DeployTransaction(constructorArgs, args);
+    return tx.send();
   }
 
   constructor({
