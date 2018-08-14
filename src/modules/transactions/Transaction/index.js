@@ -201,7 +201,7 @@ export default class Transaction extends EventEmitter {
     return this._adapter.estimate(this.rawTransaction);
   }
 
-  async send(): Promise<*> {
+  async send(): Promise<this> {
     this._checkNotSent('send transaction');
 
     if (this.gas == null) this.gas = await this.estimate();

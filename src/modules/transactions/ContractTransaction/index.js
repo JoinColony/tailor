@@ -4,7 +4,6 @@ import type { TransactionReceipt, TransactionState } from '../flowtypes';
 import Transaction from '../Transaction';
 // eslint-disable-next-line import/no-cycle
 import type Lighthouse from '../../../Lighthouse';
-import type { UnsignedTransaction } from '../../../interface/flowtypes';
 
 export default class ContractTransaction extends Transaction {
   _lh: Lighthouse;
@@ -35,22 +34,6 @@ export default class ContractTransaction extends Transaction {
 
   get functionCall() {
     return this._state.functionCall;
-  }
-
-  get rawTransaction() {
-    const rawTx: UnsignedTransaction = {
-      data: this.data,
-      from: this.from,
-      to: this.to,
-      value: this.value,
-    };
-
-    if (this.chainId) rawTx.chainId = this.chainId;
-    if (this.gas) rawTx.gas = this.gas;
-    if (this.gasPrice) rawTx.gasPrice = this.gasPrice;
-    if (this.nonce) rawTx.nonce = this.nonce;
-
-    return rawTx;
   }
 
   _handleReceiptEvents(receipt: TransactionReceipt) {

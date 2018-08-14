@@ -5,95 +5,49 @@ import createSandbox from 'jest-sandbox';
 import BigNumber from 'bn.js';
 
 import Transaction from '../index';
-import Event from '../../../Event';
-import { BOOLEAN_TYPE } from '../../../paramTypes';
 
 describe('Transaction', () => {
   const sandbox = createSandbox();
 
-  const functionCall = {
-    functionSignature: 'myFunction(unit8)',
-    args: [255],
-  };
-  const encodedFunctionCall = 'encoded function call';
   const gasEstimate = 31415926535;
   const gasPrice = 4;
   const nonce = 0;
   const chainId = 1;
   const signedTransaction = 'signed tx';
+  const to = '0x123';
 
-  const mockEncodeFunctionCall = sandbox
-    .fn()
-    .mockImplementation(() => encodedFunctionCall);
   const wallet = {
     address: 'wallet address',
     sign: sandbox.fn().mockResolvedValue(signedTransaction),
   };
-  const mockLighthouse = {
-    adapter: {
-      estimate: sandbox.fn().mockResolvedValue(gasEstimate),
-      encodeFunctionCall: mockEncodeFunctionCall,
-      sendSignedTransaction: sandbox.fn(),
-      getGasPrice: sandbox.fn().mockReturnValue(gasPrice),
-      getNonce: sandbox.fn().mockReturnValue(nonce),
-      getCurrentNetwork: sandbox.fn().mockReturnValue(chainId),
-      wallet,
-    },
+  const mockAdapter = {
+    estimate: sandbox.fn().mockResolvedValue(gasEstimate),
+    sendSignedTransaction: sandbox.fn(),
+    getGasPrice: sandbox.fn().mockReturnValue(gasPrice),
+    getNonce: sandbox.fn().mockReturnValue(nonce),
+    getCurrentNetwork: sandbox.fn().mockReturnValue(chainId),
     wallet,
-    contractAddress: 'contract address',
-  };
-
-  mockLighthouse.events = {
-    MyEvent: new Event(mockLighthouse, {
-      name: 'MyEvent',
-      output: { 'MyEvent()': [] },
-    }),
-    MyOtherEvent: new Event(mockLighthouse, {
-      name: 'MyOtherEvent',
-      output: {
-        'MyOtherEvent(bool)': [
-          {
-            name: 'someValue',
-            type: BOOLEAN_TYPE,
-          },
-        ],
-      },
-    }),
   };
 
   beforeEach(() => {
     sandbox.clear();
   });
 
-  test('Constructor', () => {
-    expect(
-      () =>
-        new Transaction(mockLighthouse, {
-          functionCall,
-          to: 'not the wallet address',
-        }),
-    ).toThrow('"to" address does not match contract address');
-  });
-
   test('Estimate', async () => {
-    const tx = new Transaction(mockLighthouse, { functionCall });
+    const tx = new Transaction(mockAdapter, { to });
 
     const estimate = await tx.estimate();
 
     expect(estimate).toBe(gasEstimate);
-    expect(mockLighthouse.adapter.encodeFunctionCall).toHaveBeenCalledWith(
-      functionCall,
-    );
-    expect(mockLighthouse.adapter.estimate).toHaveBeenCalledWith({
-      from: mockLighthouse.wallet.address,
-      to: mockLighthouse.contractAddress,
-      data: encodedFunctionCall,
+    expect(mockAdapter.estimate).toHaveBeenCalledWith({
+      from: mockAdapter.wallet.address,
+      to,
       value: expect.any(BigNumber),
     });
   });
 
   test('Preparing to send', async () => {
-    const tx = new Transaction(mockLighthouse, { functionCall });
+    const tx = new Transaction(mockAdapter, { to });
 
     sandbox.spyOn(tx, 'estimate').mockImplementation(async () => gasEstimate);
     sandbox.spyOn(tx, '_checkNotSent');
@@ -104,9 +58,9 @@ describe('Transaction', () => {
     // The gas/gasPrice/nonce/chainId should have been set
     expect(tx._checkNotSent).toHaveBeenCalled();
     expect(tx.estimate).toHaveBeenCalled();
-    expect(mockLighthouse.adapter.getGasPrice).toHaveBeenCalled();
-    expect(mockLighthouse.adapter.getNonce).toHaveBeenCalledWith(tx.from);
-    expect(mockLighthouse.adapter.getCurrentNetwork).toHaveBeenCalled();
+    expect(mockAdapter.getGasPrice).toHaveBeenCalled();
+    expect(mockAdapter.getNonce).toHaveBeenCalledWith(tx.from);
+    expect(mockAdapter.getCurrentNetwork).toHaveBeenCalled();
     expect(tx).toHaveProperty('gas', new BigNumber(gasEstimate));
     expect(tx).toHaveProperty('gasPrice', new BigNumber(gasPrice));
     expect(tx).toHaveProperty('nonce', new BigNumber(nonce));
@@ -132,11 +86,11 @@ describe('Transaction', () => {
     eventEmitter.catch = mockCatch;
     eventEmitter.then = mockThen;
     const mockSendTransaction = () => eventEmitter;
-    mockLighthouse.adapter.getSendTransaction = sandbox
+    mockAdapter.getSendTransaction = sandbox
       .fn()
       .mockImplementation(() => mockSendTransaction);
 
-    const tx = new Transaction(mockLighthouse, { functionCall });
+    const tx = new Transaction(mockAdapter, { to });
     tx.gas = gasEstimate;
     tx.gasPrice = gasPrice;
     tx.nonce = nonce;
@@ -173,7 +127,7 @@ describe('Transaction', () => {
 
     // decode receipt fails
     tx._state.sentAt = undefined;
-    mockLighthouse.adapter.getSendTransaction.mockImplementation(() => () => {
+    mockAdapter.getSendTransaction.mockImplementation(() => () => {
       throw new Error('fake error');
     });
     await expect(tx.send()).rejects.toEqual(new Error('fake error'));
@@ -181,12 +135,11 @@ describe('Transaction', () => {
 
   test('To JSON', () => {
     const confirmations = ['confirmation'];
-    const events = { MyEvent: { myValue: 1 } };
     const value = new BigNumber(999);
     const receipt = 'receipt';
     const from = 'wallet address';
 
-    const tx = new Transaction(mockLighthouse, { functionCall });
+    const tx = new Transaction(mockAdapter, { to });
 
     // bare minimum
     let json = JSON.parse(tx.toJSON());
@@ -194,11 +147,8 @@ describe('Transaction', () => {
     expect(json).toEqual({
       confirmations: [],
       createdAt: expect.any(String),
-      data: encodedFunctionCall,
-      events: [],
       from,
-      functionCall,
-      to: mockLighthouse.contractAddress,
+      to,
       value: '0',
     });
 
@@ -209,7 +159,6 @@ describe('Transaction', () => {
     tx.value = value;
     tx._state.confirmations = confirmations;
     tx._state.confirmedAt = new Date();
-    tx._state.events = events;
     tx._state.from = from;
     tx._state.hash = 'transaction hash';
     tx._state.receipt = receipt;
@@ -222,28 +171,19 @@ describe('Transaction', () => {
       confirmations,
       confirmedAt: expect.any(String),
       createdAt: expect.any(String),
-      data: encodedFunctionCall,
-      events,
       from,
-      functionCall,
       gas: `${gasEstimate}`,
       gasPrice: '4',
       hash: 'transaction hash',
       receipt,
       sentAt: expect.any(String),
-      to: mockLighthouse.contractAddress,
+      to,
       value: '999',
     });
   });
 
-  test('Get function call', () => {
-    const tx = new Transaction(mockLighthouse, { functionCall });
-
-    expect(tx.functionCall).toBe(functionCall);
-  });
-
   test('Numeric properties', () => {
-    const tx = new Transaction(mockLighthouse, { functionCall });
+    const tx = new Transaction(mockAdapter, { to });
 
     ['gas', 'gasPrice', 'value'].forEach(propName => {
       // set with number
@@ -273,7 +213,7 @@ describe('Transaction', () => {
   });
 
   test('Get receipt', () => {
-    const tx = new Transaction(mockLighthouse, { functionCall });
+    const tx = new Transaction(mockAdapter, { to });
 
     // not set
     expect(tx.receipt).toBe(undefined);
@@ -284,7 +224,7 @@ describe('Transaction', () => {
   });
 
   test('Checking not sent', () => {
-    const tx = new Transaction(mockLighthouse, { functionCall });
+    const tx = new Transaction(mockAdapter, { to });
 
     expect(() => tx._checkNotSent()).not.toThrow();
 
@@ -296,7 +236,7 @@ describe('Transaction', () => {
   });
 
   test('Handling confirmations', () => {
-    const tx = new Transaction(mockLighthouse, { functionCall });
+    const tx = new Transaction(mockAdapter, { to });
     expect(tx).toHaveProperty('confirmedAt', undefined);
 
     const receipt0 = { receipt0: true };
@@ -320,7 +260,7 @@ describe('Transaction', () => {
   });
 
   test('Handling errors while sending', () => {
-    const tx = new Transaction(mockLighthouse, { functionCall });
+    const tx = new Transaction(mockAdapter, { to });
 
     tx._state.sentAt = new Date();
     sandbox.spyOn(tx, 'emit');
@@ -333,63 +273,14 @@ describe('Transaction', () => {
   });
 
   test('Handling receipts', () => {
-    const tx = new Transaction(mockLighthouse, { functionCall });
+    const tx = new Transaction(mockAdapter, { to });
     sandbox.spyOn(tx, 'emit');
-    sandbox.spyOn(tx, '_handleReceiptEvents');
-    sandbox.spyOn(Event.prototype, 'handleEvent');
 
-    const receipt = {
-      events: {
-        MyEvent: [
-          {
-            signature:
-              // eslint-disable-next-line max-len
-              '0x4dbfb68b43dddfa12b51ebe99ab8fded620f9a0ac23142879a4f192a1b7952d2',
-            returnValues: {},
-            event: 'MyEvent',
-          },
-        ],
-        MyOtherEvent: [
-          {
-            signature:
-              // eslint-disable-next-line max-len
-              '0x54552747a8ff700c6bab19a89633321fa93fa8cde42a60f5d3679e146768c727',
-            returnValues: {
-              '0': true,
-            },
-            event: 'MyOtherEvent',
-          },
-        ],
-      },
-    };
+    const receipt = {};
 
     tx._handleReceipt(receipt);
 
-    expect(tx._handleReceiptEvents).toHaveBeenCalledWith(receipt);
     expect(tx.emit).toHaveBeenCalledWith('receipt', receipt);
     expect(tx).toHaveProperty('receipt', receipt);
-    expect(tx).toHaveProperty('events', [
-      {
-        data: {},
-        event: receipt.events.MyEvent[0],
-        signature: 'MyEvent()',
-        name: 'MyEvent',
-      },
-      {
-        data: {
-          someValue: true,
-        },
-        event: receipt.events.MyOtherEvent[0],
-        signature: 'MyOtherEvent(bool)',
-        name: 'MyOtherEvent',
-      },
-    ]);
-    expect(Event.prototype.handleEvent).toHaveBeenCalledTimes(2);
-    expect(Event.prototype.handleEvent).toHaveBeenCalledWith(
-      receipt.events.MyEvent[0],
-    );
-    expect(Event.prototype.handleEvent).toHaveBeenCalledWith(
-      receipt.events.MyOtherEvent[0],
-    );
   });
 });

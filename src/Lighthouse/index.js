@@ -99,10 +99,19 @@ export default class Lighthouse {
     args: LighthouseCreateArgs & {
       deployArgs?: Array<any>,
     } & Object = {},
-  ): Promise<DeployTransaction> {
+  ): Promise<this> {
     const constructorArgs = await this.getConstructorArgs(args);
-    const tx = new DeployTransaction(constructorArgs, args);
-    return tx.send();
+    const tx = new DeployTransaction(constructorArgs.adapter, args);
+    await tx.send();
+
+    if (!(tx.receipt && tx.receipt.contractAddress))
+      throw new Error('Unable to deploy contract');
+
+    // set contract address, reinitialize adapter
+    constructorArgs.contractData.address = tx.receipt.contractAddress;
+    await constructorArgs.adapter.initialize(constructorArgs.contractData);
+
+    return new this(constructorArgs);
   }
 
   constructor({

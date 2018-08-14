@@ -134,11 +134,16 @@ describe('Lighthouse', () => {
       });
 
     // no args
-    await Lighthouse.deploy();
+    await expect(Lighthouse.deploy()).rejects.toThrow(
+      'Unable to deploy contract',
+    );
     expect(Lighthouse.getConstructorArgs).toHaveBeenCalledWith({});
     Lighthouse.getConstructorArgs.mockClear();
 
     // with args
+    DeployTransaction.prototype.receipt = {
+      contractAddress,
+    };
     await Lighthouse.deploy(createArgs, deployArgs);
     expect(Lighthouse.getConstructorArgs).toHaveBeenCalledWith(createArgs);
     expect(DeployTransaction.prototype.send).toHaveBeenCalled();
