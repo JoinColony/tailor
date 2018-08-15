@@ -47,9 +47,9 @@ export default class ContractTransaction extends Transaction {
   }
 
   _handleReceipt(receipt: TransactionReceipt) {
-    this._state.receipt = receipt;
     this._state.events = this._handleReceiptEvents(receipt);
-    this.emit('receipt', receipt);
+    // eslint-disable-next-line no-underscore-dangle
+    super._handleReceipt(receipt);
   }
 
   toJSON() {

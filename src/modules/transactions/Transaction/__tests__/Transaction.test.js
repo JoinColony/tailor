@@ -107,13 +107,13 @@ describe('Transaction', () => {
     expect(tx.emit).toHaveBeenCalledWith('transactionHash', 'hash');
 
     // receipt
-    expect(mockOn).toHaveBeenCalledWith('receipt', expect.anything());
-    callbacks[1]('receipt');
-    expect(tx.emit).toHaveBeenCalledWith('receipt', 'receipt');
+    // expect(mockOn).toHaveBeenCalledWith('receipt', expect.anything());
+    // callbacks[1]('receipt');
+    // expect(tx.emit).toHaveBeenCalledWith('receipt', 'receipt');
 
     // confirmation
     expect(mockOn).toHaveBeenCalledWith('confirmation', expect.anything());
-    callbacks[2]('confirmationNumber', 'receipt');
+    callbacks[1]('confirmationNumber', 'receipt');
     expect(tx.emit).toHaveBeenCalledWith(
       'confirmation',
       'confirmationNumber',
@@ -122,7 +122,7 @@ describe('Transaction', () => {
 
     // error
     expect(mockOn).toHaveBeenCalledWith('error', expect.anything());
-    callbacks[3]('error');
+    callbacks[2]('error');
     expect(tx.emit).toHaveBeenCalledWith('error', 'error');
 
     // decode receipt fails
@@ -131,6 +131,12 @@ describe('Transaction', () => {
       throw new Error('fake error');
     });
     await expect(tx.send()).rejects.toEqual(new Error('fake error'));
+
+    // error after receipt
+    tx._state.receipt = 'receipt';
+    callbacks[2]('error');
+    expect(tx.emit).toHaveBeenCalledWith('error', 'error');
+    expect(tx.sentAt).toBe(undefined);
   });
 
   test('To JSON', () => {

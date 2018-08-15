@@ -9,17 +9,24 @@ import { convertOutput } from '../paramConversion';
 
 // eslint-disable-next-line import/no-cycle
 import type Lighthouse from '../../Lighthouse';
+import HookManager from '../HookManager';
 
 function getConstantFn(
   lighthouse: Lighthouse,
   functionParams: FunctionParams,
   output,
 ) {
-  return async function constant(...inputParams: any) {
+  const hooks = new HookManager();
+  const fn = async function constant(...inputParams: any) {
+    // TODO: do we want to hook inputParams?
     const fnCall = getFunctionCall(functionParams, ...inputParams);
-    const callResult = await lighthouse.adapter.call(fnCall);
-    return convertOutput(output, ...callResult);
+    const hookedFnCall = await hooks.getHookedValue('call', fnCall);
+    const callResult = await lighthouse.adapter.call(hookedFnCall);
+    const result = convertOutput(output, ...callResult);
+    return hooks.getHookedValue('result', result);
   };
+  fn.hooks = hooks.fn();
+  return fn;
 }
 
 /*

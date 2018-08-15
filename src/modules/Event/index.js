@@ -8,6 +8,8 @@ import type { Event as EventLog, TypedEvent } from '../../interface/flowtypes';
 import type { EventSpec } from '../../interface/ContractSpec';
 
 import { convertResultObj, convertOutput } from '../paramConversion';
+import HookManager from '../HookManager';
+import type { HookManagerFn } from '../HookManager/flowtypes';
 
 type EventCallback = (...*) => *;
 
@@ -23,11 +25,14 @@ export default class Event {
 
   _emitters: Array<EventEmitter>;
 
+  hooks: HookManagerFn;
+
   constructor(adapter: IAdapter, spec: EventSpec) {
     this._adapter = adapter;
     this._emitters = [];
     this._spec = spec;
     this._wrappedHandlers = new Map();
+    this.hooks = HookManager.fn();
   }
 
   handleEvent(event: EventLog) {
@@ -50,10 +55,14 @@ export default class Event {
   }
 
   wrapHandlerFunction(handlerFunction: TypedEventCallback): EventCallback {
-    return (arg: EventLog | Error) => {
+    return async (arg: EventLog | Error) => {
       if (arg instanceof Error) return handlerFunction(arg);
 
-      return handlerFunction(undefined, this.handleEvent(arg));
+      const hookedEvent = await this.hooks.getHookedValue(
+        'event',
+        this.handleEvent(arg),
+      );
+      return handlerFunction(undefined, hookedEvent);
     };
   }
 
