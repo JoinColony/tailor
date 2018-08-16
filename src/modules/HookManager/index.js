@@ -26,15 +26,15 @@ export default class HookManager {
     if (hooks) this.addHooks(hooks);
   }
 
-  async getHookedValue(hookName: string, ...args: Array<any>): Promise<*> {
+  async getHookedValue(hookName: string, ...params: Array<any>): Promise<*> {
     const parentHookedArgs = this._parent
-      ? await this._parent.getHookedValue(hookName, ...args)
-      : args;
+      ? await this._parent.getHookedValue(hookName, ...params)
+      : params[0];
 
-    if (!Array.isArray(this._hooks[hookName])) return parentHookedArgs[0];
+    if (!Array.isArray(this._hooks[hookName])) return parentHookedArgs;
 
-    const stateArg = args[0];
-    const otherArgs = args.splice(1);
+    const stateArg = parentHookedArgs;
+    const otherArgs = params.slice(1);
 
     return this._hooks[hookName].reduce(
       async (acc, current) => current(await acc, ...otherArgs),

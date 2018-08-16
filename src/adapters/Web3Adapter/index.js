@@ -102,7 +102,8 @@ export default class Web3Adapter extends Adapter {
           name: 'ALLEVENTS',
           jsonInterface: this.contract.options.jsonInterface,
         },
-        log,
+        // web3 sometimes returns semi-decoded logs
+        log.raw || log,
       ),
     );
 

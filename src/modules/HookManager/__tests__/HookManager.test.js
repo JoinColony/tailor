@@ -35,7 +35,9 @@ describe('Methods', () => {
     const args = ['my', 'args'];
     const hm = new HookManager();
     const parentHm = {
-      getHookedValue: sandbox.fn().mockImplementation(async value => value),
+      getHookedValue: sandbox
+        .fn()
+        .mockImplementation(async (hookName, value) => value),
     };
 
     // no hooks
