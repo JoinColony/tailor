@@ -64,7 +64,7 @@ export default class HookManager {
   }
 
   removeHook(hookName: string, index: number) {
-    this._hooks[hookName] = this._hooks[hookName].splice(index, 1);
+    this._hooks[hookName].splice(index, 1);
   }
 
   removeHooks(hookName: string) {
