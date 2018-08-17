@@ -1,6 +1,7 @@
 /* @flow */
 
 import EventEmitter from 'eventemitter3';
+// eslint-disable-next-line import/no-cycle
 import type { Gas, TransactionReceipt, TransactionState } from '../flowtypes';
 import { parseBigNumber } from '../../utils';
 import HookManager from '../../HookManager';
@@ -9,12 +10,31 @@ import type { UnsignedTransaction } from '../../../interface/flowtypes';
 import type { IAdapter } from '../../../interface/Adapter';
 import type { HookManagerFn } from '../../HookManager/flowtypes';
 
+// $FlowFixMe extending EventEmitter causes Flow to think .name must be settable
 export default class Transaction extends EventEmitter {
   _adapter: IAdapter;
 
   _state: TransactionState;
 
   hooks: HookManagerFn;
+
+  static get name() {
+    return 'transaction';
+  }
+
+  // returns a function which returns an instance of this
+  static getMethodFn({
+    lighthouse: { adapter },
+  }: Object): (...params: any) => Transaction {
+    const hooks = new HookManager();
+    const fn = (...options: any) =>
+      new this(adapter, {
+        hooks,
+        ...options,
+      });
+    fn.hooks = hooks.createHooks();
+    return fn;
+  }
 
   constructor(
     adapter: IAdapter,

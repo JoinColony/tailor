@@ -3,6 +3,12 @@ import Transaction from '../Transaction';
 import type { IAdapter } from '../../../interface/Adapter';
 
 export default class DeployTransaction extends Transaction {
+  static get name() {
+    return 'deploy';
+  }
+
+  // TODO: getMethodFn
+
   constructor(
     adapter: IAdapter,
     {

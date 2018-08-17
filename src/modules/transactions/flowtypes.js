@@ -13,6 +13,9 @@ import type {
   Wei,
 } from '../../interface/flowtypes';
 
+// eslint-disable-next-line import/no-cycle
+import type Transaction from './Transaction';
+
 type Confirmations = Array<TransactionReceipt>;
 
 type TransactionState = {
@@ -35,6 +38,10 @@ type TransactionState = {
   value: Wei,
 };
 
+// eslint does not recognise the Class<T> utility
+// eslint-disable-next-line no-undef
+type TransactionSpec = Class<Transaction> | string; // TODO: enum
+
 export type {
   Address,
   Confirmations,
@@ -44,6 +51,7 @@ export type {
   SignedTransaction,
   TransactionData,
   TransactionReceipt,
+  TransactionSpec,
   TransactionState,
   TypedEvents,
   Wei,

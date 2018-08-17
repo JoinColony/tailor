@@ -1,14 +1,63 @@
 /* @flow */
 
+import BigNumber from 'bn.js';
+
 import type { TransactionReceipt, TransactionState } from '../flowtypes';
 import Transaction from '../Transaction';
+import HookManager from '../../HookManager';
+import getFunctionCall from '../../getFunctionCall';
+
 // eslint-disable-next-line import/no-cycle
 import type Lighthouse from '../../../Lighthouse';
+import type { FunctionParams } from '../../../interface/ContractSpec';
+
+function isOptions(input: any) {
+  return (
+    typeof input === 'object' &&
+    ['value', 'gas', 'gasLimit'].some(
+      option =>
+        BigNumber.isBN(input[option]) || typeof input[option] === 'number',
+    )
+  );
+}
 
 export default class ContractTransaction extends Transaction {
   _lh: Lighthouse;
 
   _state: TransactionState;
+
+  static get name() {
+    return 'contract';
+  }
+
+  // returns a function which returns an instance of this
+  static getMethodFn({
+    lighthouse,
+    functionParams,
+    isPayable,
+  }: {
+    lighthouse: Lighthouse,
+    functionParams: FunctionParams,
+    isPayable?: boolean,
+  }) {
+    const hooks = new HookManager();
+    const fn = (...inputParams: any) => {
+      const options = isOptions(inputParams[inputParams.length - 1])
+        ? inputParams.pop()
+        : {};
+      if (!isPayable && options.value)
+        throw new Error('Cannot send a value to a non-payable function');
+      // TODO: do we want to hook inputParams?
+      const functionCall = getFunctionCall(functionParams, ...inputParams);
+      return new this(lighthouse, {
+        functionCall,
+        hooks,
+        ...options,
+      });
+    };
+    fn.hooks = hooks.createHooks();
+    return fn;
+  }
 
   constructor(
     lh: Lighthouse,
