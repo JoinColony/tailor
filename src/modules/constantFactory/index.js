@@ -25,7 +25,7 @@ function getConstantFn(
     const result = convertOutput(output, ...callResult);
     return hooks.getHookedValue('result', result);
   };
-  fn.hooks = hooks.fn();
+  fn.hooks = hooks.createHooks();
   return fn;
 }
 

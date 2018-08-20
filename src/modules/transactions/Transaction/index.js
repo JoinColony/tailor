@@ -54,8 +54,7 @@ export default class Transaction extends EventEmitter {
     this.value = value || 0;
 
     // hooks
-    const hm = new HookManager({ parent: hooks });
-    this.hooks = hm.fn();
+    this.hooks = HookManager.createHooks({ parent: hooks });
   }
 
   get chainId() {
@@ -238,9 +237,13 @@ export default class Transaction extends EventEmitter {
         .on('error', error => this._handleSendError(error))
         .catch(reject)
         .then(async receipt => {
-          this._handleReceipt(
-            await this.hooks.getHookedValue('receipt', receipt, this),
-          );
+          try {
+            this._handleReceipt(
+              await this.hooks.getHookedValue('receipt', receipt, this),
+            );
+          } catch (error) {
+            return reject(error);
+          }
           // Return the Transaction itself (with updated state)
           return resolve(this);
         });

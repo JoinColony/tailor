@@ -32,7 +32,7 @@ export default class Event {
     this._emitters = [];
     this._spec = spec;
     this._wrappedHandlers = new Map();
-    this.hooks = HookManager.fn();
+    this.hooks = HookManager.createHooks();
   }
 
   handleEvent(event: EventLog) {

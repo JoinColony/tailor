@@ -127,7 +127,7 @@ describe('Transaction', () => {
 
     // decode receipt fails
     tx._state.sentAt = undefined;
-    mockAdapter.getSendTransaction.mockImplementation(() => () => {
+    mockAdapter.getSendTransaction.mockImplementationOnce(() => () => {
       throw new Error('fake error');
     });
     await expect(tx.send()).rejects.toEqual(new Error('fake error'));
@@ -137,6 +137,16 @@ describe('Transaction', () => {
     callbacks[2]('error');
     expect(tx.emit).toHaveBeenCalledWith('error', 'error');
     expect(tx.sentAt).toBe(undefined);
+
+    // error with hooks
+    const tx2 = new Transaction(mockAdapter, { to });
+    sandbox
+      .spyOn(tx2.hooks, 'getHookedValue')
+      .mockImplementationOnce(async value => value)
+      .mockImplementationOnce(() => {
+        throw new Error('Hooks failed');
+      });
+    await expect(tx2.send()).rejects.toThrow('Hooks failed');
   });
 
   test('To JSON', () => {

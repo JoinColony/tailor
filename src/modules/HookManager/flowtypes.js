@@ -5,10 +5,7 @@ import type HookManager from './index';
 
 export type Hook = (...params: any) => any;
 
-export type Hooks = {
-  // beforeSend, call, etc
-  [hookName: string]: Array<Hook>,
-};
+export type Hooks = Map<string, Array<Hook>>;
 
 export type SuppliedHooks = {
   [hookName: string]: Hook | Array<Hook>,

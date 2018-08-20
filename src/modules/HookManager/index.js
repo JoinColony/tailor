@@ -14,39 +14,58 @@ export default class HookManager {
 
   _parent: ?HookManager;
 
-  static fn(args: HookManagerArgs = {}): HookManagerFn {
+  /**
+   * Constructs a HM with the given args and returns its `hooks()`
+   * function.
+   */
+  static createHooks(args: HookManagerArgs = {}): HookManagerFn {
     const hm = new HookManager(args);
-    return hm.fn();
+    return hm.createHooks();
   }
 
   constructor({ hooks, parent }: HookManagerArgs = {}) {
-    this._hooks = {};
+    this._hooks = new Map();
     this._parent = parent;
 
     if (hooks) this.addHooks(hooks);
   }
 
+  /**
+   * Gets the hooked value for the given hookName, with the value being
+   * cascaded through each hook function, first in the parents if set,
+   * in the oder in which they were registered.
+   *
+   * All params after hookName are passed to hook functions, but the
+   * first of these should be the value for which a hooked value is
+   * returned.
+   *
+   * Returns a promise which resolves to the hooked value. The hook
+   * functions may have side effects on the passed params.
+   */
   async getHookedValue(hookName: string, ...params: Array<any>): Promise<*> {
     const parentHookedArgs = this._parent
       ? await this._parent.getHookedValue(hookName, ...params)
       : params[0];
 
-    if (!Array.isArray(this._hooks[hookName])) return parentHookedArgs;
+    const hook = this._hooks.get(hookName);
+
+    if (!Array.isArray(hook)) return parentHookedArgs;
 
     const stateArg = parentHookedArgs;
     const otherArgs = params.slice(1);
 
-    return this._hooks[hookName].reduce(
+    return hook.reduce(
       async (acc, current) => current(await acc, ...otherArgs),
       Promise.resolve(stateArg),
     );
   }
 
   addHook(hookName: string, hook: Hook) {
-    if (Array.isArray(this._hooks[hookName])) {
-      this._hooks[hookName].push(hook);
+    const existingHook = this._hooks.get(hookName);
+    if (Array.isArray(existingHook)) {
+      existingHook.push(hook);
     } else {
-      this._hooks[hookName] = [hook];
+      this._hooks.set(hookName, [hook]);
     }
   }
 
@@ -54,24 +73,26 @@ export default class HookManager {
     const hookNames = Object.keys(hooks);
 
     hookNames.forEach(hookName => {
-      const thisHooks: Array<Hook> = Array.isArray(hooks[hookName])
-        ? hooks[hookName]
-        : [hooks[hookName]];
-      thisHooks.forEach(hook => {
+      [].concat(hooks[hookName]).forEach(hook => {
         this.addHook(hookName, hook);
       });
     });
   }
 
   removeHook(hookName: string, index: number) {
-    this._hooks[hookName].splice(index, 1);
+    const hook = this._hooks.get(hookName);
+    if (hook) hook.splice(index, 1);
   }
 
   removeHooks(hookName: string) {
-    delete this._hooks[hookName];
+    this._hooks.delete(hookName);
   }
 
-  fn(): HookManagerFn {
+  /**
+   * Returns a `hooks()` function which proxies `addHooks` and has
+   * other HM functions as properties.
+   */
+  createHooks(): HookManagerFn {
     const fn = (hooks: SuppliedHooks) => {
       this.addHooks(hooks);
     };

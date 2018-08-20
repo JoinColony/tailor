@@ -40,7 +40,7 @@ function getMethodFn(
       ...options,
     });
   };
-  fn.hooks = hooks.fn();
+  fn.hooks = hooks.createHooks();
   return fn;
 }
 
