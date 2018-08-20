@@ -1,9 +1,7 @@
 /* @flow */
 
 import type { MethodSpec } from '../../interface/ContractSpec';
-// eslint-disable-next-line import/no-cycle
-import Lighthouse from '../../Lighthouse';
-// eslint-disable-next-line import/no-cycle
+import type Lighthouse from '../../Lighthouse';
 import { getTransaction } from '../transactions';
 
 /*

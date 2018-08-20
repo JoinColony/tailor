@@ -1,7 +1,6 @@
 /* @flow */
 
 import EventEmitter from 'eventemitter3';
-// eslint-disable-next-line import/no-cycle
 import type { Gas, TransactionReceipt, TransactionState } from '../flowtypes';
 import { parseBigNumber } from '../../utils';
 import HookManager from '../../HookManager';

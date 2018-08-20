@@ -1,25 +1,11 @@
 /* @flow */
 
 import Transaction from './Transaction';
-// eslint-disable-next-line import/no-cycle
-import ContractTransaction from './ContractTransaction';
-import DeployTransaction from './DeployTransaction';
-import MultiSigTransaction from './MultiSigTransaction';
 
 import type { TransactionSpec } from './flowtypes';
+import { TRANSACTION_NAME_MAP, DEFAULT_TRANSACTION } from './constants';
 
 const assert = require('assert');
-
-export const DEFAULT_TRANSACTION = ContractTransaction.name;
-
-export const TRANSACTION_NAME_MAP: {
-  [transactionName: string]: Transaction.constructor,
-} = {
-  [Transaction.name]: Transaction,
-  [ContractTransaction.name]: ContractTransaction,
-  [DeployTransaction.name]: DeployTransaction,
-  [MultiSigTransaction.name]: MultiSigTransaction,
-};
 
 export function getTransactionFromName(name: string) {
   assert(

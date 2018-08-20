@@ -7,7 +7,6 @@ import Transaction from '../Transaction';
 import HookManager from '../../HookManager';
 import getFunctionCall from '../../getFunctionCall';
 
-// eslint-disable-next-line import/no-cycle
 import type Lighthouse from '../../../Lighthouse';
 import type { FunctionParams } from '../../../interface/ContractSpec';
 

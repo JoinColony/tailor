@@ -7,7 +7,6 @@ import type {
 import getFunctionCall from '../getFunctionCall';
 import { convertOutput } from '../paramConversion';
 
-// eslint-disable-next-line import/no-cycle
 import type Lighthouse from '../../Lighthouse';
 import HookManager from '../HookManager';
 
