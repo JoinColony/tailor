@@ -19,12 +19,13 @@ export default function methodFactory(
   const functionParams =
     functionSignatures.length === 0 ? { [name]: [] } : input;
 
-  const Tx = getTransaction(type);
+  const { class: Tx, options } = getTransaction(type);
 
   const fn = Tx.getMethodFn({
     lighthouse,
     functionParams,
     isPayable,
+    ...options,
   });
 
   // Allow each function signature to be called specifically by adding
