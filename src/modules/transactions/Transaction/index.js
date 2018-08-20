@@ -1,25 +1,22 @@
 /* @flow */
 
 import EventEmitter from 'eventemitter3';
-import type { Gas, TransactionReceipt, TransactionState } from './flowtypes';
-import { parseBigNumber } from '../utils';
+import type { Gas, TransactionReceipt, TransactionState } from '../flowtypes';
+import { parseBigNumber } from '../../utils';
 
-// eslint-disable-next-line import/no-cycle
-import type Lighthouse from '../../Lighthouse';
-import type { UnsignedTransaction } from '../../interface/flowtypes';
+import type { UnsignedTransaction } from '../../../interface/flowtypes';
+import type { IAdapter } from '../../../interface/Adapter';
 
 export default class Transaction extends EventEmitter {
-  _lh: Lighthouse;
+  _adapter: IAdapter;
 
   _state: TransactionState;
 
   constructor(
-    lh: Lighthouse,
+    adapter: IAdapter,
     {
-      functionCall,
-      data = lh.adapter.encodeFunctionCall(functionCall),
-      from = lh.adapter.wallet.address,
-      to = lh.contractAddress,
+      data,
+      from = adapter.wallet.address,
       confirmations = [],
       createdAt = new Date(),
       events = [],
@@ -32,10 +29,7 @@ export default class Transaction extends EventEmitter {
   ) {
     super();
 
-    if (to && to.toLowerCase() !== lh.contractAddress.toLowerCase())
-      throw new Error('"to" address does not match contract address');
-
-    this._lh = lh;
+    this._adapter = adapter;
     this._state = Object.assign(
       {},
       {
@@ -44,8 +38,6 @@ export default class Transaction extends EventEmitter {
         data,
         events,
         from,
-        functionCall,
-        to,
         ...state,
       },
     );
@@ -73,20 +65,12 @@ export default class Transaction extends EventEmitter {
     return this._state.createdAt;
   }
 
-  get events() {
-    return this._state.events;
-  }
-
   get data() {
     return this._state.data;
   }
 
   get from() {
     return this._state.from;
-  }
-
-  get functionCall() {
-    return this._state.functionCall;
   }
 
   get gas() {
@@ -182,19 +166,8 @@ export default class Transaction extends EventEmitter {
     this.emit('transactionHash', hash);
   }
 
-  _handleReceiptEvents(receipt: TransactionReceipt) {
-    return Object.keys(receipt.events || {}).reduce((acc, eventName) => {
-      const eventCls = this._lh.events[eventName];
-      receipt.events[eventName].forEach(rawEvent => {
-        acc.push(eventCls.handleEvent(rawEvent));
-      });
-      return acc;
-    }, []);
-  }
-
   _handleReceipt(receipt: TransactionReceipt) {
     this._state.receipt = receipt;
-    this._state.events = this._handleReceiptEvents(receipt);
     this.emit('receipt', receipt);
   }
 
@@ -208,9 +181,7 @@ export default class Transaction extends EventEmitter {
       confirmations: this.confirmations,
       createdAt: this.createdAt,
       data: this.data,
-      events: this.events,
       from: this.from,
-      functionCall: this.functionCall,
       to: this.to,
       value: this.value.toString(),
     };
@@ -227,7 +198,7 @@ export default class Transaction extends EventEmitter {
   }
 
   async estimate(): Promise<Gas> {
-    return this._lh.adapter.estimate(this.rawTransaction);
+    return this._adapter.estimate(this.rawTransaction);
   }
 
   async send(): Promise<this> {
@@ -235,17 +206,17 @@ export default class Transaction extends EventEmitter {
 
     if (this.gas == null) this.gas = await this.estimate();
     if (this.gasPrice == null)
-      this.gasPrice = await this._lh.adapter.getGasPrice();
+      this.gasPrice = await this._adapter.getGasPrice();
     if (this.nonce == null)
-      this.nonce = await this._lh.adapter.getNonce(this.from);
+      this.nonce = await this._adapter.getNonce(this.from);
     if (this.chainId == null)
-      this.chainId = await this._lh.adapter.getCurrentNetwork();
+      this.chainId = await this._adapter.getCurrentNetwork();
 
     return this._send();
   }
 
   async _send() {
-    const sendTransaction = await this._lh.adapter.getSendTransaction(
+    const sendTransaction = await this._adapter.getSendTransaction(
       this.rawTransaction,
     );
     return new Promise((resolve, reject) => {

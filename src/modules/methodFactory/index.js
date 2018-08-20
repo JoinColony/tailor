@@ -5,7 +5,7 @@ import BigNumber from 'bn.js';
 import type { MethodSpec, FunctionParams } from '../../interface/ContractSpec';
 import getFunctionCall from '../getFunctionCall';
 // eslint-disable-next-line import/no-cycle
-import Transaction from '../Transaction';
+import Transaction from '../transactions/ContractTransaction';
 // eslint-disable-next-line import/no-cycle
 import Lighthouse from '../../Lighthouse';
 

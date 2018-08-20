@@ -2,6 +2,7 @@
 
 import type {
   Address,
+  FunctionArguments,
   FunctionCall,
   Gas,
   Nonce,
@@ -16,10 +17,11 @@ type Confirmations = Array<TransactionReceipt>;
 
 type TransactionState = {
   createdAt: Date,
-  events: TypedEvents,
-  functionCall: FunctionCall,
-  to: Address,
-  data: TransactionData,
+  deployArgs?: FunctionArguments,
+  events?: TypedEvents,
+  functionCall?: FunctionCall,
+  to?: Address,
+  data?: TransactionData,
   confirmations: Confirmations,
   confirmedAt?: Date,
   from?: Address,

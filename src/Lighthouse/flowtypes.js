@@ -71,8 +71,6 @@ export type LighthouseArgs = {
   wallet: IWallet,
 };
 
-export type { IWallet } from '../interface/Wallet';
-
 export type {
   ConstantSpecs,
   ContractData,
@@ -81,6 +79,7 @@ export type {
   IAdapter,
   ILoader,
   IParser,
+  IWallet,
   MethodSpecs,
   PartialConstantSpecs,
   PartialEventSpecs,

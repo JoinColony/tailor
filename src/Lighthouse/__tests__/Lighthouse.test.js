@@ -10,6 +10,7 @@ import Wallet from '../../wallets/Wallet';
 import PARAM_TYPES from '../../modules/paramTypes';
 
 import { getAdapter, getLoader, getParser, getWallet } from '../factory';
+import DeployTransaction from '../../modules/transactions/DeployTransaction';
 
 jest.mock('web3', () => () => ({
   eth: {
@@ -24,6 +25,8 @@ jest.mock('../factory', () => ({
   getWallet: jest.fn(),
 }));
 
+jest.mock('../../modules/transactions/DeployTransaction');
+
 describe('Lighthouse', () => {
   const sandbox = createSandbox();
 
@@ -33,7 +36,7 @@ describe('Lighthouse', () => {
     sandbox.restore();
   });
 
-  test('Creating a Lighthouse', async () => {
+  test('Getting contract args', async () => {
     const web3 = new Web3();
     const args = {
       adapter: {
@@ -51,10 +54,6 @@ describe('Lighthouse', () => {
       query: { contractName: 'MyContract' },
     });
 
-    sandbox
-      .spyOn(Lighthouse.prototype, '_defineContractInterface')
-      .mockImplementation(() => {});
-
     const mockAdapterInit = sandbox.fn();
     const mockLoaderLoad = sandbox.fn();
     getAdapter.mockReturnValue({ initialize: mockAdapterInit });
@@ -62,20 +61,92 @@ describe('Lighthouse', () => {
     getWallet.mockReturnValue(wallet);
 
     // no args
-    await expect(Lighthouse.create()).rejects.toThrow('contractData or loader');
+    await expect(Lighthouse.getConstructorArgs()).rejects.toThrow(
+      'contractData or loader',
+    );
 
     // contractData
-    await Lighthouse.create(dataArgs);
+    await Lighthouse.getConstructorArgs(dataArgs);
     expect(mockLoaderLoad).not.toHaveBeenCalled();
 
     // loader
-    await Lighthouse.create(loaderArgs);
+    await Lighthouse.getConstructorArgs(loaderArgs);
     expect(mockLoaderLoad).toHaveBeenCalled();
 
     expect(getAdapter).toHaveBeenCalledWith(args.adapter, args.wallet);
     expect(getParser).toHaveBeenCalledWith(args.parser);
     expect(getWallet).toHaveBeenCalledWith(args.wallet);
     expect(mockAdapterInit).toHaveBeenCalled();
+  });
+
+  test('Creating a Lighthouse', async () => {
+    const createArgs = { create: 'args' };
+
+    sandbox
+      .spyOn(Lighthouse.prototype, '_defineContractInterface')
+      .mockImplementation(() => ({}));
+    sandbox
+      .spyOn(Lighthouse, 'getConstructorArgs')
+      .mockImplementation(() => ({}));
+
+    // no args
+    await Lighthouse.create();
+    expect(Lighthouse.getConstructorArgs).toHaveBeenCalledWith({});
+
+    // with args
+    await Lighthouse.create(createArgs);
+    expect(Lighthouse.getConstructorArgs).toHaveBeenCalledWith(createArgs);
+  });
+
+  test('Deploying a contract', async () => {
+    const createArgs = { create: 'args' };
+    const deployArgs = ['one', 'two'];
+    const fromAddress = '0x123';
+    const deployData = 'deploy data';
+    const signed = 'signed deploy tx';
+    const contractAddress = '0x987';
+    const receipt = { receipt: true, contractAddress };
+
+    const mockEncodeDeploy = sandbox.fn().mockReturnValue(deployData);
+    const mockSendSignedTransaction = sandbox.fn().mockResolvedValue(receipt);
+    const mockInitialize = sandbox.fn();
+    const mockSign = sandbox.fn().mockResolvedValue(signed);
+
+    sandbox
+      .spyOn(Lighthouse.prototype, '_defineContractInterface')
+      .mockImplementation(() => ({}));
+    sandbox
+      .spyOn(Lighthouse, 'getConstructorArgs')
+      .mockImplementation(() => ({}))
+      .mockResolvedValue({
+        adapter: {
+          encodeDeploy: mockEncodeDeploy,
+          sendSignedTransaction: mockSendSignedTransaction,
+          initialize: mockInitialize,
+        },
+        wallet: {
+          sign: mockSign,
+          address: fromAddress,
+        },
+        contractData: {
+          abi: [],
+        },
+      });
+
+    // no args
+    await expect(Lighthouse.deploy()).rejects.toThrow(
+      'Unable to deploy contract',
+    );
+    expect(Lighthouse.getConstructorArgs).toHaveBeenCalledWith({});
+    Lighthouse.getConstructorArgs.mockClear();
+
+    // with args
+    DeployTransaction.prototype.receipt = {
+      contractAddress,
+    };
+    await Lighthouse.deploy(createArgs, deployArgs);
+    expect(Lighthouse.getConstructorArgs).toHaveBeenCalledWith(createArgs);
+    expect(DeployTransaction.prototype.send).toHaveBeenCalled();
   });
 
   test('Instantiating a Lighthouse', () => {
