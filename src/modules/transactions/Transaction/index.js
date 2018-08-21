@@ -9,7 +9,6 @@ import type { UnsignedTransaction } from '../../../interface/flowtypes';
 import type { IAdapter } from '../../../interface/Adapter';
 import type { HookManagerFn } from '../../HookManager/flowtypes';
 
-// $FlowFixMe extending EventEmitter causes Flow to think .name must be settable
 export default class Transaction extends EventEmitter {
   _adapter: IAdapter;
 
@@ -17,14 +16,14 @@ export default class Transaction extends EventEmitter {
 
   hooks: HookManagerFn;
 
-  static get name() {
+  static get transactionName() {
     return 'transaction';
   }
 
   // returns a function which returns an instance of this
   static getMethodFn({
     lighthouse: { adapter },
-  }: Object): (...params: any) => Transaction {
+  }: Object): ((...params: any) => Transaction) & {} {
     const hooks = new HookManager();
     const fn = (...options: any) =>
       new this(adapter, {

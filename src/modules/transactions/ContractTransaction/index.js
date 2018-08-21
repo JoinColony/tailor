@@ -1,31 +1,20 @@
 /* @flow */
 
-import BigNumber from 'bn.js';
-
-import type { TransactionReceipt, TransactionState } from '../flowtypes';
+import { isOptions } from '../utils';
 import Transaction from '../Transaction';
 import HookManager from '../../HookManager';
 import getFunctionCall from '../../getFunctionCall';
 
+import type { TransactionReceipt, TransactionState } from '../flowtypes';
 import type Lighthouse from '../../../Lighthouse';
 import type { FunctionParams } from '../../../interface/ContractSpec';
-
-function isOptions(input: any) {
-  return (
-    typeof input === 'object' &&
-    ['value', 'gas', 'gasLimit'].some(
-      option =>
-        BigNumber.isBN(input[option]) || typeof input[option] === 'number',
-    )
-  );
-}
 
 export default class ContractTransaction extends Transaction {
   _lh: Lighthouse;
 
   _state: TransactionState;
 
-  static get name() {
+  static get transactionName() {
     return 'contract';
   }
 
@@ -38,7 +27,7 @@ export default class ContractTransaction extends Transaction {
     lighthouse: Lighthouse,
     functionParams: FunctionParams,
     isPayable?: boolean,
-  }) {
+  }): ((...params: any) => Transaction) & Object {
     const hooks = new HookManager();
     const fn = (...inputParams: any) => {
       const options = isOptions(inputParams[inputParams.length - 1])
@@ -96,7 +85,6 @@ export default class ContractTransaction extends Transaction {
 
   _handleReceipt(receipt: TransactionReceipt) {
     this._state.events = this._handleReceiptEvents(receipt);
-    // eslint-disable-next-line no-underscore-dangle
     super._handleReceipt(receipt);
   }
 
