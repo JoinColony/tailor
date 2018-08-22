@@ -94,23 +94,7 @@ export default class MultiSigTransaction extends ContractTransaction {
     return fn;
   }
 
-  static _validatePayload(payload: any) {
-    const assert = makeAssert('Invalid payload');
-    assert(isPlainObject(payload), 'Payload must be an object');
-    const { data, destinationAddress, sourceAddress, value } = payload || {};
-    assert(isHexStrict(data), 'data must be a hex string');
-    assert(
-      isAddress(destinationAddress),
-      'destinationAddress must be a valid address',
-    );
-    assert(isAddress(sourceAddress), 'sourceAddress must be a valid address');
-    return assert(
-      Number(value) === value && value >= 0,
-      'value must be a positive number',
-    );
-  }
-
-  static _validateSignature(signature: any, assert: Function = defaultAssert) {
+  static _validateSignature(signature: any, assert: Function) {
     assert(isPlainObject(signature), 'Signature must be an object');
     const { sigV, sigR, sigS, mode } = signature;
     return (
@@ -131,6 +115,17 @@ export default class MultiSigTransaction extends ContractTransaction {
       ([address, signature]) =>
         assert(isAddress(address), `"${address}" is not a valid address`) &&
         this._validateSignature(signature, assert),
+    );
+  }
+
+  // TODO: constructor checks multisig specific state values using setters
+  constructor(lh: Lighthouse, { signers, multiSigNonce, ...state }: Object) {
+    super(lh, { signers, multiSigNonce, ...state });
+    // eslint-disable-next-line no-underscore-dangle
+    this.constructor._validateSigners(signers);
+    defaultAssert(
+      multiSigNonce == null || Number.isInteger(multiSigNonce),
+      'The optional `multiSigNonce` parameter should be an integer',
     );
   }
 
@@ -346,10 +341,10 @@ export default class MultiSigTransaction extends ContractTransaction {
     const { data, to, from, value, signers } = parsed;
 
     defaultAssert(
-      isEqual(this.data, data) &&
-        isEqual(this.to, to) &&
-        isEqual(this.from, from) &&
-        isEqual(this.value, value),
+      isEqual(
+        { data: this.data, to: this.to, from: this.from, value: this.value },
+        { data, to, from, value },
+      ),
       'Unable to add state; incompatible payloads',
     );
     // eslint-disable-next-line no-underscore-dangle
@@ -364,26 +359,24 @@ export default class MultiSigTransaction extends ContractTransaction {
       args: this._state.functionCall.args,
     });
 
-    defaultAssert(response.length, 'Nonce function must return a value');
+    if (!response.length) throw new Error('Nonce function must return a value');
 
-    const nonce = BigNumber.isBigNumber(response[0])
+    const nonce = BigNumber.isBN(response[0])
       ? response[0].toNumber()
       : response[0];
-    defaultAssert(
-      Number(nonce) === nonce && Number.isInteger(nonce),
-      'Nonce must be an integer',
-    );
+    if (!(Number(nonce) === nonce && Number.isInteger(nonce)))
+      throw new Error('Nonce must be an integer');
 
     return nonce;
   }
 
   async getRequiredSigners(): Promise<Array<string>> {
-    const signees = await this._state.getRequiredSignees(
+    const signers = await this._state.getRequiredSigners(
       this._state.functionCall.args,
     );
-    if (!(Array.isArray(signees) && signees.every(isAddress)))
-      throw new Error('Expected an array of signee addresses');
-    return signees;
+    if (!(Array.isArray(signers) && signers.every(isAddress)))
+      throw new Error('Expected an array of signer addresses');
+    return signers;
   }
 
   /**
@@ -398,19 +391,9 @@ export default class MultiSigTransaction extends ContractTransaction {
   }
 
   async send(): Promise<this> {
-    this._checkNotSent('send transaction');
     await this.refresh();
     this._validateRequiredSigners();
-
-    if (this.gas == null) this.gas = await this.estimate();
-    if (this.gasPrice == null)
-      this.gasPrice = await this._adapter.getGasPrice();
-    if (this.nonce == null)
-      this.nonce = await this._adapter.getNonce(this.from);
-    if (this.chainId == null)
-      this.chainId = await this._adapter.getCurrentNetwork();
-
-    return this._send();
+    return super.send();
   }
 
   /**

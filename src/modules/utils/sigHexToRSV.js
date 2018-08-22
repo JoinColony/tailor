@@ -1,5 +1,7 @@
 /* @flow */
 
+import { hexToBytes, bytesToHex } from 'web3-utils';
+
 /**
  * Converts a signature hex string to an object containing its
  * r, s and v components.
@@ -8,7 +10,7 @@
  * https://github.com/ethereumjs/ethereumjs-util/blob/master/index.js#L432
  */
 export default function sigHexToRSV(sigString: string) {
-  const sig = exports.toBuffer(sigString);
+  const sig = hexToBytes(sigString);
 
   // NOTE: with potential introduction of chainId this might need to be updated
   if (sig.length !== 65) {
@@ -23,7 +25,7 @@ export default function sigHexToRSV(sigString: string) {
 
   return {
     v,
-    r: sig.slice(0, 32),
-    s: sig.slice(32, 64),
+    r: bytesToHex(sig.slice(0, 32)),
+    s: bytesToHex(sig.slice(32, 64)),
   };
 }
