@@ -603,12 +603,10 @@ describe('MultiSigTransaction', () => {
 
     // Invalid nonce supplied
     ['1', 0.1].forEach(input => {
-      // eslint-disable-next-line no-new
-      new Transaction(mockLighthouse, { ...txArgs, multiSigNonce: input });
-      expect(assert).toHaveBeenCalledWith(
-        false,
-        expect.stringMatching('multiSigNonce'),
-      );
+      expect(
+        () =>
+          new Transaction(mockLighthouse, { ...txArgs, multiSigNonce: input }),
+      ).toThrow('multiSigNonce');
     });
 
     // No nonce supplied, or valid nonce supplied
@@ -717,7 +715,11 @@ describe('MultiSigTransaction', () => {
     // construct
     const tx = fn();
     expect(tx).toBeInstanceOf(Transaction);
-    // TODO: check state is set according to above
+    expect(tx._lh).toBe(mockLighthouse);
+    expect(tx._state.getRequiredSigners).toBe(getRequiredSigners);
+    expect(tx._state.multiSigFunctionName).toBe(multiSigFunctionName);
+    expect(tx._state.nonceFunctionName).toBe(nonceFunctionName);
+    expect(tx._state.nonceInput).toBe(nonceInput);
 
     // hooks
     expect(fn.hooks.getManager()).toBeInstanceOf(HookManager);

@@ -1,7 +1,6 @@
 /* @flow */
 
 import Transaction from './Transaction';
-import Adapter from '../../adapters/Adapter';
 
 import type { TransactionSpec } from './flowtypes';
 import { TRANSACTION_NAME_MAP, DEFAULT_TRANSACTION } from './constants';
@@ -22,31 +21,26 @@ export function getTransactionFromName(name: string) {
 }
 
 export function isTransactionClass(F: any) {
-  try {
-    const instance = new F(new Adapter(), {});
-    if (instance instanceof Transaction) return true;
-  } catch (error) {
-    //
-  }
-  return false;
+  return F === Transaction || F.prototype instanceof Transaction;
 }
 
 export function getTransaction(
   spec: TransactionSpec = DEFAULT_TRANSACTION,
 ): GetTransactionReturn {
   // $FlowFixMe we've checked it's a Transaction class
-  if (isTransactionClass(spec)) return { class: spec };
+  if (exports.isTransactionClass(spec)) return { class: spec };
 
-  if (typeof spec === 'string') return { class: getTransactionFromName(spec) };
+  if (typeof spec === 'string')
+    return { class: exports.getTransactionFromName(spec) };
 
   if (spec.name) {
     return {
-      class: getTransactionFromName(spec.name),
+      class: exports.getTransactionFromName(spec.name),
       options: spec.options || undefined,
     };
   }
 
-  if (spec.class) {
+  if (spec.class && exports.isTransactionClass(spec.class)) {
     return {
       // $FlowFixMe
       class: spec.class,
@@ -54,5 +48,5 @@ export function getTransaction(
     };
   }
 
-  throw Error('Invalid Transaction specification.');
+  throw new Error('Invalid Transaction specification.');
 }

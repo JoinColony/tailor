@@ -5,6 +5,7 @@ import createSandbox from 'jest-sandbox';
 import BigNumber from 'bn.js';
 
 import Transaction from '../index';
+import HookManager from '../../../HookManager';
 
 describe('Transaction', () => {
   const sandbox = createSandbox();
@@ -31,6 +32,14 @@ describe('Transaction', () => {
 
   beforeEach(() => {
     sandbox.clear();
+  });
+
+  test('Getting method function', async () => {
+    const fn = Transaction.getMethodFn({
+      lighthouse: { adapter: mockAdapter },
+    });
+    expect(fn()).toBeInstanceOf(Transaction);
+    expect(fn.hooks.getManager()).toBeInstanceOf(HookManager);
   });
 
   test('Estimate', async () => {

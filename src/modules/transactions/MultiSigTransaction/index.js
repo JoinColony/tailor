@@ -82,7 +82,6 @@ export default class MultiSigTransaction extends ContractTransaction {
     };
     fn.hooks = hooks.createHooks();
 
-    // TODO: do we need to .call here?
     fn.restore = json =>
       this.restore(lighthouse, json, {
         getRequiredSigners,
@@ -118,15 +117,11 @@ export default class MultiSigTransaction extends ContractTransaction {
     );
   }
 
-  // TODO: constructor checks multisig specific state values using setters
   constructor(lh: Lighthouse, { signers, multiSigNonce, ...state }: Object) {
-    super(lh, { signers, multiSigNonce, ...state });
-    // eslint-disable-next-line no-underscore-dangle
-    this.constructor._validateSigners(signers);
-    defaultAssert(
-      multiSigNonce == null || Number.isInteger(multiSigNonce),
-      'The optional `multiSigNonce` parameter should be an integer',
-    );
+    super(lh, { ...state });
+
+    if (signers) this.signers = signers;
+    if (multiSigNonce) this.multiSigNonce = multiSigNonce;
   }
 
   get _signedMessageDigest() {
@@ -191,6 +186,18 @@ export default class MultiSigTransaction extends ContractTransaction {
         'MultiSig nonce not set; call `.refresh` to refresh nonce',
       );
     return this._state.multiSigNonce;
+  }
+
+  set signers(signers: any) {
+    // eslint-disable-next-line no-underscore-dangle
+    this.constructor._validateSigners(signers);
+    this._state.signers = signers;
+  }
+
+  set multiSigNonce(multiSigNonce: number) {
+    if (!Number.isInteger(multiSigNonce))
+      throw new Error('multiSigNonce should be an integer');
+    this._state.multiSigNonce = multiSigNonce;
   }
 
   _getMessageDigest(mode: SigningMode) {

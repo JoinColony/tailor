@@ -1,5 +1,7 @@
 /* @flow */
 
+import { TRANSACTION_NAME_MAP } from './constants';
+
 import type {
   Address,
   FunctionArguments,
@@ -41,7 +43,7 @@ type TransactionState = {
 // eslint-disable-next-line no-undef
 type TransactionClass = Class<Transaction>;
 
-type TransactionName = string; // TODO: enum
+type TransactionName = $Values<typeof TRANSACTION_NAME_MAP>;
 
 type TransactionSpec =
   | TransactionClass

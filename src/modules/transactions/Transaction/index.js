@@ -38,7 +38,7 @@ export default class Transaction extends EventEmitter {
     adapter: IAdapter,
     {
       data,
-      from = adapter.wallet.address,
+      from = !!adapter.wallet && adapter.wallet.address,
       confirmations = [],
       createdAt = new Date(),
       events = [],
