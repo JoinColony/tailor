@@ -79,7 +79,7 @@ describe('Event', () => {
     }).toThrow('could not be matched');
   });
 
-  test('Wrapping a handler function', () => {
+  test('Wrapping a handler function', async () => {
     const e = new Event(mockAdapter, spec);
     const handler = sandbox.fn().mockImplementation((error, event) => ({
       error,
@@ -88,7 +88,7 @@ describe('Event', () => {
     const wrapped = e.wrapHandlerFunction(handler);
 
     const error = new Error('Some event error');
-    expect(wrapped(error)).toEqual({ error, event: undefined });
+    expect(await wrapped(error)).toEqual({ error, event: undefined });
 
     const signature =
       '0x6c2b4666ba8da5a95717621d879a77de725f3d816709b9cbe9f059b8f875e284';
@@ -99,7 +99,7 @@ describe('Event', () => {
         length: 1,
       },
     };
-    expect(wrapped(rawEvent)).toEqual({
+    expect(await wrapped(rawEvent)).toEqual({
       error: undefined,
       event: {
         event: rawEvent,

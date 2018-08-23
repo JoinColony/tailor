@@ -106,14 +106,9 @@ describe('Transaction', () => {
     callbacks[0]('hash');
     expect(tx.emit).toHaveBeenCalledWith('transactionHash', 'hash');
 
-    // receipt
-    expect(mockOn).toHaveBeenCalledWith('receipt', expect.anything());
-    callbacks[1]('receipt');
-    expect(tx.emit).toHaveBeenCalledWith('receipt', 'receipt');
-
     // confirmation
     expect(mockOn).toHaveBeenCalledWith('confirmation', expect.anything());
-    callbacks[2]('confirmationNumber', 'receipt');
+    callbacks[1]('confirmationNumber', 'receipt');
     expect(tx.emit).toHaveBeenCalledWith(
       'confirmation',
       'confirmationNumber',
@@ -122,15 +117,31 @@ describe('Transaction', () => {
 
     // error
     expect(mockOn).toHaveBeenCalledWith('error', expect.anything());
-    callbacks[3]('error');
+    callbacks[2]('error');
     expect(tx.emit).toHaveBeenCalledWith('error', 'error');
 
     // decode receipt fails
     tx._state.sentAt = undefined;
-    mockAdapter.getSendTransaction.mockImplementation(() => () => {
+    mockAdapter.getSendTransaction.mockImplementationOnce(() => () => {
       throw new Error('fake error');
     });
     await expect(tx.send()).rejects.toEqual(new Error('fake error'));
+
+    // error after receipt
+    tx._state.receipt = 'receipt';
+    callbacks[2]('error');
+    expect(tx.emit).toHaveBeenCalledWith('error', 'error');
+    expect(tx.sentAt).toBe(undefined);
+
+    // error with hooks
+    const tx2 = new Transaction(mockAdapter, { to });
+    sandbox
+      .spyOn(tx2.hooks, 'getHookedValue')
+      .mockImplementationOnce(async value => value)
+      .mockImplementationOnce(() => {
+        throw new Error('Hooks failed');
+      });
+    await expect(tx2.send()).rejects.toThrow('Hooks failed');
   });
 
   test('To JSON', () => {

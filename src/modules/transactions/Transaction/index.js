@@ -3,14 +3,18 @@
 import EventEmitter from 'eventemitter3';
 import type { Gas, TransactionReceipt, TransactionState } from '../flowtypes';
 import { parseBigNumber } from '../../utils';
+import HookManager from '../../HookManager';
 
 import type { UnsignedTransaction } from '../../../interface/flowtypes';
 import type { IAdapter } from '../../../interface/Adapter';
+import type { HookManagerFn } from '../../HookManager/flowtypes';
 
 export default class Transaction extends EventEmitter {
   _adapter: IAdapter;
 
   _state: TransactionState;
+
+  hooks: HookManagerFn;
 
   constructor(
     adapter: IAdapter,
@@ -22,6 +26,7 @@ export default class Transaction extends EventEmitter {
       events = [],
       gas,
       gasPrice,
+      hooks,
       nonce,
       value,
       ...state
@@ -47,6 +52,9 @@ export default class Transaction extends EventEmitter {
     this.gasPrice = gasPrice;
     this.nonce = nonce;
     this.value = value || 0;
+
+    // hooks
+    this.hooks = HookManager.createHooks({ parent: hooks });
   }
 
   get chainId() {
@@ -216,21 +224,28 @@ export default class Transaction extends EventEmitter {
   }
 
   async _send() {
+    this._state = await this.hooks.getHookedValue('send', this._state, this);
     const sendTransaction = await this._adapter.getSendTransaction(
       this.rawTransaction,
     );
     return new Promise((resolve, reject) => {
       sendTransaction()
         .on('transactionHash', hash => this._handleTransactionHash(hash))
-        .on('receipt', receipt => this._handleReceipt(receipt))
         .on('confirmation', (confirmationNumber, receipt) =>
           this._handleConfirmation(confirmationNumber, receipt),
         )
         .on('error', error => this._handleSendError(error))
         .catch(reject)
-        .then(() => {
+        .then(async receipt => {
+          try {
+            this._handleReceipt(
+              await this.hooks.getHookedValue('receipt', receipt, this),
+            );
+          } catch (error) {
+            return reject(error);
+          }
           // Return the Transaction itself (with updated state)
-          resolve(this);
+          return resolve(this);
         });
     });
   }

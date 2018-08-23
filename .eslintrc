@@ -20,5 +20,8 @@
                 "flowtype/require-valid-file-annotation": "off"
             }
         }
-    ]
+    ],
+  "rules": {
+    "no-underscore-dangle": [2, { "allowAfterThis": true, "allowAfterSuper": true }]
+  }
 }
