@@ -10,7 +10,6 @@ import {
   hexToBytes,
   isAddress,
 } from 'web3-utils';
-import BigNumber from 'bn.js';
 
 import ContractTransaction from '../ContractTransaction';
 import { SIGNING_MODES } from './constants';
@@ -57,8 +56,7 @@ export default class MultiSigTransaction extends ContractTransaction {
     isPayable,
     getRequiredSigners,
     multiSigFunctionName,
-    nonceFunctionName,
-    nonceInput,
+    getMultiSigNonce,
   }: Object) {
     // TODO: more specific type
 
@@ -75,8 +73,7 @@ export default class MultiSigTransaction extends ContractTransaction {
         hooks,
         getRequiredSigners,
         multiSigFunctionName,
-        nonceFunctionName,
-        nonceInput,
+        getMultiSigNonce,
         ...options,
       });
     };
@@ -86,8 +83,7 @@ export default class MultiSigTransaction extends ContractTransaction {
       this.restore(lighthouse, json, {
         getRequiredSigners,
         multiSigFunctionName,
-        nonceFunctionName,
-        nonceInput,
+        getMultiSigNonce,
       });
 
     return fn;
@@ -361,18 +357,13 @@ export default class MultiSigTransaction extends ContractTransaction {
   }
 
   async getMultiSigNonce(): Promise<number> {
-    const response = await this._lh.adapter.call({
-      functionSignature: this._state.nonceFunctionName,
-      args: this._state.functionCall.args,
+    const nonce = await this._state.getMultiSigNonce({
+      lighthouse: this._lh,
+      ...this._state,
     });
 
-    if (!response.length) throw new Error('Nonce function must return a value');
-
-    const nonce = BigNumber.isBN(response[0])
-      ? response[0].toNumber()
-      : response[0];
-    if (!(Number(nonce) === nonce && Number.isInteger(nonce)))
-      throw new Error('Nonce must be an integer');
+    if (!Number.isInteger(nonce))
+      throw new Error('getMultiSigNonce must return an integer');
 
     return nonce;
   }

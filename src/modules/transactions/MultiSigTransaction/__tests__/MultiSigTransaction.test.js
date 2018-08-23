@@ -49,7 +49,8 @@ describe('MultiSigTransaction', () => {
   const signedMessage = 'signed message';
   const to = '0xcontract';
   const from = '0xwallet';
-  const nonceFunctionName = 'nonceFunction';
+  const multiSigNonce = 5;
+  const getMultiSigNonce = sandbox.fn().mockResolvedValue(multiSigNonce);
   const multiSigFunctionName = 'ms function name';
 
   const mockEncodeFunctionCall = sandbox.fn().mockImplementation(() => data);
@@ -73,8 +74,6 @@ describe('MultiSigTransaction', () => {
     wallet,
     contractAddress: to,
   };
-
-  const multiSigNonce = 5;
 
   const signatureRSV = {
     sigR: '0x3810976581519370936455002930541734832270292486195672859026812854',
@@ -117,7 +116,7 @@ describe('MultiSigTransaction', () => {
     to,
     from,
     data,
-    nonceFunctionName,
+    getMultiSigNonce,
     multiSigFunctionName,
   };
 
@@ -663,22 +662,20 @@ describe('MultiSigTransaction', () => {
     const tx = new Transaction(mockLighthouse, txArgs);
 
     // returns number
-    mockLighthouse.adapter.call.mockImplementation(() => [multiSigNonce]);
-    expect(await tx.getMultiSigNonce()).toEqual(multiSigNonce);
-
-    // returns bn
-    mockLighthouse.adapter.call.mockImplementation(() => [
-      new BigNumber(multiSigNonce),
-    ]);
+    getMultiSigNonce.mockImplementationOnce(() => multiSigNonce);
     expect(await tx.getMultiSigNonce()).toEqual(multiSigNonce);
 
     // returns invalid
-    mockLighthouse.adapter.call.mockImplementation(() => ['invalid']);
-    await expect(tx.getMultiSigNonce()).rejects.toThrow('must be an integer');
+    getMultiSigNonce.mockImplementationOnce(() => 'invalid');
+    await expect(tx.getMultiSigNonce()).rejects.toThrow(
+      'must return an integer',
+    );
 
     // returns nothing
-    mockLighthouse.adapter.call.mockImplementation(() => ({}));
-    await expect(tx.getMultiSigNonce()).rejects.toThrow('must return a value');
+    getMultiSigNonce.mockImplementationOnce(() => {});
+    await expect(tx.getMultiSigNonce()).rejects.toThrow(
+      'must return an integer',
+    );
 
     // state getter
     expect(tx.multiSigNonce).toEqual(multiSigNonce);
@@ -694,15 +691,13 @@ describe('MultiSigTransaction', () => {
     };
     const isPayable = false;
     const getRequiredSigners = sandbox.fn();
-    const nonceInput = [];
     const fn = Transaction.getMethodFn({
       lighthouse: mockLighthouse,
       functionParams,
       isPayable,
       getRequiredSigners,
       multiSigFunctionName,
-      nonceFunctionName,
-      nonceInput,
+      getMultiSigNonce,
     });
 
     // construct non-payable with value
@@ -718,8 +713,7 @@ describe('MultiSigTransaction', () => {
     expect(tx._lh).toBe(mockLighthouse);
     expect(tx._state.getRequiredSigners).toBe(getRequiredSigners);
     expect(tx._state.multiSigFunctionName).toBe(multiSigFunctionName);
-    expect(tx._state.nonceFunctionName).toBe(nonceFunctionName);
-    expect(tx._state.nonceInput).toBe(nonceInput);
+    expect(tx._state.getMultiSigNonce).toBe(getMultiSigNonce);
 
     // hooks
     expect(fn.hooks.getManager()).toBeInstanceOf(HookManager);
@@ -731,8 +725,7 @@ describe('MultiSigTransaction', () => {
     expect(Transaction.restore).toHaveBeenCalledWith(mockLighthouse, json, {
       getRequiredSigners,
       multiSigFunctionName,
-      nonceFunctionName,
-      nonceInput,
+      getMultiSigNonce,
     });
   });
 
