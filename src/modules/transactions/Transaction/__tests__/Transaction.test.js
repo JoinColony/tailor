@@ -106,11 +106,6 @@ describe('Transaction', () => {
     callbacks[0]('hash');
     expect(tx.emit).toHaveBeenCalledWith('transactionHash', 'hash');
 
-    // receipt
-    // expect(mockOn).toHaveBeenCalledWith('receipt', expect.anything());
-    // callbacks[1]('receipt');
-    // expect(tx.emit).toHaveBeenCalledWith('receipt', 'receipt');
-
     // confirmation
     expect(mockOn).toHaveBeenCalledWith('confirmation', expect.anything());
     callbacks[1]('confirmationNumber', 'receipt');

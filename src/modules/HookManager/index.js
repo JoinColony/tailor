@@ -33,7 +33,7 @@ export default class HookManager {
   /**
    * Gets the hooked value for the given hookName, with the value being
    * cascaded through each hook function, first in the parents if set,
-   * in the oder in which they were registered.
+   * in the order in which they were registered.
    *
    * All params after hookName are passed to hook functions, but the
    * first of these should be the value for which a hooked value is
