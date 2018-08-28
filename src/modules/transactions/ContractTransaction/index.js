@@ -18,11 +18,15 @@ export default class ContractTransaction extends Transaction {
     return 'contract';
   }
 
-  // returns a function which returns an instance of this
+  /**
+   * Returns a method factory specific to this Transaction type, to be
+   * attached to the Lighthouse `methods` object. Also attaches hooks.
+   */
   static getMethodFn({
     lighthouse,
     functionParams,
     isPayable,
+    ...methodParams
   }: {
     lighthouse: Lighthouse,
     functionParams: FunctionParams,
@@ -40,6 +44,7 @@ export default class ContractTransaction extends Transaction {
       return new this(lighthouse, {
         functionCall,
         hooks,
+        ...methodParams,
         ...options,
       });
     };
@@ -65,6 +70,13 @@ export default class ContractTransaction extends Transaction {
     this._lh = lh;
   }
 
+  get _JSONValues() {
+    return Object.assign({}, super._JSONValues, {
+      events: this.events,
+      functionCall: this.functionCall,
+    });
+  }
+
   get events() {
     return this._state.events;
   }
@@ -86,28 +98,5 @@ export default class ContractTransaction extends Transaction {
   _handleReceipt(receipt: TransactionReceipt) {
     this._state.events = this._handleReceiptEvents(receipt);
     super._handleReceipt(receipt);
-  }
-
-  toJSON() {
-    const state: TransactionState = {
-      confirmations: this.confirmations,
-      createdAt: this.createdAt,
-      data: this.data,
-      events: this.events,
-      from: this.from,
-      functionCall: this.functionCall,
-      to: this.to,
-      value: this.value.toString(),
-    };
-
-    if (this.confirmedAt) state.confirmedAt = this.confirmedAt;
-    if (this.gas) state.gas = this.gas.toString();
-    if (this.gasPrice) state.gasPrice = this.gasPrice.toString();
-    if (this.hash) state.hash = this.hash;
-    if (this.chainId) state.chainId = this.chainId;
-    if (this.receipt) state.receipt = this.receipt;
-    if (this.sentAt) state.sentAt = this.sentAt;
-
-    return JSON.stringify(state);
   }
 }

@@ -14,9 +14,6 @@ import {
 import ContractTransaction from '../ContractTransaction';
 import { SIGNING_MODES } from './constants';
 import { makeAssert, sigHexToRSV } from '../../utils';
-import HookManager from '../../HookManager';
-import getFunctionCall from '../../getFunctionCall';
-import { isOptions } from '../utils';
 
 import type {
   CombinedSignatures,
@@ -34,20 +31,14 @@ export default class MultiSigTransaction extends ContractTransaction {
     return 'multisig';
   }
 
-  static async restore(
-    lighthouse: Lighthouse,
-    json: string,
-    options: Object = {},
-  ) {
+  static restore(lighthouse: Lighthouse, json: string, options: Object = {}) {
     let parsed = {};
     try {
       parsed = JSON.parse(json);
     } catch (error) {
       throw new Error('Unable to restore operation: could not parse JSON');
     }
-    const tx = new this(lighthouse, { ...parsed, ...options });
-    await tx.start();
-    return tx;
+    return new this(lighthouse, { ...options, ...parsed });
   }
 
   static getMethodFn({
@@ -58,48 +49,32 @@ export default class MultiSigTransaction extends ContractTransaction {
     multiSigFunctionName,
     getMultiSigNonce,
   }: Object) {
-    // TODO: more specific type
-
-    const hooks = new HookManager();
-    const fn = (...inputParams: any) => {
-      const options = isOptions(inputParams[inputParams.length - 1])
-        ? inputParams.pop()
-        : {};
-      if (!isPayable && options.value)
-        throw new Error('Cannot send a value to a non-payable function');
-      const functionCall = getFunctionCall(functionParams, ...inputParams);
-      return new this(lighthouse, {
-        functionCall,
-        hooks,
-        getRequiredSigners,
-        multiSigFunctionName,
-        getMultiSigNonce,
-        ...options,
-      });
-    };
-    fn.hooks = hooks.createHooks();
-
+    const fn = super.getMethodFn({
+      lighthouse,
+      functionParams,
+      isPayable,
+      getRequiredSigners,
+      multiSigFunctionName,
+      getMultiSigNonce,
+    });
     fn.restore = json =>
       this.restore(lighthouse, json, {
         getRequiredSigners,
         multiSigFunctionName,
         getMultiSigNonce,
       });
-
     return fn;
   }
 
   static _validateSignature(signature: any, assert: Function) {
     assert(isPlainObject(signature), 'Signature must be an object');
     const { sigV, sigR, sigS, mode } = signature;
-    return (
-      assert([27, 28].includes(sigV), 'v must be 27 or 28') &&
-      assert(isHexStrict(sigR), 'r must be a hex string') &&
-      assert(isHexStrict(sigS), 's must be a hex string') &&
-      assert(
-        Object.values(SIGNING_MODES).includes(mode),
-        'mode must be a valid signing mode',
-      )
+    assert([27, 28].includes(sigV), 'v must be 27 or 28');
+    assert(isHexStrict(sigR), 'r must be a hex string');
+    assert(isHexStrict(sigS), 's must be a hex string');
+    assert(
+      Object.values(SIGNING_MODES).includes(mode),
+      'mode must be a valid signing mode',
     );
   }
 
@@ -133,6 +108,13 @@ export default class MultiSigTransaction extends ContractTransaction {
         this._state.messageHash,
       ),
     );
+  }
+
+  get _JSONValues() {
+    return Object.assign({}, super._JSONValues, {
+      multiSigNonce: this._state.multiSigNonce,
+      signers: this.signers,
+    });
   }
 
   /**
@@ -275,8 +257,8 @@ export default class MultiSigTransaction extends ContractTransaction {
       this._state.multiSigNonce = newNonce;
       // If the nonce changed, the signers are no longer valid
       this._state.signers = {};
-      // We will also trigger onReset, if it exists
-      if (this._state.onReset) this._state.onReset();
+      // We will also emit a reset event
+      this.emit('reset');
     }
   }
 
@@ -323,15 +305,6 @@ export default class MultiSigTransaction extends ContractTransaction {
       },
     });
     return this;
-  }
-
-  toJSON() {
-    const json = JSON.parse(super.toJSON());
-    return JSON.stringify({
-      multiSigNonce: this._state.multiSigNonce,
-      signers: this.signers,
-      ...json,
-    });
   }
 
   addSignersFromJSON(json: string) {
@@ -405,9 +378,5 @@ export default class MultiSigTransaction extends ContractTransaction {
     const { r: sigR, s: sigS, v: sigV } = sigHexToRSV(signature);
     await this._addSignature({ sigR, sigS, sigV }, this._lh.wallet.address);
     return this;
-  }
-
-  async start() {
-    await this.refresh();
   }
 }

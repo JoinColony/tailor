@@ -7,8 +7,6 @@ import { TRANSACTION_NAME_MAP, DEFAULT_TRANSACTION } from './constants';
 
 const assert = require('assert');
 
-// eslint doesn't recognise Flow's Class
-// eslint-disable-next-line no-undef
 type GetTransactionReturn = { class: Class<Transaction>, options?: any };
 
 export function getTransactionFromName(name: string) {

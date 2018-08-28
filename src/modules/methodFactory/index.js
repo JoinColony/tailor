@@ -5,7 +5,7 @@ import type Lighthouse from '../../Lighthouse';
 import { getTransaction } from '../transactions';
 
 /*
- * Given a specification for a method function, eeturn an async function
+ * Given a specification for a method function, return an async function
  * which can be called with any valid input.
  */
 export default function methodFactory(
@@ -19,8 +19,12 @@ export default function methodFactory(
   const functionParams =
     functionSignatures.length === 0 ? { [name]: [] } : input;
 
+  // Get class for the type of Transaction to use for this method. Uses
+  // `type` spec, or returns default `ContractTransaction`.
   const { class: Tx, options } = getTransaction(type);
 
+  // Get the method function object, which is callable and may also
+  // have additional properties attached (such as hooks).
   const fn = Tx.getMethodFn({
     lighthouse,
     functionParams,

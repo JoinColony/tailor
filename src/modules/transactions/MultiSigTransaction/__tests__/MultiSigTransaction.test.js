@@ -499,8 +499,8 @@ describe('MultiSigTransaction', () => {
   });
 
   test('Refreshing multisig nonce', async () => {
-    const onReset = sandbox.fn();
-    const tx = new Transaction(mockLighthouse, { ...txArgs, onReset });
+    const tx = new Transaction(mockLighthouse, txArgs);
+    sandbox.spyOn(tx, 'emit').mockImplementation(() => {});
 
     const oldNonce = 20;
     const newNonce = 21;
@@ -514,7 +514,7 @@ describe('MultiSigTransaction', () => {
     expect(tx.getMultiSigNonce).toHaveBeenCalled();
     expect(tx._state.multiSigNonce).toBe(oldNonce);
     expect(tx._state.signers).toEqual(signers);
-    expect(onReset).not.toHaveBeenCalled();
+    expect(tx.emit).not.toHaveBeenCalled();
 
     // Refresh with the new nonce
     tx.getMultiSigNonce.mockImplementation(async () => newNonce);
@@ -522,17 +522,10 @@ describe('MultiSigTransaction', () => {
     expect(tx.getMultiSigNonce).toHaveBeenCalled();
     expect(tx._state.multiSigNonce).toBe(newNonce);
     expect(tx._state.signers).toEqual({});
-    expect(onReset).toHaveBeenCalled();
+    expect(tx.emit).toHaveBeenCalled();
 
     // no nonce already set
     delete tx._state.multiSigNonce;
-    await tx._refreshMultiSigNonce();
-    expect(tx.getMultiSigNonce).toHaveBeenCalled();
-    expect(tx._state.multiSigNonce).toBe(newNonce);
-
-    // no reset
-    delete tx._state.onReset;
-    tx._state.multiSigNonce = oldNonce;
     await tx._refreshMultiSigNonce();
     expect(tx.getMultiSigNonce).toHaveBeenCalled();
     expect(tx._state.multiSigNonce).toBe(newNonce);
@@ -616,13 +609,6 @@ describe('MultiSigTransaction', () => {
       });
       expect(tx).toBeInstanceOf(Transaction);
     });
-  });
-
-  test('Starting the transaction', async () => {
-    const tx = new Transaction(mockLighthouse, txArgs);
-    sandbox.spyOn(tx, 'refresh').mockImplementation(() => {});
-    await tx.start();
-    expect(tx.refresh).toHaveBeenCalled();
   });
 
   test('Sending a transaction', async () => {
@@ -734,17 +720,13 @@ describe('MultiSigTransaction', () => {
     const options = {};
 
     // valid json
-    sandbox
-      .spyOn(Transaction.prototype, 'start')
-      .mockImplementationOnce(() => {});
     expect(
       await Transaction.restore(mockLighthouse, json, options),
     ).toBeInstanceOf(Transaction);
-    expect(Transaction.prototype.start).toHaveBeenCalled();
 
     // invalid json, no options
-    await expect(
+    await expect(() =>
       Transaction.restore(mockLighthouse, 'invalid json'),
-    ).rejects.toThrow('could not parse JSON');
+    ).toThrow('could not parse JSON');
   });
 });

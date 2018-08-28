@@ -8,8 +8,6 @@ export default class DeployTransaction extends Transaction {
     return 'deploy';
   }
 
-  // TODO: getMethodFn
-
   constructor(
     adapter: IAdapter,
     {

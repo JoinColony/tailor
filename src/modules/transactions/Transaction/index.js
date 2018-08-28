@@ -75,6 +75,27 @@ export default class Transaction extends EventEmitter {
     this.hooks = HookManager.createHooks({ parent: hooks });
   }
 
+  get _JSONValues() {
+    const state: TransactionState = {
+      confirmations: this.confirmations,
+      createdAt: this.createdAt,
+      data: this.data,
+      from: this.from,
+      to: this.to,
+      value: this.value.toString(),
+    };
+
+    if (this.confirmedAt) state.confirmedAt = this.confirmedAt;
+    if (this.gas) state.gas = this.gas.toString();
+    if (this.gasPrice) state.gasPrice = this.gasPrice.toString();
+    if (this.hash) state.hash = this.hash;
+    if (this.chainId) state.chainId = this.chainId;
+    if (this.receipt) state.receipt = this.receipt;
+    if (this.sentAt) state.sentAt = this.sentAt;
+
+    return state;
+  }
+
   get chainId() {
     return this._state.chainId;
   }
@@ -203,24 +224,7 @@ export default class Transaction extends EventEmitter {
   }
 
   toJSON() {
-    const state: TransactionState = {
-      confirmations: this.confirmations,
-      createdAt: this.createdAt,
-      data: this.data,
-      from: this.from,
-      to: this.to,
-      value: this.value.toString(),
-    };
-
-    if (this.confirmedAt) state.confirmedAt = this.confirmedAt;
-    if (this.gas) state.gas = this.gas.toString();
-    if (this.gasPrice) state.gasPrice = this.gasPrice.toString();
-    if (this.hash) state.hash = this.hash;
-    if (this.chainId) state.chainId = this.chainId;
-    if (this.receipt) state.receipt = this.receipt;
-    if (this.sentAt) state.sentAt = this.sentAt;
-
-    return JSON.stringify(state);
+    return JSON.stringify(this._JSONValues);
   }
 
   async estimate(): Promise<Gas> {
