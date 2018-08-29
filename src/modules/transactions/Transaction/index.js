@@ -16,11 +16,29 @@ export default class Transaction extends EventEmitter {
 
   hooks: HookManagerFn;
 
+  static get transactionName() {
+    return 'transaction';
+  }
+
+  // returns a function which returns an instance of this
+  static getMethodFn({
+    lighthouse: { adapter },
+  }: Object): ((...params: any) => Transaction) & {} {
+    const hooks = new HookManager();
+    const fn = (...options: any) =>
+      new this(adapter, {
+        hooks,
+        ...options,
+      });
+    fn.hooks = hooks.createHooks();
+    return fn;
+  }
+
   constructor(
     adapter: IAdapter,
     {
       data,
-      from = adapter.wallet.address,
+      from = !!adapter.wallet && adapter.wallet.address,
       confirmations = [],
       createdAt = new Date(),
       events = [],
@@ -55,6 +73,27 @@ export default class Transaction extends EventEmitter {
 
     // hooks
     this.hooks = HookManager.createHooks({ parent: hooks });
+  }
+
+  get _JSONValues() {
+    const state: TransactionState = {
+      confirmations: this.confirmations,
+      createdAt: this.createdAt,
+      data: this.data,
+      from: this.from,
+      to: this.to,
+      value: this.value.toString(),
+    };
+
+    if (this.confirmedAt) state.confirmedAt = this.confirmedAt;
+    if (this.gas) state.gas = this.gas.toString();
+    if (this.gasPrice) state.gasPrice = this.gasPrice.toString();
+    if (this.hash) state.hash = this.hash;
+    if (this.chainId) state.chainId = this.chainId;
+    if (this.receipt) state.receipt = this.receipt;
+    if (this.sentAt) state.sentAt = this.sentAt;
+
+    return state;
   }
 
   get chainId() {
@@ -185,24 +224,7 @@ export default class Transaction extends EventEmitter {
   }
 
   toJSON() {
-    const state: TransactionState = {
-      confirmations: this.confirmations,
-      createdAt: this.createdAt,
-      data: this.data,
-      from: this.from,
-      to: this.to,
-      value: this.value.toString(),
-    };
-
-    if (this.confirmedAt) state.confirmedAt = this.confirmedAt;
-    if (this.gas) state.gas = this.gas.toString();
-    if (this.gasPrice) state.gasPrice = this.gasPrice.toString();
-    if (this.hash) state.hash = this.hash;
-    if (this.chainId) state.chainId = this.chainId;
-    if (this.receipt) state.receipt = this.receipt;
-    if (this.sentAt) state.sentAt = this.sentAt;
-
-    return JSON.stringify(state);
+    return JSON.stringify(this._JSONValues);
   }
 
   async estimate(): Promise<Gas> {

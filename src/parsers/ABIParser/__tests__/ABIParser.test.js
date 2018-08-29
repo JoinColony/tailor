@@ -151,6 +151,7 @@ describe('ABIParser', () => {
         },
       ],
       isPayable: false,
+      type: 'contract',
     });
     expect(parser.constructor.parseParams).toHaveBeenCalledWith(
       sendCoinABI.inputs,
@@ -179,6 +180,7 @@ describe('ABIParser', () => {
       },
       output: [],
       isPayable: false,
+      type: 'contract',
     });
     expect(parser.constructor.parseParams).toHaveBeenCalledTimes(2);
     expect(parser.constructor.parseParams).toHaveBeenCalledWith([], noInputs);

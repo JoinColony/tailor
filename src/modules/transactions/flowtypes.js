@@ -1,5 +1,7 @@
 /* @flow */
 
+import { TRANSACTION_NAME_MAP } from './constants';
+
 import type {
   Address,
   FunctionArguments,
@@ -12,6 +14,8 @@ import type {
   TypedEvents,
   Wei,
 } from '../../interface/flowtypes';
+
+import type Transaction from './Transaction';
 
 type Confirmations = Array<TransactionReceipt>;
 
@@ -35,6 +39,21 @@ type TransactionState = {
   value: Wei,
 };
 
+// eslint does not recognise the Class<T> utility
+// eslint-disable-next-line no-undef
+type TransactionClass = Class<Transaction>;
+
+type TransactionName = $Values<typeof TRANSACTION_NAME_MAP>;
+
+type TransactionSpec =
+  | TransactionClass
+  | TransactionName
+  | {
+      name?: TransactionName,
+      class?: TransactionClass,
+      options?: Object,
+    };
+
 export type {
   Address,
   Confirmations,
@@ -44,6 +63,7 @@ export type {
   SignedTransaction,
   TransactionData,
   TransactionReceipt,
+  TransactionSpec,
   TransactionState,
   TypedEvents,
   Wei,

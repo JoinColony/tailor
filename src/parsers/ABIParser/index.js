@@ -121,6 +121,7 @@ export default class ABIParser extends Parser {
       isPayable: Boolean(payable),
       name,
       output: this.parseParams(outputs, name),
+      type: 'contract',
     };
   }
 

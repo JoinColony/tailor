@@ -23,7 +23,7 @@ declare module 'web3-utils' {
   declare export function numberToHex(n: number): string;
   declare export function toHex(input: any): string;
   declare export function hexToBytes(hex: string): Array<number>;
-  declare export function bytesToHex(bytes: string): string;
+  declare export function bytesToHex(bytes: Array<number>): string;
   declare export function keccak256(input: string): string;
   declare export function padLeft(
     input: string | number,

@@ -1,6 +1,5 @@
 /* @flow */
 
-// eslint-disable-next-line import/no-cycle
 import type HookManager from './index';
 
 export type Hook = (...params: any) => any;

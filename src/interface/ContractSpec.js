@@ -2,6 +2,7 @@
 
 import type { ParamsSpec } from './Params';
 import type { FunctionSignature, EventSignature } from './flowtypes';
+import type { TransactionSpec } from '../modules/transactions/flowtypes';
 
 export type FunctionParams = {
   [functionSig: FunctionSignature]: ParamsSpec,
@@ -16,6 +17,7 @@ export type MethodSpec = {
   isPayable: boolean,
   name: string,
   output: ParamsSpec,
+  type: TransactionSpec,
 };
 
 export type EventSpec = {
@@ -46,6 +48,7 @@ export type PartialMethodSpec = {
   isPayable?: boolean,
   name?: string,
   output?: ParamsSpec,
+  type?: TransactionSpec,
 };
 
 export type PartialEventSpec = {

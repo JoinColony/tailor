@@ -1,6 +1,5 @@
 /* @flow */
 
-// eslint-disable-next-line import/no-cycle
 import type {
   HookManagerArgs,
   HookManagerFn,
