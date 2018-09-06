@@ -69,6 +69,7 @@ export type LighthouseArgs = {
   methods?: PartialMethodSpecs,
   parser: IParser,
   wallet: IWallet,
+  helpers: Object,
 };
 
 export type {

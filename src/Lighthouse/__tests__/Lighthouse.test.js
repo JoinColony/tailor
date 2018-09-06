@@ -90,11 +90,11 @@ describe('Lighthouse', () => {
       .mockImplementation(() => ({}));
 
     // no args
-    await Lighthouse.create();
+    await Lighthouse.load();
     expect(Lighthouse.getConstructorArgs).toHaveBeenCalledWith({});
 
     // with args
-    await Lighthouse.create(createArgs);
+    await Lighthouse.load(createArgs);
     expect(Lighthouse.getConstructorArgs).toHaveBeenCalledWith(createArgs);
   });
 
@@ -377,5 +377,22 @@ describe('Lighthouse', () => {
         },
       },
     });
+  });
+
+  test('Defining helpers', () => {
+    const myHelper = sandbox.fn();
+    const helpers = { myHelper, badHelper: true, constructor: sandbox.fn() };
+    sandbox.spyOn(Lighthouse.prototype, '_defineHelpers');
+    sandbox
+      .spyOn(Lighthouse.prototype, '_defineContractInterface')
+      .mockImplementation(() => {});
+
+    const lh = new Lighthouse({ helpers });
+    lh.myHelper();
+
+    expect(lh._defineHelpers).toHaveBeenCalledWith(helpers);
+    expect(myHelper.mock.instances[0]).toBe(lh);
+    expect(lh).not.toHaveProperty('badHelper');
+    expect(lh.constructor).not.toBe(helpers.constructor);
   });
 });

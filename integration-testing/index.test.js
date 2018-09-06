@@ -32,9 +32,9 @@ describe('Integration testing', () => {
 
   const wallet = new TestWallet(walletAddress, privateKey);
 
-  test('Creating a client', async () => {
+  test('Loading a client', async () => {
     const web3 = new Web3('ws://localhost:8545');
-    client = await Lighthouse.create({
+    client = await Lighthouse.load({
       adapter: {
         name: 'web3',
         options: { web3 },

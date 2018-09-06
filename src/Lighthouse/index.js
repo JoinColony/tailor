@@ -63,6 +63,7 @@ export default class Lighthouse {
     events,
     methods,
     query,
+    ...helpers
   }: LighthouseCreateArgs = {}): Promise<LighthouseArgs> {
     if (!(providedContractData || loader))
       throw new Error('Expected either contractData or loader');
@@ -85,10 +86,11 @@ export default class Lighthouse {
       events,
       methods,
       contractData,
+      helpers,
     };
   }
 
-  static async create(args: LighthouseCreateArgs = {}): Promise<this> {
+  static async load(args: LighthouseCreateArgs = {}): Promise<this> {
     return new this(await this.getConstructorArgs(args));
   }
 
@@ -119,12 +121,14 @@ export default class Lighthouse {
     events = {},
     methods = {},
     contractData,
+    helpers,
   }: LighthouseArgs) {
     this.adapter = adapter;
     this.parser = parser;
     this.wallet = wallet;
     this._overrides = { constants, events, methods };
     this._defineContractInterface(contractData);
+    this._defineHelpers(helpers);
   }
 
   async setWallet(wallet: IWallet | WalletSpec): Promise<IWallet> {
@@ -173,5 +177,19 @@ export default class Lighthouse {
     this._defineMethods(spec.methods);
 
     return spec;
+  }
+
+  _defineHelpers(helpers: Object = {}) {
+    const boundHelpers = Object.keys(helpers).reduce((acc, helper) => {
+      if (typeof helpers[helper] !== 'function') return acc;
+      if (Reflect.has(this, helper)) {
+        // eslint-disable-next-line no-console
+        console.warn(`Cannot set helper, "${helper}" is reserved`);
+      } else {
+        acc[helper] = helpers[helper];
+      }
+      return acc;
+    }, {});
+    Object.assign(this, boundHelpers);
   }
 }
