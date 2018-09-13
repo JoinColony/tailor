@@ -29,7 +29,7 @@ describe('ContractTransaction', () => {
     address: 'wallet address',
     sign: sandbox.fn().mockResolvedValue(signedTransaction),
   };
-  const mockLighthouse = {
+  const mockTailor = {
     adapter: {
       estimate: sandbox.fn().mockResolvedValue(gasEstimate),
       encodeFunctionCall: mockEncodeFunctionCall,
@@ -43,12 +43,12 @@ describe('ContractTransaction', () => {
     contractAddress: 'contract address',
   };
 
-  mockLighthouse.events = {
-    MyEvent: new Event(mockLighthouse, {
+  mockTailor.events = {
+    MyEvent: new Event(mockTailor, {
       name: 'MyEvent',
       output: { 'MyEvent()': [] },
     }),
-    MyOtherEvent: new Event(mockLighthouse, {
+    MyOtherEvent: new Event(mockTailor, {
       name: 'MyOtherEvent',
       output: {
         'MyOtherEvent(bool)': [
@@ -68,7 +68,7 @@ describe('ContractTransaction', () => {
   test('Constructor', () => {
     expect(
       () =>
-        new Transaction(mockLighthouse, {
+        new Transaction(mockTailor, {
           functionCall,
           to: 'not the wallet address',
         }),
@@ -82,7 +82,7 @@ describe('ContractTransaction', () => {
     const receipt = 'receipt';
     const from = 'wallet address';
 
-    const tx = new Transaction(mockLighthouse, { functionCall });
+    const tx = new Transaction(mockTailor, { functionCall });
 
     // bare minimum
     let json = JSON.parse(tx.toJSON());
@@ -94,7 +94,7 @@ describe('ContractTransaction', () => {
       events: [],
       from,
       functionCall,
-      to: mockLighthouse.contractAddress,
+      to: mockTailor.contractAddress,
       value: '0',
     });
 
@@ -127,19 +127,19 @@ describe('ContractTransaction', () => {
       hash: 'transaction hash',
       receipt,
       sentAt: expect.any(String),
-      to: mockLighthouse.contractAddress,
+      to: mockTailor.contractAddress,
       value: '999',
     });
   });
 
   test('Get function call', () => {
-    const tx = new Transaction(mockLighthouse, { functionCall });
+    const tx = new Transaction(mockTailor, { functionCall });
 
     expect(tx.functionCall).toBe(functionCall);
   });
 
   test('Handling receipts', () => {
-    const tx = new Transaction(mockLighthouse, { functionCall });
+    const tx = new Transaction(mockTailor, { functionCall });
     sandbox.spyOn(tx, 'emit');
     sandbox.spyOn(tx, '_handleReceiptEvents');
     sandbox.spyOn(Event.prototype, 'handleEvent');

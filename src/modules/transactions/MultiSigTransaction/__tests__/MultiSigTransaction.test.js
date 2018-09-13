@@ -60,7 +60,7 @@ describe('MultiSigTransaction', () => {
     signMessage: sandbox.fn().mockResolvedValue(signedMessage),
     verifyMessage: sandbox.fn().mockResolvedValue(true),
   };
-  const mockLighthouse = {
+  const mockTailor = {
     adapter: {
       estimate: sandbox.fn().mockResolvedValue(gasEstimate),
       encodeFunctionCall: mockEncodeFunctionCall,
@@ -134,7 +134,7 @@ describe('MultiSigTransaction', () => {
   });
 
   test('Combining signatures', () => {
-    const tx = new Transaction(mockLighthouse, txArgs);
+    const tx = new Transaction(mockTailor, txArgs);
 
     // Test helper to get a certain prop from the signatures in order
     const sortedSigs = Object.keys(tx._state.signers).sort();
@@ -151,7 +151,7 @@ describe('MultiSigTransaction', () => {
   });
 
   test('Getting Multisig arguments', () => {
-    const tx = new Transaction(mockLighthouse, txArgs);
+    const tx = new Transaction(mockTailor, txArgs);
     const combined = {
       sigV: 'sigV',
       sigR: 'sigR',
@@ -174,7 +174,7 @@ describe('MultiSigTransaction', () => {
   });
 
   test('Validating required signers (all signers present)', () => {
-    const tx = new Transaction(mockLighthouse, txArgs);
+    const tx = new Transaction(mockTailor, txArgs);
     tx._state.requiredSigners = Object.keys(signers);
 
     const valid = tx._validateRequiredSigners();
@@ -194,7 +194,7 @@ describe('MultiSigTransaction', () => {
       [addressTwo]: signers[addressTwo],
     };
 
-    const tx = new Transaction(mockLighthouse, {
+    const tx = new Transaction(mockTailor, {
       ...txArgs,
       signers: twoSigners,
     });
@@ -214,7 +214,7 @@ describe('MultiSigTransaction', () => {
   });
 
   test('JSON contains multiSigNonce and signers', () => {
-    const tx = new Transaction(mockLighthouse, txArgs);
+    const tx = new Transaction(mockTailor, txArgs);
     const json = tx.toJSON();
     expect(typeof json).toBe('string');
     expect(JSON.parse(json)).toMatchObject({
@@ -233,7 +233,7 @@ describe('MultiSigTransaction', () => {
       [addressThree]: signers[addressThree],
     };
 
-    const tx = new Transaction(mockLighthouse, {
+    const tx = new Transaction(mockTailor, {
       ...txArgs,
       signers: initialSigners,
     });
@@ -269,7 +269,7 @@ describe('MultiSigTransaction', () => {
   });
 
   test('Adding state as JSON (invalid json)', () => {
-    const tx = new Transaction(mockLighthouse, txArgs);
+    const tx = new Transaction(mockTailor, txArgs);
 
     expect(() => {
       tx.addSignersFromJSON('aksjdhkjasdhkj');
@@ -277,7 +277,7 @@ describe('MultiSigTransaction', () => {
   });
 
   test('ERC191 Message hash is created properly', async () => {
-    const tx = new Transaction(mockLighthouse, {
+    const tx = new Transaction(mockTailor, {
       ...txArgs,
       value: 1,
       nonce: 5,
@@ -305,7 +305,7 @@ describe('MultiSigTransaction', () => {
   });
 
   test('Signed message digests', () => {
-    const tx = new Transaction(mockLighthouse, txArgs);
+    const tx = new Transaction(mockTailor, txArgs);
     tx._state.multiSigNonce = 5;
 
     // Initialise the hash
@@ -343,7 +343,7 @@ describe('MultiSigTransaction', () => {
       'get',
     );
 
-    const tx = new Transaction(mockLighthouse, txArgs);
+    const tx = new Transaction(mockTailor, txArgs);
 
     tx._getMessageDigest(0);
     expect(digestSpy).toHaveBeenCalled();
@@ -367,7 +367,7 @@ describe('MultiSigTransaction', () => {
       .spyOn(Transaction.prototype, '_signedTrezorMessageDigest', 'get')
       .mockReturnValue(trezorDigest);
 
-    const tx = new Transaction(mockLighthouse, txArgs);
+    const tx = new Transaction(mockTailor, txArgs);
 
     sandbox.spyOn(tx, '_getMessageDigest');
     wallet.verifyMessage
@@ -396,7 +396,7 @@ describe('MultiSigTransaction', () => {
   });
 
   test('Adding signatures', async () => {
-    const tx = new Transaction(mockLighthouse, { ...txArgs, signers: {} });
+    const tx = new Transaction(mockTailor, { ...txArgs, signers: {} });
     const mode = 1;
 
     sandbox.spyOn(tx, '_findSignatureMode').mockResolvedValue(mode);
@@ -412,7 +412,7 @@ describe('MultiSigTransaction', () => {
   test('Signing', async () => {
     const messageHash = 'messageHash';
 
-    const tx = new Transaction(mockLighthouse, txArgs);
+    const tx = new Transaction(mockTailor, txArgs);
     tx._state.messageHash = messageHash;
 
     sandbox.spyOn(tx, '_addSignature').mockReturnValue(signature);
@@ -434,7 +434,7 @@ describe('MultiSigTransaction', () => {
   });
 
   test('Raw transaction is returned correctly', async () => {
-    const tx = new Transaction(mockLighthouse, {
+    const tx = new Transaction(mockTailor, {
       ...txArgs,
       chainId: null,
       gas: null,
@@ -445,9 +445,7 @@ describe('MultiSigTransaction', () => {
     // base rawTransaction
     const multiSigFunctionData = 'ms function data';
     const multiSigArgs = 'ms args';
-    mockLighthouse.adapter.encodeFunctionCall.mockReturnValue(
-      multiSigFunctionData,
-    );
+    mockTailor.adapter.encodeFunctionCall.mockReturnValue(multiSigFunctionData);
     sandbox.spyOn(tx, '_getArgs').mockImplementation(() => multiSigArgs);
     expect(tx.rawTransaction).toEqual({
       data: multiSigFunctionData,
@@ -455,7 +453,7 @@ describe('MultiSigTransaction', () => {
       to,
       value,
     });
-    expect(mockLighthouse.adapter.encodeFunctionCall).toHaveBeenCalledWith({
+    expect(mockTailor.adapter.encodeFunctionCall).toHaveBeenCalledWith({
       functionSignature: multiSigFunctionName,
       args: multiSigArgs,
     });
@@ -478,7 +476,7 @@ describe('MultiSigTransaction', () => {
   });
 
   test('Refreshing', async () => {
-    const tx = new Transaction(mockLighthouse, txArgs);
+    const tx = new Transaction(mockTailor, txArgs);
 
     sandbox
       .spyOn(tx, '_refreshMultiSigNonce')
@@ -499,7 +497,7 @@ describe('MultiSigTransaction', () => {
   });
 
   test('Refreshing multisig nonce', async () => {
-    const tx = new Transaction(mockLighthouse, txArgs);
+    const tx = new Transaction(mockTailor, txArgs);
     sandbox.spyOn(tx, 'emit').mockImplementation(() => {});
 
     const oldNonce = 20;
@@ -532,7 +530,7 @@ describe('MultiSigTransaction', () => {
   });
 
   test('Refreshing required signers', async () => {
-    const tx = new Transaction(mockLighthouse, txArgs);
+    const tx = new Transaction(mockTailor, txArgs);
 
     const newSigners = ['signer one', 'signer two'];
     sandbox
@@ -549,7 +547,7 @@ describe('MultiSigTransaction', () => {
     const signer2 = 'signer2';
     const signer3 = 'signer3';
     const requiredSigners = [signer1, signer2, signer3];
-    const tx = new Transaction(mockLighthouse, {
+    const tx = new Transaction(mockTailor, {
       ...txArgs,
       signers: { signer1, signer2 },
     });
@@ -570,7 +568,7 @@ describe('MultiSigTransaction', () => {
 
   test('Only one required signer', async () => {
     const signer1 = 'signer1';
-    const tx = new Transaction(mockLighthouse, { ...txArgs, signers: {} });
+    const tx = new Transaction(mockTailor, { ...txArgs, signers: {} });
     tx._state.requiredSigners = [signer1];
 
     expect(tx.requiredSigners).toEqual([signer1]);
@@ -596,14 +594,13 @@ describe('MultiSigTransaction', () => {
     // Invalid nonce supplied
     ['1', 0.1].forEach(input => {
       expect(
-        () =>
-          new Transaction(mockLighthouse, { ...txArgs, multiSigNonce: input }),
+        () => new Transaction(mockTailor, { ...txArgs, multiSigNonce: input }),
       ).toThrow('multiSigNonce');
     });
 
     // No nonce supplied, or valid nonce supplied
     [undefined, null, 0, 1, 5].forEach(input => {
-      const tx = new Transaction(mockLighthouse, {
+      const tx = new Transaction(mockTailor, {
         ...txArgs,
         multiSigNonce: input,
       });
@@ -612,7 +609,7 @@ describe('MultiSigTransaction', () => {
   });
 
   test('Sending a transaction', async () => {
-    const tx = new Transaction(mockLighthouse, txArgs);
+    const tx = new Transaction(mockTailor, txArgs);
     sandbox.spyOn(tx, 'refresh').mockImplementation(() => {});
     sandbox.spyOn(tx, '_validateRequiredSigners').mockImplementation(() => {});
     sandbox
@@ -627,7 +624,7 @@ describe('MultiSigTransaction', () => {
   test('Getting required signers', async () => {
     const requiredSigners = ['0xabc'];
     const getRequiredSigners = sandbox.fn();
-    const tx = new Transaction(mockLighthouse, {
+    const tx = new Transaction(mockTailor, {
       ...txArgs,
       getRequiredSigners,
     });
@@ -645,7 +642,7 @@ describe('MultiSigTransaction', () => {
   });
 
   test('Getting multisig nonce', async () => {
-    const tx = new Transaction(mockLighthouse, txArgs);
+    const tx = new Transaction(mockTailor, txArgs);
 
     // returns number
     getMultiSigNonce.mockImplementationOnce(() => multiSigNonce);
@@ -678,7 +675,7 @@ describe('MultiSigTransaction', () => {
     const isPayable = false;
     const getRequiredSigners = sandbox.fn();
     const fn = Transaction.getMethodFn({
-      lighthouse: mockLighthouse,
+      tailor: mockTailor,
       functionParams,
       isPayable,
       getRequiredSigners,
@@ -696,7 +693,7 @@ describe('MultiSigTransaction', () => {
     // construct
     const tx = fn();
     expect(tx).toBeInstanceOf(Transaction);
-    expect(tx._lh).toBe(mockLighthouse);
+    expect(tx._tailor).toBe(mockTailor);
     expect(tx._state.getRequiredSigners).toBe(getRequiredSigners);
     expect(tx._state.multiSigFunctionName).toBe(multiSigFunctionName);
     expect(tx._state.getMultiSigNonce).toBe(getMultiSigNonce);
@@ -708,7 +705,7 @@ describe('MultiSigTransaction', () => {
     const json = JSON.stringify({});
     sandbox.spyOn(Transaction, 'restore').mockImplementationOnce(() => {});
     await fn.restore(json);
-    expect(Transaction.restore).toHaveBeenCalledWith(mockLighthouse, json, {
+    expect(Transaction.restore).toHaveBeenCalledWith(mockTailor, json, {
       getRequiredSigners,
       multiSigFunctionName,
       getMultiSigNonce,
@@ -720,13 +717,13 @@ describe('MultiSigTransaction', () => {
     const options = {};
 
     // valid json
-    expect(
-      await Transaction.restore(mockLighthouse, json, options),
-    ).toBeInstanceOf(Transaction);
+    expect(await Transaction.restore(mockTailor, json, options)).toBeInstanceOf(
+      Transaction,
+    );
 
     // invalid json, no options
-    await expect(() =>
-      Transaction.restore(mockLighthouse, 'invalid json'),
-    ).toThrow('could not parse JSON');
+    await expect(() => Transaction.restore(mockTailor, 'invalid json')).toThrow(
+      'could not parse JSON',
+    );
   });
 });

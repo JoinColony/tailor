@@ -7,20 +7,16 @@ import type {
 import getFunctionCall from '../getFunctionCall';
 import { convertOutput } from '../paramConversion';
 
-import type Lighthouse from '../../Lighthouse';
+import type Tailor from '../../Tailor';
 import HookManager from '../HookManager';
 
-function getConstantFn(
-  lighthouse: Lighthouse,
-  functionParams: FunctionParams,
-  output,
-) {
+function getConstantFn(tailor: Tailor, functionParams: FunctionParams, output) {
   const hooks = new HookManager();
   const fn = async function constant(...inputParams: any) {
     // TODO: do we want to hook inputParams?
     const fnCall = getFunctionCall(functionParams, ...inputParams);
     const hookedFnCall = await hooks.getHookedValue('call', fnCall);
-    const callResult = await lighthouse.adapter.call(hookedFnCall);
+    const callResult = await tailor.adapter.call(hookedFnCall);
     const result = convertOutput(output, ...callResult);
     return hooks.getHookedValue('result', result);
   };
@@ -33,7 +29,7 @@ function getConstantFn(
  * which can be called with any valid input.
  */
 export default function constantFactory(
-  lighthouse: Lighthouse,
+  tailor: Tailor,
   { name, input = {}, output = [] }: ConstantSpec,
 ) {
   const functionSignatures = Object.keys(input);
@@ -43,13 +39,13 @@ export default function constantFactory(
   const functionParams =
     functionSignatures.length === 0 ? { [name]: [] } : input;
 
-  const fn = getConstantFn(lighthouse, functionParams, output);
+  const fn = getConstantFn(tailor, functionParams, output);
 
   // Allow each function signature to be called specifically by adding
   // properties to the constant function
   functionSignatures.forEach(functionSignature => {
     fn[functionSignature] = getConstantFn(
-      lighthouse,
+      tailor,
       { [functionSignature]: functionParams[functionSignature] },
       output,
     );

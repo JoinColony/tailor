@@ -1,5 +1,5 @@
 /* @flow */
 
-import Lighthouse from './Lighthouse';
+import Tailor from './Tailor';
 
-export default Lighthouse;
+export default Tailor;

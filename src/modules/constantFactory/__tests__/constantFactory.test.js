@@ -11,7 +11,7 @@ describe('Constants', () => {
 
   const result = { z: 3 };
 
-  const mockLighthouse = {
+  const mockTailor = {
     adapter: {
       call: sandbox.fn().mockResolvedValue([result.z]),
     },
@@ -68,7 +68,7 @@ describe('Constants', () => {
       output: outputSpec,
     };
 
-    const c = constantFactory(mockLighthouse, spec);
+    const c = constantFactory(mockTailor, spec);
     expect(c).toEqual(expect.any(Function));
 
     expect(await c()).toEqual(result);
@@ -83,7 +83,7 @@ describe('Constants', () => {
       },
     };
 
-    const c = constantFactory(mockLighthouse, spec);
+    const c = constantFactory(mockTailor, spec);
     expect(c).toEqual(expect.any(Function));
 
     expect(await c(1)).toEqual(result);
@@ -110,7 +110,7 @@ describe('Constants', () => {
       },
     };
 
-    const c = constantFactory(mockLighthouse, spec);
+    const c = constantFactory(mockTailor, spec);
     expect(c).toEqual(expect.any(Function));
 
     expect(await c(1)).toEqual(result);
@@ -148,7 +148,7 @@ describe('Constants', () => {
       },
     };
 
-    const c = constantFactory(mockLighthouse, spec);
+    const c = constantFactory(mockTailor, spec);
     expect(c).toEqual(expect.any(Function));
 
     expect(await c(1)).toEqual(result);

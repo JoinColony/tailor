@@ -18,7 +18,7 @@ import { makeAssert, sigHexToRSV } from '../../utils';
 import type {
   CombinedSignatures,
   FunctionCall,
-  Lighthouse,
+  Tailor,
   Signature,
   SigningMode,
   UnsignedTransaction,
@@ -31,18 +31,18 @@ export default class MultiSigTransaction extends ContractTransaction {
     return 'multisig';
   }
 
-  static restore(lighthouse: Lighthouse, json: string, options: Object = {}) {
+  static restore(tailor: Tailor, json: string, options: Object = {}) {
     let parsed = {};
     try {
       parsed = JSON.parse(json);
     } catch (error) {
       throw new Error('Unable to restore operation: could not parse JSON');
     }
-    return new this(lighthouse, { ...options, ...parsed });
+    return new this(tailor, { ...options, ...parsed });
   }
 
   static getMethodFn({
-    lighthouse,
+    tailor,
     functionParams,
     isPayable,
     getRequiredSigners,
@@ -50,7 +50,7 @@ export default class MultiSigTransaction extends ContractTransaction {
     getMultiSigNonce,
   }: Object) {
     const fn = super.getMethodFn({
-      lighthouse,
+      tailor,
       functionParams,
       isPayable,
       getRequiredSigners,
@@ -58,7 +58,7 @@ export default class MultiSigTransaction extends ContractTransaction {
       getMultiSigNonce,
     });
     fn.restore = json =>
-      this.restore(lighthouse, json, {
+      this.restore(tailor, json, {
         getRequiredSigners,
         multiSigFunctionName,
         getMultiSigNonce,
@@ -88,8 +88,8 @@ export default class MultiSigTransaction extends ContractTransaction {
     );
   }
 
-  constructor(lh: Lighthouse, { signers, multiSigNonce, ...state }: Object) {
-    super(lh, { ...state });
+  constructor(tailor: Tailor, { signers, multiSigNonce, ...state }: Object) {
+    super(tailor, { ...state });
 
     if (signers) this.signers = signers;
     if (multiSigNonce) this.multiSigNonce = multiSigNonce;
@@ -126,7 +126,7 @@ export default class MultiSigTransaction extends ContractTransaction {
       args: this._getArgs(),
     };
     const rawTx: UnsignedTransaction = {
-      data: this._lh.adapter.encodeFunctionCall(functionCall),
+      data: this._tailor.adapter.encodeFunctionCall(functionCall),
       from: this.from,
       to: this.to,
       value: this.value,
@@ -282,7 +282,12 @@ export default class MultiSigTransaction extends ContractTransaction {
     await Promise.all(
       modes.map(async mode => {
         const digest = this._getMessageDigest(mode);
-        if (await this._lh.wallet.verifyMessage({ message: digest, signature }))
+        if (
+          await this._tailor.wallet.verifyMessage({
+            message: digest,
+            signature,
+          })
+        )
           foundMode = mode;
       }),
     );
@@ -331,7 +336,7 @@ export default class MultiSigTransaction extends ContractTransaction {
 
   async getMultiSigNonce(): Promise<number> {
     const nonce = await this._state.getMultiSigNonce({
-      lighthouse: this._lh,
+      tailor: this._tailor,
       ...this._state,
     });
 
@@ -372,11 +377,11 @@ export default class MultiSigTransaction extends ContractTransaction {
    */
   async sign() {
     await this.refresh();
-    const signature = await this._lh.wallet.signMessage(
+    const signature = await this._tailor.wallet.signMessage(
       this._state.messageHash,
     );
     const { r: sigR, s: sigS, v: sigV } = sigHexToRSV(signature);
-    await this._addSignature({ sigR, sigS, sigV }, this._lh.wallet.address);
+    await this._addSignature({ sigR, sigS, sigV }, this._tailor.wallet.address);
     return this;
   }
 }

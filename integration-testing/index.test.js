@@ -3,7 +3,7 @@ import createSandbox from 'jest-sandbox';
 import Web3 from 'web3';
 
 import TestWallet from './utils/TestWallet';
-import Lighthouse from '../src';
+import Tailor from '../src';
 
 const directory = path.resolve(
   'integration-testing',
@@ -40,7 +40,7 @@ describe('Integration testing', () => {
 
   test('Loading a client', async () => {
     const web3 = new Web3('ws://localhost:8545');
-    client = await Lighthouse.load({
+    client = await Tailor.load({
       adapter: {
         name: 'web3',
         options: { web3 },
@@ -194,10 +194,10 @@ describe('Integration testing', () => {
   });
 
   // TODO add tests for:
-  // JoinColony/lighthouse#9
-  // JoinColony/lighthouse#16
-  // JoinColony/lighthouse#17
-  // JoinColony/lighthouse#19
-  // JoinColony/lighthouse#21
-  // JoinColony/lighthouse#25
+  // JoinColony/tailor#9
+  // JoinColony/tailor#16
+  // JoinColony/tailor#17
+  // JoinColony/tailor#19
+  // JoinColony/tailor#21
+  // JoinColony/tailor#25
 });

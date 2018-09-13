@@ -10,9 +10,9 @@ module.exports = {
   entry: './src/index.js',
   mode,
   output: {
-    filename: 'lighthouse.js',
+    filename: 'tailor.js',
     path: path.resolve(__dirname, 'dist'),
-    library: 'Lighthouse',
+    library: 'Tailor',
     libraryTarget: 'umd',
   },
   module: {

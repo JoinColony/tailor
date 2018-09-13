@@ -34,7 +34,7 @@ import type {
 
 const assert = require('assert');
 
-// TODO JoinColony/lighthouse/issues/16
+// TODO JoinColony/tailor/issues/16
 export function getAdapter(
   // TODO default adapter options doesn't include a web3 instance...
   input: IAdapter | AdapterSpec | AdapterName = DEFAULT_ADAPTER,
@@ -62,7 +62,7 @@ export function getAdapter(
   return new ADAPTER_NAME_MAP[name](options);
 }
 
-// TODO JoinColony/lighthouse/issues/16
+// TODO JoinColony/tailor/issues/16
 export function getLoader(
   input: ILoader<*> | LoaderSpec | LoaderName = DEFAULT_LOADER,
 ): ILoader<*> {
@@ -86,7 +86,7 @@ export function getLoader(
   return new LOADER_NAME_MAP[name](options);
 }
 
-// TODO JoinColony/lighthouse/issues/16
+// TODO JoinColony/tailor/issues/16
 export function getParser(
   input: IParser | ParserSpec | ParserName = DEFAULT_PARSER,
 ): IParser {
@@ -110,7 +110,7 @@ export function getParser(
   return new PARSER_NAME_MAP[name](options);
 }
 
-// TODO JoinColony/lighthouse/issues/16
+// TODO JoinColony/tailor/issues/16
 export async function getWallet(
   input: IWallet | WalletSpec | WalletName = DEFAULT_WALLET,
 ): Promise<IWallet> {

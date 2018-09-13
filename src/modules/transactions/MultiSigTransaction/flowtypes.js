@@ -1,6 +1,6 @@
 /* @flow */
 
-import type Lighthouse from '../../../Lighthouse';
+import type Tailor from '../../../Tailor';
 import { SIGNING_MODES } from './constants';
 import type { FunctionCall } from '../flowtypes';
 import type { UnsignedTransaction } from '../../../interface/flowtypes';
@@ -27,7 +27,7 @@ type CombinedSignatures = {
 export type {
   CombinedSignatures,
   FunctionCall,
-  Lighthouse,
+  Tailor,
   Signature,
   Signers,
   SigningMode,
