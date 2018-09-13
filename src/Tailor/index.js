@@ -16,8 +16,8 @@ import type {
   IAdapter,
   IParser,
   IWallet,
-  LighthouseArgs,
-  LighthouseCreateArgs,
+  TailorArgs,
+  TailorCreateArgs,
   MethodSpecs,
   PartialConstantSpecs,
   PartialEventSpecs,
@@ -25,7 +25,7 @@ import type {
   WalletSpec,
 } from './flowtypes';
 
-export default class Lighthouse {
+export default class Tailor {
   adapter: IAdapter;
 
   parser: IParser;
@@ -65,7 +65,7 @@ export default class Lighthouse {
     methods,
     query,
     ...helpers
-  }: LighthouseCreateArgs = {}): Promise<LighthouseArgs> {
+  }: TailorCreateArgs = {}): Promise<TailorArgs> {
     if (!(providedContractData || loader))
       throw new Error('Expected either contractData or loader');
 
@@ -91,12 +91,12 @@ export default class Lighthouse {
     };
   }
 
-  static async load(args: LighthouseCreateArgs = {}): Promise<this> {
+  static async load(args: TailorCreateArgs = {}): Promise<this> {
     return new this(await this.getConstructorArgs(args));
   }
 
   static async deploy(
-    args: LighthouseCreateArgs & {
+    args: TailorCreateArgs & {
       deployArgs?: Array<any>,
     } & Object = {},
   ): Promise<this> {
@@ -123,7 +123,7 @@ export default class Lighthouse {
     methods = {},
     contractData,
     helpers,
-  }: LighthouseArgs) {
+  }: TailorArgs) {
     this.adapter = adapter;
     this.parser = parser;
     this.wallet = wallet;

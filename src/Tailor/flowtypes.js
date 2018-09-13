@@ -49,7 +49,7 @@ export type WalletSpec = {
   options?: Object,
 };
 
-export type LighthouseCreateArgs = {
+export type TailorCreateArgs = {
   adapter?: IAdapter | AdapterSpec,
   contractData?: ContractData,
   constants?: PartialConstantSpecs,
@@ -61,7 +61,7 @@ export type LighthouseCreateArgs = {
   wallet?: IWallet | WalletSpec,
 };
 
-export type LighthouseArgs = {
+export type TailorArgs = {
   adapter: IAdapter,
   contractData: ContractData,
   constants?: PartialConstantSpecs,

@@ -13,7 +13,7 @@ describe('Methods', () => {
 
   const result = { z: 3 };
 
-  const mockLighthouse = {
+  const mockTailor = {
     adapter: {
       wallet: {
         address: 'wallet address',
@@ -69,12 +69,12 @@ describe('Methods', () => {
       name: 'myMethod',
     };
 
-    const method = methodFactory(mockLighthouse, spec);
+    const method = methodFactory(mockTailor, spec);
     expect(method).toEqual(expect.any(Function));
 
     const tx = method();
     expect(tx).toBeInstanceOf(Transaction);
-    expect(tx._lh).toBe(mockLighthouse);
+    expect(tx._tailor).toBe(mockTailor);
     expect(tx.gas).toBe(null);
 
     const txWithOptions = method({ gas: 1000 });
@@ -89,13 +89,13 @@ describe('Methods', () => {
       },
     };
 
-    const method = methodFactory(mockLighthouse, spec);
+    const method = methodFactory(mockTailor, spec);
     expect(method).toEqual(expect.any(Function));
     expect(method['myMethod(uint)']).toEqual(expect.any(Function));
 
     const tx = method(1);
     expect(tx).toBeInstanceOf(Transaction);
-    expect(tx._lh).toBe(mockLighthouse);
+    expect(tx._tailor).toBe(mockTailor);
     expect(tx.gas).toBe(null);
 
     const txWithOptions = method(1, { gas: new BigNumber(1000) });
@@ -111,12 +111,12 @@ describe('Methods', () => {
       isPayable: true,
     };
 
-    const payableMethod = methodFactory(mockLighthouse, spec);
+    const payableMethod = methodFactory(mockTailor, spec);
     expect(payableMethod).toEqual(expect.any(Function));
 
     const tx = payableMethod(1);
     expect(tx).toBeInstanceOf(Transaction);
-    expect(tx._lh).toBe(mockLighthouse);
+    expect(tx._tailor).toBe(mockTailor);
     expect(tx.gas).toBe(null);
     expect(tx.value).toEqual(new BigNumber(0));
 
@@ -124,7 +124,7 @@ describe('Methods', () => {
     expect(txWithOptions.value.toNumber()).toEqual(1000);
 
     const nonPayableMethod = methodFactory(
-      mockLighthouse,
+      mockTailor,
       Object.assign({}, spec, { isPayable: false }),
     );
     expect(() => {
@@ -138,7 +138,7 @@ describe('Methods', () => {
       input: inputs,
     };
 
-    const method = methodFactory(mockLighthouse, spec);
+    const method = methodFactory(mockTailor, spec);
     expect(method).toEqual(expect.any(Function));
     expect(method['myMethod(uint)']).toEqual(expect.any(Function));
     expect(method['myMethod(bool)']).toEqual(expect.any(Function));

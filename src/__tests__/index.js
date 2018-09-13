@@ -1,9 +1,9 @@
 /* eslint-env jest */
 
-import Lighthouse from '../index';
+import Tailor from '../index';
 
-describe('Lighthouse index', () => {
+describe('Tailor index', () => {
   test('Default export', () => {
-    expect(Lighthouse).toBeInstanceOf(Lighthouse.constructor);
+    expect(Tailor).toBeInstanceOf(Tailor.constructor);
   });
 });

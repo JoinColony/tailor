@@ -3,7 +3,7 @@
 
 import createSandbox from 'jest-sandbox';
 import Web3 from 'web3';
-import Lighthouse from '../index';
+import Tailor from '../index';
 import Adapter from '../../adapters/Adapter';
 import ABIParser from '../../parsers/ABIParser';
 import Wallet from '../../wallets/Wallet';
@@ -27,7 +27,7 @@ jest.mock('../factory', () => ({
 
 jest.mock('../../modules/transactions/DeployTransaction');
 
-describe('Lighthouse', () => {
+describe('Tailor', () => {
   const sandbox = createSandbox();
 
   const wallet = new Wallet();
@@ -61,16 +61,16 @@ describe('Lighthouse', () => {
     getWallet.mockReturnValue(wallet);
 
     // no args
-    await expect(Lighthouse.getConstructorArgs()).rejects.toThrow(
+    await expect(Tailor.getConstructorArgs()).rejects.toThrow(
       'contractData or loader',
     );
 
     // contractData
-    await Lighthouse.getConstructorArgs(dataArgs);
+    await Tailor.getConstructorArgs(dataArgs);
     expect(mockLoaderLoad).not.toHaveBeenCalled();
 
     // loader
-    await Lighthouse.getConstructorArgs(loaderArgs);
+    await Tailor.getConstructorArgs(loaderArgs);
     expect(mockLoaderLoad).toHaveBeenCalled();
 
     expect(getAdapter).toHaveBeenCalledWith(args.adapter, args.wallet);
@@ -79,23 +79,21 @@ describe('Lighthouse', () => {
     expect(mockAdapterInit).toHaveBeenCalled();
   });
 
-  test('Creating a Lighthouse', async () => {
+  test('Creating a Tailor', async () => {
     const createArgs = { create: 'args' };
 
     sandbox
-      .spyOn(Lighthouse.prototype, '_defineContractInterface')
+      .spyOn(Tailor.prototype, '_defineContractInterface')
       .mockImplementation(() => ({}));
-    sandbox
-      .spyOn(Lighthouse, 'getConstructorArgs')
-      .mockImplementation(() => ({}));
+    sandbox.spyOn(Tailor, 'getConstructorArgs').mockImplementation(() => ({}));
 
     // no args
-    await Lighthouse.load();
-    expect(Lighthouse.getConstructorArgs).toHaveBeenCalledWith({});
+    await Tailor.load();
+    expect(Tailor.getConstructorArgs).toHaveBeenCalledWith({});
 
     // with args
-    await Lighthouse.load(createArgs);
-    expect(Lighthouse.getConstructorArgs).toHaveBeenCalledWith(createArgs);
+    await Tailor.load(createArgs);
+    expect(Tailor.getConstructorArgs).toHaveBeenCalledWith(createArgs);
   });
 
   test('Deploying a contract', async () => {
@@ -113,10 +111,10 @@ describe('Lighthouse', () => {
     const mockSign = sandbox.fn().mockResolvedValue(signed);
 
     sandbox
-      .spyOn(Lighthouse.prototype, '_defineContractInterface')
+      .spyOn(Tailor.prototype, '_defineContractInterface')
       .mockImplementation(() => ({}));
     sandbox
-      .spyOn(Lighthouse, 'getConstructorArgs')
+      .spyOn(Tailor, 'getConstructorArgs')
       .mockImplementation(() => ({}))
       .mockResolvedValue({
         adapter: {
@@ -134,24 +132,22 @@ describe('Lighthouse', () => {
       });
 
     // no args
-    await expect(Lighthouse.deploy()).rejects.toThrow(
-      'Unable to deploy contract',
-    );
-    expect(Lighthouse.getConstructorArgs).toHaveBeenCalledWith({});
-    Lighthouse.getConstructorArgs.mockClear();
+    await expect(Tailor.deploy()).rejects.toThrow('Unable to deploy contract');
+    expect(Tailor.getConstructorArgs).toHaveBeenCalledWith({});
+    Tailor.getConstructorArgs.mockClear();
 
     // with args
     DeployTransaction.prototype.receipt = {
       contractAddress,
     };
-    await Lighthouse.deploy(createArgs, deployArgs);
-    expect(Lighthouse.getConstructorArgs).toHaveBeenCalledWith(createArgs);
+    await Tailor.deploy(createArgs, deployArgs);
+    expect(Tailor.getConstructorArgs).toHaveBeenCalledWith(createArgs);
     expect(DeployTransaction.prototype.send).toHaveBeenCalled();
   });
 
-  test('Instantiating a Lighthouse', () => {
+  test('Instantiating a Tailor', () => {
     sandbox
-      .spyOn(Lighthouse.prototype, '_defineContractInterface')
+      .spyOn(Tailor.prototype, '_defineContractInterface')
       .mockImplementation(() => {});
 
     const args = {
@@ -163,36 +159,32 @@ describe('Lighthouse', () => {
       },
       contractData: 'contract data',
     };
-    const lh1 = new Lighthouse(args);
+    const tailor1 = new Tailor(args);
 
-    expect(lh1).toBeInstanceOf(Lighthouse);
-    expect(lh1).toHaveProperty('adapter', expect.any(Adapter));
-    expect(lh1).toHaveProperty('parser', expect.any(ABIParser));
-    expect(lh1).toHaveProperty('wallet', expect.any(Wallet));
-    expect(lh1).toHaveProperty('_overrides', {
+    expect(tailor1).toBeInstanceOf(Tailor);
+    expect(tailor1).toHaveProperty('adapter', expect.any(Adapter));
+    expect(tailor1).toHaveProperty('parser', expect.any(ABIParser));
+    expect(tailor1).toHaveProperty('wallet', expect.any(Wallet));
+    expect(tailor1).toHaveProperty('_overrides', {
       constants: {},
       methods: args.methods,
       events: {},
     });
-    expect(lh1).toHaveProperty('_contractData', args.contractData);
-    expect(
-      Lighthouse.prototype._defineContractInterface,
-    ).toHaveBeenCalledWith();
+    expect(tailor1).toHaveProperty('_contractData', args.contractData);
+    expect(Tailor.prototype._defineContractInterface).toHaveBeenCalledWith();
 
     // With contract data
     const contractData = 'some contract data';
-    const lh2 = new Lighthouse(Object.assign({}, args, { contractData }));
-    expect(lh2).toHaveProperty('_contractData', contractData);
-    expect(
-      Lighthouse.prototype._defineContractInterface,
-    ).toHaveBeenCalledWith();
-    expect(lh2).toBeInstanceOf(Lighthouse);
-    Lighthouse.prototype._defineContractInterface.mockRestore();
+    const tailor2 = new Tailor(Object.assign({}, args, { contractData }));
+    expect(tailor2).toHaveProperty('_contractData', contractData);
+    expect(Tailor.prototype._defineContractInterface).toHaveBeenCalledWith();
+    expect(tailor2).toBeInstanceOf(Tailor);
+    Tailor.prototype._defineContractInterface.mockRestore();
   });
 
   test('Setting the wallet', async () => {
     sandbox
-      .spyOn(Lighthouse.prototype, '_defineContractInterface')
+      .spyOn(Tailor.prototype, '_defineContractInterface')
       .mockImplementation(() => {});
 
     const oldWallet = new Wallet();
@@ -203,11 +195,11 @@ describe('Lighthouse', () => {
       wallet: oldWallet,
       contractData: 'contract data',
     };
-    const lh = new Lighthouse(args);
+    const tailor = new Tailor(args);
 
     getWallet.mockResolvedValueOnce(new Wallet());
 
-    const newWallet = await lh.setWallet(newWalletSpec);
+    const newWallet = await tailor.setWallet(newWalletSpec);
 
     expect(newWallet).not.toBe(oldWallet);
     expect(newWallet).toEqual(expect.any(Wallet));
@@ -279,7 +271,7 @@ describe('Lighthouse', () => {
               },
             ],
           },
-          // TODO in lighthouse#25 (hooks)
+          // TODO in tailor#25 (hooks)
           convertInput: sandbox.fn(),
           // there would be other things here, like `output`,
           // but we don't need them for this test
@@ -300,7 +292,7 @@ describe('Lighthouse', () => {
               },
             ],
           },
-          // TODO in lighthouse#25 (hooks)
+          // TODO in tailor#25 (hooks)
           convertOutput: sandbox.fn(),
         },
       },
@@ -350,13 +342,13 @@ describe('Lighthouse', () => {
     };
 
     jest
-      .spyOn(Lighthouse.prototype, '_defineContractInterface')
+      .spyOn(Tailor.prototype, '_defineContractInterface')
       .mockImplementationOnce(() => {});
-    const lh = new Lighthouse(args);
-    lh._contractData = contractData;
+    const tailor = new Tailor(args);
+    tailor._contractData = contractData;
 
-    const iface = lh._defineContractInterface();
-    expect(lh.parser.parse).toHaveBeenCalledWith(contractData);
+    const iface = tailor._defineContractInterface();
+    expect(tailor.parser.parse).toHaveBeenCalledWith(contractData);
     expect(iface).toEqual({
       methods: {
         myMethod: {
@@ -400,21 +392,21 @@ describe('Lighthouse', () => {
   test('Defining helpers', () => {
     const myHelper = sandbox.fn();
     const helpers = { myHelper, badHelper: true, constructor: sandbox.fn() };
-    sandbox.spyOn(Lighthouse.prototype, '_defineHelpers');
+    sandbox.spyOn(Tailor.prototype, '_defineHelpers');
     sandbox
-      .spyOn(Lighthouse.prototype, '_defineContractInterface')
+      .spyOn(Tailor.prototype, '_defineContractInterface')
       .mockImplementation(() => {});
 
-    const lh = new Lighthouse({ helpers });
-    lh.myHelper();
+    const tailor = new Tailor({ helpers });
+    tailor.myHelper();
 
-    expect(lh._defineHelpers).toHaveBeenCalledWith(helpers);
-    expect(myHelper.mock.instances[0]).toBe(lh);
-    expect(lh).not.toHaveProperty('badHelper');
-    expect(lh.constructor).not.toBe(helpers.constructor);
+    expect(tailor._defineHelpers).toHaveBeenCalledWith(helpers);
+    expect(myHelper.mock.instances[0]).toBe(tailor);
+    expect(tailor).not.toHaveProperty('badHelper');
+    expect(tailor.constructor).not.toBe(helpers.constructor);
   });
 
-  test('Extending Lighthouse', () => {
+  test('Extending Tailor', () => {
     const myHelper = sandbox.fn();
     const constants = {
       myConstant: {
@@ -451,10 +443,10 @@ describe('Lighthouse', () => {
       myHelper,
     };
     sandbox
-      .spyOn(Lighthouse.prototype, '_defineContractInterface')
+      .spyOn(Tailor.prototype, '_defineContractInterface')
       .mockImplementation(() => {});
 
-    const lh = new Lighthouse({
+    const tailor = new Tailor({
       constants: {
         myConstant: {
           input: [{ name: 'myInput', type: 'myType' }],
@@ -463,9 +455,9 @@ describe('Lighthouse', () => {
       },
       methods,
     });
-    lh.extend(extension);
+    tailor.extend(extension);
 
-    expect(lh._overrides).toEqual({
+    expect(tailor._overrides).toEqual({
       constants: {
         myConstant: {
           input: [
@@ -478,11 +470,11 @@ describe('Lighthouse', () => {
       events,
       methods,
     });
-    expect(lh.myHelper).toBe(myHelper);
+    expect(tailor.myHelper).toBe(myHelper);
 
     // with no args, should remain same
-    const beforeOverrides = Object.assign({}, lh._overrides);
-    lh.extend({});
-    expect(lh._overrides).toEqual(beforeOverrides);
+    const beforeOverrides = Object.assign({}, tailor._overrides);
+    tailor.extend({});
+    expect(tailor._overrides).toEqual(beforeOverrides);
   });
 });

@@ -16,7 +16,7 @@ jest.mock('web3', () => () => ({
   },
 }));
 
-describe('Lighthouse factory', () => {
+describe('Tailor factory', () => {
   const sandbox = createSandbox();
 
   beforeEach(() => {

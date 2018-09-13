@@ -5,7 +5,7 @@ jobs:
     docker:
       - image: circleci/node:8.10
     parallelism: 2
-    working_directory: ~/lighthouse
+    working_directory: ~/tailor
     steps:
       - checkout
       - restore_cache:
@@ -48,7 +48,7 @@ jobs:
     docker:
       - image: circleci/node:8.10
     parallelism: 2
-    working_directory: ~/lighthouse
+    working_directory: ~/tailor
     steps:
       - checkout
       - restore_cache:

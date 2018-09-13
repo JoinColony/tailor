@@ -1,7 +1,7 @@
 /* @flow */
 
 import type { MethodSpec } from '../../interface/ContractSpec';
-import type Lighthouse from '../../Lighthouse';
+import type Tailor from '../../Tailor';
 import { getTransaction } from '../transactions';
 
 /*
@@ -9,7 +9,7 @@ import { getTransaction } from '../transactions';
  * which can be called with any valid input.
  */
 export default function methodFactory(
-  lighthouse: Lighthouse,
+  tailor: Tailor,
   { name, input = {}, isPayable, type }: MethodSpec,
 ) {
   const functionSignatures = Object.keys(input);
@@ -26,7 +26,7 @@ export default function methodFactory(
   // Get the method function object, which is callable and may also
   // have additional properties attached (such as hooks).
   const fn = Tx.getMethodFn({
-    lighthouse,
+    tailor,
     functionParams,
     isPayable,
     ...options,
@@ -36,7 +36,7 @@ export default function methodFactory(
   // properties to the method function
   functionSignatures.forEach(functionSignature => {
     fn[functionSignature] = Tx.getMethodFn({
-      lighthouse,
+      tailor,
       functionParams: {
         [functionSignature]: functionParams[functionSignature],
       },

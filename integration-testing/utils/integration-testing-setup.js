@@ -37,15 +37,15 @@ if (global.DEBUG) {
 /*
  * Paths
  */
-const lighthousePath = path.resolve('.');
+const tailorPath = path.resolve('.');
 const testingPath = path.resolve('integration-testing');
 const truffleProjectPath = path.resolve(testingPath, 'truffle-project');
-const trufflePath = `${lighthousePath}/node_modules/.bin/truffle`;
+const trufflePath = `${tailorPath}/node_modules/.bin/truffle`;
 const contractsPath = path.resolve(truffleProjectPath, 'build', 'contracts');
 const ganacheAccountsFile = path.resolve(testingPath, 'ganache-accounts.json');
 
 /* eslint-disable-next-line global-require, import/no-dynamic-require */
-const lighthousePackage = require(path.resolve('package.json'));
+const tailorPackage = require(path.resolve('package.json'));
 
 const cleanupArtifacts = message => {
   console.log(chalk.green.bold(message));
@@ -156,7 +156,7 @@ module.exports = async () => {
     console.log(
       chalk.green.bold('Compiling Contracts using'),
       chalk.bold(
-        `truffle${chalk.gray('@')}${lighthousePackage.devDependencies.truffle}`,
+        `truffle${chalk.gray('@')}${tailorPackage.devDependencies.truffle}`,
       ),
     );
     await exec(

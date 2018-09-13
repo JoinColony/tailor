@@ -22,7 +22,7 @@ export default class Transaction extends EventEmitter {
 
   // returns a function which returns an instance of this
   static getMethodFn({
-    lighthouse: { adapter },
+    tailor: { adapter },
   }: Object): ((...params: any) => Transaction) & {} {
     const hooks = new HookManager();
     const fn = (...options: any) =>

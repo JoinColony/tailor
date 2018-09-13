@@ -6,11 +6,11 @@ import HookManager from '../../HookManager';
 import getFunctionCall from '../../getFunctionCall';
 
 import type { TransactionReceipt, TransactionState } from '../flowtypes';
-import type Lighthouse from '../../../Lighthouse';
+import type Tailor from '../../../Tailor';
 import type { FunctionParams } from '../../../interface/ContractSpec';
 
 export default class ContractTransaction extends Transaction {
-  _lh: Lighthouse;
+  _tailor: Tailor;
 
   _state: TransactionState;
 
@@ -20,15 +20,15 @@ export default class ContractTransaction extends Transaction {
 
   /**
    * Returns a method factory specific to this Transaction type, to be
-   * attached to the Lighthouse `methods` object. Also attaches hooks.
+   * attached to the Tailor `methods` object. Also attaches hooks.
    */
   static getMethodFn({
-    lighthouse,
+    tailor,
     functionParams,
     isPayable,
     ...methodParams
   }: {
-    lighthouse: Lighthouse,
+    tailor: Tailor,
     functionParams: FunctionParams,
     isPayable?: boolean,
   }): ((...params: any) => Transaction) & Object {
@@ -41,7 +41,7 @@ export default class ContractTransaction extends Transaction {
         throw new Error('Cannot send a value to a non-payable function');
       // TODO: do we want to hook inputParams?
       const functionCall = getFunctionCall(functionParams, ...inputParams);
-      return new this(lighthouse, {
+      return new this(tailor, {
         functionCall,
         hooks,
         ...methodParams,
@@ -53,21 +53,21 @@ export default class ContractTransaction extends Transaction {
   }
 
   constructor(
-    lh: Lighthouse,
+    tailor: Tailor,
     {
       functionCall,
-      data = lh.adapter.encodeFunctionCall(functionCall),
-      to = lh.contractAddress,
+      data = tailor.adapter.encodeFunctionCall(functionCall),
+      to = tailor.contractAddress,
       events = [],
       ...state
     }: Object,
   ) {
-    super(lh.adapter, { functionCall, data, to, events, ...state });
+    super(tailor.adapter, { functionCall, data, to, events, ...state });
 
-    if (to && to.toLowerCase() !== lh.contractAddress.toLowerCase())
+    if (to && to.toLowerCase() !== tailor.contractAddress.toLowerCase())
       throw new Error('"to" address does not match contract address');
 
-    this._lh = lh;
+    this._tailor = tailor;
   }
 
   get _JSONValues() {
@@ -87,7 +87,7 @@ export default class ContractTransaction extends Transaction {
 
   _handleReceiptEvents(receipt: TransactionReceipt) {
     return Object.keys(receipt.events || {}).reduce((acc, eventName) => {
-      const eventCls = this._lh.events[eventName];
+      const eventCls = this._tailor.events[eventName];
       receipt.events[eventName].forEach(rawEvent => {
         acc.push(eventCls.handleEvent(rawEvent));
       });

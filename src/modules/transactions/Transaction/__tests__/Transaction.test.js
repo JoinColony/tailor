@@ -36,7 +36,7 @@ describe('Transaction', () => {
 
   test('Getting method function', async () => {
     const fn = Transaction.getMethodFn({
-      lighthouse: { adapter: mockAdapter },
+      tailor: { adapter: mockAdapter },
     });
     expect(fn()).toBeInstanceOf(Transaction);
     expect(fn.hooks.getManager()).toBeInstanceOf(HookManager);
