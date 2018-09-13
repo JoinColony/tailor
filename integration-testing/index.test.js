@@ -32,6 +32,12 @@ describe('Integration testing', () => {
 
   const wallet = new TestWallet(walletAddress, privateKey);
 
+  const overloadedType = {
+    validate: sandbox.fn().mockImplementation(() => true),
+    convertInput: sandbox.fn().mockImplementation(value => value),
+    convertOutput: sandbox.fn().mockImplementation(value => value),
+  };
+
   test('Loading a client', async () => {
     const web3 = new Web3('ws://localhost:8545');
     client = await Lighthouse.load({
@@ -41,6 +47,18 @@ describe('Integration testing', () => {
       },
       query: { contractName: 'MetaCoin' },
       parser: 'truffle',
+      constants: {
+        overloaded: {
+          input: {
+            'overloaded(uint256,uint256)': [
+              {
+                type: overloadedType,
+                customProp: true,
+              },
+            ],
+          },
+        },
+      },
       loader: {
         name: 'truffle',
         options: {
@@ -64,6 +82,8 @@ describe('Integration testing', () => {
     const { overloaded } = client.constants;
     expect(await overloaded(2, 2, 2)).toEqual({ sum: 6 });
     expect(await overloaded(2, 2)).toEqual({ sum: 4 });
+    expect(overloadedType.validate).toHaveBeenCalledWith(2);
+    expect(overloadedType.convertInput).toHaveBeenCalledWith(2);
     expect(await overloaded(2, true)).toEqual({ sum: 2 });
     expect(await overloaded(true, true)).toEqual({
       sum: 0,

@@ -1,11 +1,10 @@
 /* @flow */
 
-import deepmerge from 'deepmerge';
-
 import constantFactory from '../modules/constantFactory';
 import Event from '../modules/Event';
 import methodFactory from '../modules/methodFactory';
 import DeployTransaction from '../modules/transactions/DeployTransaction';
+import { mergeOverrides, mergeSpec } from '../modules/utils';
 import { getAdapter, getLoader, getParser, getWallet } from './factory';
 
 import type Transaction from '../modules/transactions/Transaction';
@@ -46,6 +45,8 @@ export default class Lighthouse {
   };
 
   contractAddress: string;
+
+  _contractData: ContractData;
 
   _overrides: {
     constants: PartialConstantSpecs,
@@ -127,7 +128,8 @@ export default class Lighthouse {
     this.parser = parser;
     this.wallet = wallet;
     this._overrides = { constants, events, methods };
-    this._defineContractInterface(contractData);
+    this._contractData = contractData;
+    this._defineContractInterface();
     this._defineHelpers(helpers);
   }
 
@@ -136,12 +138,19 @@ export default class Lighthouse {
     return this.wallet;
   }
 
+  extend({ constants = {}, events = {}, methods = {}, ...helpers }: Object) {
+    this._overrides = mergeOverrides(this._overrides, {
+      constants,
+      events,
+      methods,
+    });
+    this._defineContractInterface();
+    this._defineHelpers(helpers);
+  }
+
   _getContractSpec(contractData: ContractData): ContractSpec {
     const initialSpecs = this.parser.parse(contractData);
-    return deepmerge(initialSpecs, this._overrides, {
-      // Arrays should overwrite rather than concatenate
-      arrayMerge: (destination, source) => source,
-    });
+    return mergeSpec(initialSpecs, this._overrides);
   }
 
   _defineConstants(specs: ConstantSpecs) {
@@ -168,10 +177,10 @@ export default class Lighthouse {
     Object.assign(this, { events });
   }
 
-  _defineContractInterface(contractData: ContractData) {
-    this.contractAddress = contractData.address;
+  _defineContractInterface() {
+    this.contractAddress = this._contractData.address;
 
-    const spec = this._getContractSpec(contractData);
+    const spec = this._getContractSpec(this._contractData);
     this._defineConstants(spec.constants);
     this._defineEvents(spec.events);
     this._defineMethods(spec.methods);

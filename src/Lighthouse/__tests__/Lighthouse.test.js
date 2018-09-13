@@ -174,16 +174,18 @@ describe('Lighthouse', () => {
       methods: args.methods,
       events: {},
     });
-    expect(Lighthouse.prototype._defineContractInterface).toHaveBeenCalledWith(
-      args.contractData,
-    );
+    expect(lh1).toHaveProperty('_contractData', args.contractData);
+    expect(
+      Lighthouse.prototype._defineContractInterface,
+    ).toHaveBeenCalledWith();
 
     // With contract data
     const contractData = 'some contract data';
     const lh2 = new Lighthouse(Object.assign({}, args, { contractData }));
-    expect(Lighthouse.prototype._defineContractInterface).toHaveBeenCalledWith(
-      contractData,
-    );
+    expect(lh2).toHaveProperty('_contractData', contractData);
+    expect(
+      Lighthouse.prototype._defineContractInterface,
+    ).toHaveBeenCalledWith();
     expect(lh2).toBeInstanceOf(Lighthouse);
     Lighthouse.prototype._defineContractInterface.mockRestore();
   });
@@ -271,6 +273,10 @@ describe('Lighthouse', () => {
                 name: 'role',
                 type: PARAM_TYPES.INTEGER,
               },
+              {
+                name: 'notOverriden',
+                type: PARAM_TYPES.INTEGER,
+              },
             ],
           },
           // TODO in lighthouse#25 (hooks)
@@ -288,12 +294,8 @@ describe('Lighthouse', () => {
         getTaskRole: {
           input: {
             'getTaskRole(uint,uint)': [
+              null,
               {
-                name: 'id',
-                type: PARAM_TYPES.INTEGER,
-              },
-              {
-                name: 'role',
                 type: customRoleType,
               },
             ],
@@ -351,8 +353,9 @@ describe('Lighthouse', () => {
       .spyOn(Lighthouse.prototype, '_defineContractInterface')
       .mockImplementationOnce(() => {});
     const lh = new Lighthouse(args);
+    lh._contractData = contractData;
 
-    const iface = lh._defineContractInterface(contractData);
+    const iface = lh._defineContractInterface();
     expect(lh.parser.parse).toHaveBeenCalledWith(contractData);
     expect(iface).toEqual({
       methods: {
@@ -372,8 +375,23 @@ describe('Lighthouse', () => {
           // Only set in overrides; should be from overrides
           convertOutput: args.constants.getTaskRole.convertOutput,
 
-          // Set in initial specs and overrides; should be from overrides
-          input: args.constants.getTaskRole.input,
+          // Set in initial specs and overrides; should be merged
+          input: {
+            'getTaskRole(uint,uint)': [
+              {
+                name: 'id',
+                type: PARAM_TYPES.INTEGER,
+              },
+              {
+                name: 'role',
+                type: customRoleType,
+              },
+              {
+                name: 'notOverriden',
+                type: PARAM_TYPES.INTEGER,
+              },
+            ],
+          },
         },
       },
     });
@@ -394,5 +412,77 @@ describe('Lighthouse', () => {
     expect(myHelper.mock.instances[0]).toBe(lh);
     expect(lh).not.toHaveProperty('badHelper');
     expect(lh.constructor).not.toBe(helpers.constructor);
+  });
+
+  test('Extending Lighthouse', () => {
+    const myHelper = sandbox.fn();
+    const constants = {
+      myConstant: {
+        input: [{ name: 'myOverridenInput' }, { name: 'myOtherOverride' }],
+      },
+    };
+    const events = {
+      myEvent: {
+        output: {
+          'myEvent(uint8)': [
+            {
+              name: 'myOutput',
+              type: sandbox.fn(),
+            },
+          ],
+        },
+      },
+    };
+    const methods = {
+      myMethod: {
+        input: {
+          'myMethod()': [
+            {
+              name: 'myInput',
+              type: sandbox.fn(),
+            },
+          ],
+        },
+      },
+    };
+    const extension = {
+      constants,
+      events,
+      myHelper,
+    };
+    sandbox
+      .spyOn(Lighthouse.prototype, '_defineContractInterface')
+      .mockImplementation(() => {});
+
+    const lh = new Lighthouse({
+      constants: {
+        myConstant: {
+          input: [{ name: 'myInput', type: 'myType' }],
+          output: [{ name: 'myOutput' }],
+        },
+      },
+      methods,
+    });
+    lh.extend(extension);
+
+    expect(lh._overrides).toEqual({
+      constants: {
+        myConstant: {
+          input: [
+            { name: 'myOverridenInput', type: 'myType' },
+            { name: 'myOtherOverride' },
+          ],
+          output: [{ name: 'myOutput' }],
+        },
+      },
+      events,
+      methods,
+    });
+    expect(lh.myHelper).toBe(myHelper);
+
+    // with no args, should remain same
+    const beforeOverrides = Object.assign({}, lh._overrides);
+    lh.extend({});
+    expect(lh._overrides).toEqual(beforeOverrides);
   });
 });
