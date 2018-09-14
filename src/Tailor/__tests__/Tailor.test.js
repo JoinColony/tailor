@@ -7,7 +7,7 @@ import Tailor from '../index';
 import Adapter from '../../adapters/Adapter';
 import ABIParser from '../../parsers/ABIParser';
 import Wallet from '../../wallets/Wallet';
-import PARAM_TYPES from '../../modules/paramTypes';
+import { BOOLEAN_TYPE, INTEGER_TYPE } from '../../modules/paramTypes';
 
 import { getAdapter, getLoader, getParser, getWallet } from '../factory';
 import DeployTransaction from '../../modules/transactions/DeployTransaction';
@@ -165,18 +165,17 @@ describe('Tailor', () => {
     expect(tailor1).toHaveProperty('adapter', expect.any(Adapter));
     expect(tailor1).toHaveProperty('parser', expect.any(ABIParser));
     expect(tailor1).toHaveProperty('wallet', expect.any(Wallet));
-    expect(tailor1).toHaveProperty('_overrides', {
+    expect(tailor1).toHaveProperty('_contractSpec', {
       constants: {},
       methods: args.methods,
       events: {},
     });
-    expect(tailor1).toHaveProperty('_contractData', args.contractData);
     expect(Tailor.prototype._defineContractInterface).toHaveBeenCalledWith();
 
     // With contract data
     const contractData = 'some contract data';
     const tailor2 = new Tailor(Object.assign({}, args, { contractData }));
-    expect(tailor2).toHaveProperty('_contractData', contractData);
+    // expect(tailor2).toHaveProperty('_contractData', contractData);
     expect(Tailor.prototype._defineContractInterface).toHaveBeenCalledWith();
     expect(tailor2).toBeInstanceOf(Tailor);
     Tailor.prototype._defineContractInterface.mockRestore();
@@ -216,11 +215,11 @@ describe('Tailor', () => {
             'myMethod(uint,bool)': [
               {
                 name: 'id',
-                type: PARAM_TYPES.INTEGER,
+                type: INTEGER_TYPE,
               },
               {
                 name: 'isProbablyTrue',
-                type: PARAM_TYPES.BOOLEAN,
+                type: BOOLEAN_TYPE,
               },
             ],
           },
@@ -233,21 +232,21 @@ describe('Tailor', () => {
             'MyEvent(uint256,uint256)': [
               {
                 name: 'a',
-                type: PARAM_TYPES.INTEGER,
+                type: INTEGER_TYPE,
               },
               {
                 name: 'b',
-                type: PARAM_TYPES.INTEGER,
+                type: INTEGER_TYPE,
               },
             ],
             'MyEvent(bool,bool)': [
               {
                 name: 'a',
-                type: PARAM_TYPES.BOOLEAN,
+                type: BOOLEAN_TYPE,
               },
               {
                 name: 'b',
-                type: PARAM_TYPES.BOOLEAN,
+                type: BOOLEAN_TYPE,
               },
             ],
           },
@@ -259,15 +258,15 @@ describe('Tailor', () => {
             'getTaskRole(uint,uint)': [
               {
                 name: 'id',
-                type: PARAM_TYPES.INTEGER,
+                type: INTEGER_TYPE,
               },
               {
                 name: 'role',
-                type: PARAM_TYPES.INTEGER,
+                type: INTEGER_TYPE,
               },
               {
                 name: 'notOverriden',
-                type: PARAM_TYPES.INTEGER,
+                type: INTEGER_TYPE,
               },
             ],
           },
@@ -303,21 +302,21 @@ describe('Tailor', () => {
             'MyEvent(uint256,uint256)': [
               {
                 name: 'a',
-                type: PARAM_TYPES.INTEGER,
+                type: INTEGER_TYPE,
               },
               {
                 name: 'b',
-                type: PARAM_TYPES.INTEGER,
+                type: INTEGER_TYPE,
               },
             ],
             'MyEvent(bool,bool)': [
               {
                 name: 'a',
-                type: PARAM_TYPES.BOOLEAN,
+                type: BOOLEAN_TYPE,
               },
               {
                 name: 'b',
-                type: PARAM_TYPES.BOOLEAN,
+                type: BOOLEAN_TYPE,
               },
             ],
           },
@@ -329,11 +328,11 @@ describe('Tailor', () => {
             'myMethod(uint,bool)': [
               {
                 name: 'id',
-                type: PARAM_TYPES.INTEGER,
+                type: INTEGER_TYPE,
               },
               {
                 name: 'isTotallyTrue',
-                type: PARAM_TYPES.BOOLEAN,
+                type: BOOLEAN_TYPE,
               },
             ],
           },

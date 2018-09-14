@@ -9,10 +9,8 @@ import type {
   ContractSpec,
   EventSpecs,
   MethodSpecs,
-  PartialConstantSpecs,
-  PartialEventSpecs,
-  PartialMethodSpecs,
 } from '../interface/ContractSpec';
+import type { Overrides } from '../interface/Overrides';
 
 import {
   ADAPTER_NAME_MAP,
@@ -52,38 +50,30 @@ export type WalletSpec = {
 export type TailorCreateArgs = {
   adapter?: IAdapter | AdapterSpec,
   contractData?: ContractData,
-  constants?: PartialConstantSpecs,
-  events?: PartialEventSpecs,
   loader?: ILoader<*> | LoaderSpec,
-  methods?: PartialMethodSpecs,
   parser?: IParser | ParserSpec,
   query?: GenericQuery,
   wallet?: IWallet | WalletSpec,
-};
+} & Overrides;
 
 export type TailorArgs = {
   adapter: IAdapter,
   contractData: ContractData,
-  constants?: PartialConstantSpecs,
-  events?: PartialEventSpecs,
-  methods?: PartialMethodSpecs,
+  helpers: Object,
   parser: IParser,
   wallet: IWallet,
-  helpers: Object,
-};
+} & Overrides;
 
 export type {
   ConstantSpecs,
   ContractData,
   ContractSpec,
   EventSpecs,
+  GenericQuery,
   IAdapter,
   ILoader,
   IParser,
   IWallet,
   MethodSpecs,
-  PartialConstantSpecs,
-  PartialEventSpecs,
-  PartialMethodSpecs,
-  GenericQuery,
+  Overrides,
 };

@@ -2,7 +2,7 @@
 
 import type {
   ConstantSpec,
-  FunctionParams,
+  ParamsSpecWithSignatures,
 } from '../../interface/ContractSpec';
 import getFunctionCall from '../getFunctionCall';
 import { convertOutput } from '../paramConversion';
@@ -10,7 +10,11 @@ import { convertOutput } from '../paramConversion';
 import type Tailor from '../../Tailor';
 import HookManager from '../HookManager';
 
-function getConstantFn(tailor: Tailor, functionParams: FunctionParams, output) {
+function getConstantFn(
+  tailor: Tailor,
+  functionParams: ParamsSpecWithSignatures,
+  output,
+) {
   const hooks = new HookManager();
   const fn = async function constant(...inputParams: any) {
     // TODO: do we want to hook inputParams?
@@ -18,7 +22,7 @@ function getConstantFn(tailor: Tailor, functionParams: FunctionParams, output) {
     const hookedFnCall = await hooks.getHookedValue('call', fnCall);
     const callResult = await tailor.adapter.call(hookedFnCall);
     const result = convertOutput(output, ...callResult);
-    return hooks.getHookedValue('result', result);
+    return hooks.getHookedValue('result', result, inputParams);
   };
   fn.hooks = hooks.createHooks();
   return fn;

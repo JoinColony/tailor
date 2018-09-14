@@ -42,7 +42,7 @@ export default class ABIParser extends Parser {
   static parseTupleType(components: Array<ABIParam>): ParamType {
     const tupleTypes = components.map(({ name, type }, index) => [
       this.parseFieldName(name, index),
-      this.parseType(type),
+      this.parseType(type, name),
     ]);
     const convert = (
       converter: 'convertInput' | 'convertOutput',
@@ -55,6 +55,7 @@ export default class ABIParser extends Parser {
       }, {});
 
     return {
+      name: 'tuple',
       convertInput: convert.bind(this, 'convertInput'),
       convertOutput: convert.bind(this, 'convertOutput'),
       validate(value: *) {
@@ -69,13 +70,21 @@ export default class ABIParser extends Parser {
    */
   static parseType(
     solidityType: string,
+    fieldName?: string,
     components?: Array<ABIParam>,
   ): ParamType {
     if (solidityType === 'tuple' && components && components.length)
       return this.parseTupleType(components);
 
-    for (const [type, pattern] of TYPE_PATTERN_MAP) {
-      if (solidityType.match(pattern)) return type;
+    for (const [pattern, { type, nameMap }] of TYPE_PATTERN_MAP) {
+      if (solidityType.match(pattern)) {
+        if (fieldName && nameMap) {
+          for (const [namePattern, { type: typeFromName }] of nameMap) {
+            if (fieldName.match(namePattern)) return typeFromName;
+          }
+        }
+        return type;
+      }
     }
 
     throw new Error(`Type "${solidityType}" could not be matched`);
@@ -96,7 +105,7 @@ export default class ABIParser extends Parser {
 
       return {
         name: this.parseFieldName(name, index),
-        type: this.parseType(type, components),
+        type: this.parseType(type, name, components),
       };
     });
   }

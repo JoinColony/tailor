@@ -4,8 +4,10 @@ import type { ParamType } from '../../interface/Params';
 
 import {
   ADDRESS_TYPE,
+  BIG_INTEGER_TYPE,
   BOOLEAN_TYPE,
   BYTES_TYPE,
+  DATE_TYPE,
   INTEGER_TYPE,
   STRING_TYPE,
 } from '../../modules/paramTypes';
@@ -17,16 +19,31 @@ export const BOOLEAN_PATTERN = /^bool(\[([0-9]*)])*$/;
 
 export const BYTES_PATTERN = /^bytes(([0-9]{1,})(\[([0-9]*)])|(\[([0-9]*)]))*$/;
 
-export const INTEGER_PATTERN = /^u?int([0-9]*)?(\[([0-9]*)])*$/;
+export const BIG_INTEGER_PATTERN = /^u?int([0-9]*)?(\[([0-9]*)])*$/;
 
 export const STRING_PATTERN = /^string(\[([0-9]*)])*$/;
 
-export const TYPE_PATTERN_MAP: Map<ParamType, RegExp> = new Map([
-  [ADDRESS_TYPE, ADDRESS_PATTERN],
-  [BOOLEAN_TYPE, BOOLEAN_PATTERN],
-  [BYTES_TYPE, BYTES_PATTERN],
-  [INTEGER_TYPE, INTEGER_PATTERN],
-  [STRING_TYPE, STRING_PATTERN],
+export const ID_PATTERN = /^((?:id|count)|(?:(?:[a-z])+(?:Id|Count)))$/;
+export const DATE_PATTERN = /^((?:id|count)|(?:(?:[a-z])+(?:Id|Count)))$/;
+
+export const TYPE_PATTERN_MAP: Map<
+  RegExp,
+  { type: ParamType, nameMap?: Map<RegExp, { type: ParamType }> },
+> = new Map([
+  [ADDRESS_PATTERN, { type: ADDRESS_TYPE }],
+  [
+    BIG_INTEGER_PATTERN,
+    {
+      type: BIG_INTEGER_TYPE,
+      nameMap: new Map([
+        [ID_PATTERN, { type: INTEGER_TYPE }],
+        [DATE_PATTERN, { type: DATE_TYPE }],
+      ]),
+    },
+  ],
+  [BOOLEAN_PATTERN, { type: BOOLEAN_TYPE }],
+  [BYTES_PATTERN, { type: BYTES_TYPE }],
+  [STRING_PATTERN, { type: STRING_TYPE }],
 ]);
 
 export const SPEC_TYPES = {

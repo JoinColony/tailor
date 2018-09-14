@@ -1,11 +1,13 @@
 /* @flow */
+/* eslint-disable no-underscore-dangle */
 
 import constantFactory from '../modules/constantFactory';
 import Event from '../modules/Event';
 import methodFactory from '../modules/methodFactory';
 import DeployTransaction from '../modules/transactions/DeployTransaction';
-import { mergeOverrides, mergeSpec } from '../modules/utils';
+import { mergeSpec } from '../modules/utils';
 import { getAdapter, getLoader, getParser, getWallet } from './factory';
+import { PARAM_TYPE_NAME_MAP } from '../modules/paramTypes';
 
 import type Transaction from '../modules/transactions/Transaction';
 import type {
@@ -19,11 +21,17 @@ import type {
   TailorArgs,
   TailorCreateArgs,
   MethodSpecs,
-  PartialConstantSpecs,
-  PartialEventSpecs,
-  PartialMethodSpecs,
   WalletSpec,
 } from './flowtypes';
+import type { ParamTypeName } from '../interface/Params';
+import type {
+  Overrides,
+  ParamOverrides,
+  ParamOverridesWithSignatures,
+  ParamOverridesWithOptionalSignatures,
+} from '../interface/Overrides';
+// eslint-disable-next-line max-len
+import type { ParamsSpecWithOptionalSignatures } from '../interface/ContractSpec';
 
 export default class Tailor {
   adapter: IAdapter;
@@ -46,13 +54,11 @@ export default class Tailor {
 
   contractAddress: string;
 
-  _contractData: ContractData;
+  bytecode: ?string;
 
-  _overrides: {
-    constants: PartialConstantSpecs,
-    events: PartialEventSpecs,
-    methods: PartialMethodSpecs,
-  };
+  _contractSpec: ContractSpec;
+
+  _overrides: Overrides;
 
   static async getConstructorArgs({
     contractData: providedContractData,
@@ -114,22 +120,94 @@ export default class Tailor {
     return new this(constructorArgs);
   }
 
+  static _resolveParamTypeName(typeName: ParamTypeName) {
+    const type = PARAM_TYPE_NAME_MAP[typeName];
+    if (!type) throw new Error(`Custom type "${typeName}" not found`);
+    return type;
+  }
+
+  static _resolveTypesForParamOverrides(paramOverrides: ParamOverrides) {
+    return paramOverrides.map(
+      paramOverride =>
+        typeof paramOverride.type === 'string'
+          ? Object.assign({}, paramOverride, {
+              type: this._resolveParamTypeName(paramOverride.type),
+            })
+          : paramOverride,
+    );
+  }
+
+  static _getParamOverridesWithSignatures(
+    paramOverrides: ParamOverridesWithSignatures,
+  ) {
+    return Object.keys(paramOverrides).reduce((acc, key) => {
+      acc[key] = this._resolveTypesForParamOverrides(paramOverrides[key]);
+      return acc;
+    }, {});
+  }
+
+  static _getParamOverrides(
+    params: ParamsSpecWithOptionalSignatures,
+    overrides: ParamOverridesWithOptionalSignatures,
+  ) {
+    if (Array.isArray(overrides)) {
+      // For e.g. constant/method output
+      if (Array.isArray(params))
+        return this._resolveTypesForParamOverrides(overrides);
+
+      const signatures = Object.keys(params);
+      // TODO write error message
+      if (signatures.length > 1) throw new Error('Cannot apply override');
+
+      return {
+        [signatures[0]]: this._resolveTypesForParamOverrides(overrides),
+      };
+    }
+
+    return this._getParamOverridesWithSignatures(overrides);
+  }
+
+  static _getOverridesOfType(overrides: *, specs: *) {
+    return Object.keys(overrides).reduce((acc, name) => {
+      const override = overrides[name];
+      const spec = specs[name];
+
+      // TODO probably need this
+      // if (!spec)
+      //   throw new Error(`Unable to override ${name}: contract spec not found`);
+
+      if (override.input)
+        override.input = this._getParamOverrides(spec.input, override.input);
+      if (override.output)
+        override.output = this._getParamOverrides(spec.output, override.output);
+
+      acc[name] = override;
+      return acc;
+    }, {});
+  }
+
   constructor({
     adapter,
+    constants = {},
+    contractData,
+    events = {},
+    helpers,
+    methods = {},
     parser,
     wallet,
-    constants = {},
-    events = {},
-    methods = {},
-    contractData,
-    helpers,
   }: TailorArgs) {
     this.adapter = adapter;
     this.parser = parser;
     this.wallet = wallet;
-    this._overrides = { constants, events, methods };
-    this._contractData = contractData;
-    this._defineContractInterface();
+    if (contractData) {
+      this.contractAddress = contractData.address;
+      this.bytecode = contractData.bytecode;
+    }
+    this._defineContractInterface(contractData, {
+      constants,
+      methods,
+      events,
+    });
     this._defineHelpers(helpers);
   }
 
@@ -138,19 +216,33 @@ export default class Tailor {
     return this.wallet;
   }
 
-  extend({ constants = {}, events = {}, methods = {}, ...helpers }: Object) {
-    this._overrides = mergeOverrides(this._overrides, {
-      constants,
-      events,
-      methods,
-    });
-    this._defineContractInterface();
+  extend({
+    constants = {},
+    events = {},
+    methods = {},
+    ...helpers
+  }: {
+    helpers: Object,
+  } & Overrides) {
+    this._defineContractInterface(undefined, { constants, events, methods });
     this._defineHelpers(helpers);
   }
 
-  _getContractSpec(contractData: ContractData): ContractSpec {
-    const initialSpecs = this.parser.parse(contractData);
-    return mergeSpec(initialSpecs, this._overrides);
+  _getOverrides({ constants, events, methods }: Overrides) {
+    return {
+      constants: this.constructor._getOverridesOfType(
+        constants,
+        this._contractSpec.constants,
+      ),
+      events: this.constructor._getOverridesOfType(
+        events,
+        this._contractSpec.events,
+      ),
+      methods: this.constructor._getOverridesOfType(
+        methods,
+        this._contractSpec.methods,
+      ),
+    };
   }
 
   _defineConstants(specs: ConstantSpecs) {
@@ -177,15 +269,19 @@ export default class Tailor {
     Object.assign(this, { events });
   }
 
-  _defineContractInterface() {
-    this.contractAddress = this._contractData.address;
+  _defineContractInterface(contractData?: ContractData, overrides?: Overrides) {
+    if (contractData && !this._contractSpec)
+      this._contractSpec = this.parser.parse(contractData);
 
-    const spec = this._getContractSpec(this._contractData);
-    this._defineConstants(spec.constants);
-    this._defineEvents(spec.events);
-    this._defineMethods(spec.methods);
+    if (overrides)
+      this._contractSpec = mergeSpec(
+        this._contractSpec,
+        this._getOverrides(overrides),
+      );
 
-    return spec;
+    this._defineConstants(this._contractSpec.constants);
+    this._defineEvents(this._contractSpec.events);
+    this._defineMethods(this._contractSpec.methods);
   }
 
   _defineHelpers(helpers: Object = {}) {

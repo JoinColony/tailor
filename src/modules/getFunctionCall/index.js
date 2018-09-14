@@ -4,7 +4,7 @@ import type {
   FunctionCall,
   FunctionSignature,
 } from '../../interface/flowtypes';
-import type { FunctionParams } from '../../interface/ContractSpec';
+import type { ParamsSpecWithSignatures } from '../../interface/ContractSpec';
 import {
   convertInput,
   findMatchingFunctionSignatures,
@@ -15,7 +15,7 @@ import {
  * simply return a function call.
  */
 function getSingleFunctionCall(
-  functionParams: FunctionParams,
+  functionParams: ParamsSpecWithSignatures,
   functionSignature: FunctionSignature,
   ...inputParams: any
 ): FunctionCall {
@@ -33,7 +33,7 @@ function getSingleFunctionCall(
  * Failing that, errors for each attempted function signature are reported.
  */
 function getOverloadedFunctionCall(
-  functionParams: FunctionParams,
+  functionParams: ParamsSpecWithSignatures,
   ...inputParams: any
 ): FunctionCall {
   let args;
@@ -67,7 +67,7 @@ function getOverloadedFunctionCall(
  * function signature for that input.
  */
 export default function getFunctionCall(
-  functionParams: FunctionParams,
+  functionParams: ParamsSpecWithSignatures,
   ...inputParams: any
 ): FunctionCall {
   const functionSignatures = Object.keys(functionParams);

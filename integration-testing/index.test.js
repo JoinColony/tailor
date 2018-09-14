@@ -1,6 +1,7 @@
 import path from 'path';
 import createSandbox from 'jest-sandbox';
 import Web3 from 'web3';
+import BigNumber from 'bn.js';
 
 import TestWallet from './utils/TestWallet';
 import Tailor from '../src';
@@ -80,13 +81,13 @@ describe('Integration testing', () => {
 
   test('Calling an overloaded constant', async () => {
     const { overloaded } = client.constants;
-    expect(await overloaded(2, 2, 2)).toEqual({ sum: 6 });
-    expect(await overloaded(2, 2)).toEqual({ sum: 4 });
+    expect(await overloaded(2, 2, 2)).toEqual({ sum: new BigNumber(6) });
+    expect(await overloaded(2, 2)).toEqual({ sum: new BigNumber(4) });
     expect(overloadedType.validate).toHaveBeenCalledWith(2);
     expect(overloadedType.convertInput).toHaveBeenCalledWith(2);
-    expect(await overloaded(2, true)).toEqual({ sum: 2 });
+    expect(await overloaded(2, true)).toEqual({ sum: new BigNumber(2) });
     expect(await overloaded(true, true)).toEqual({
-      sum: 0,
+      sum: new BigNumber(0),
     });
   });
 
@@ -133,13 +134,13 @@ describe('Integration testing', () => {
           signature: 'OverloadedEvent()',
         },
         {
-          data: { a: 2 },
+          data: { a: new BigNumber(2) },
           event: expect.any(Object),
           name: 'OverloadedEvent',
           signature: 'OverloadedEvent(uint256)',
         },
         {
-          data: { a: 2, b: 2 },
+          data: { a: new BigNumber(2), b: new BigNumber(2) },
           event: expect.any(Object),
           name: 'OverloadedEvent',
           signature: 'OverloadedEvent(uint256,uint256)',
@@ -163,14 +164,14 @@ describe('Integration testing', () => {
       undefined,
       expect.objectContaining({
         signature: 'OverloadedEvent(uint256)',
-        data: { a: 2 },
+        data: { a: new BigNumber(2) },
       }),
     );
     expect(handlerFunction).toHaveBeenCalledWith(
       undefined,
       expect.objectContaining({
         signature: 'OverloadedEvent(uint256,uint256)',
-        data: { a: 2, b: 2 },
+        data: { a: new BigNumber(2), b: new BigNumber(2) },
       }),
     );
     expect(handlerFunction).toHaveBeenCalledWith(

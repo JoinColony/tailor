@@ -7,7 +7,7 @@ import {
   convertOutput,
   findMatchingFunctionSignatures,
 } from '../index';
-import PARAM_TYPES from '../../paramTypes';
+import { BOOLEAN_TYPE, INTEGER_TYPE, STRING_TYPE } from '../../paramTypes';
 
 describe('Parameter conversion', () => {
   const sandbox = createSandbox();
@@ -27,7 +27,7 @@ describe('Parameter conversion', () => {
     const spec = [
       {
         name: 'id',
-        type: PARAM_TYPES.INTEGER,
+        type: INTEGER_TYPE,
       },
     ];
 
@@ -67,11 +67,11 @@ describe('Parameter conversion', () => {
     const spec = [
       {
         name: 'id',
-        type: PARAM_TYPES.INTEGER,
+        type: INTEGER_TYPE,
       },
       {
         name: 'isTrue',
-        type: PARAM_TYPES.BOOLEAN,
+        type: BOOLEAN_TYPE,
       },
     ];
 
@@ -126,11 +126,11 @@ describe('Parameter conversion', () => {
     const spec = [
       {
         name: 'name',
-        type: PARAM_TYPES.STRING,
+        type: STRING_TYPE,
       },
       {
         name: 'id',
-        type: PARAM_TYPES.INTEGER,
+        type: INTEGER_TYPE,
         defaultValue: 5,
       },
     ];
@@ -160,11 +160,11 @@ describe('Parameter conversion', () => {
     const spec = [
       {
         name: 'name',
-        type: PARAM_TYPES.STRING,
+        type: STRING_TYPE,
       },
       {
         name: 'isTrue',
-        type: PARAM_TYPES.BOOLEAN,
+        type: BOOLEAN_TYPE,
       },
     ];
 
@@ -232,7 +232,7 @@ describe('Parameter conversion', () => {
     const spec = [
       {
         name: 'id',
-        type: PARAM_TYPES.INTEGER,
+        type: INTEGER_TYPE,
       },
     ];
 
@@ -244,15 +244,15 @@ describe('Parameter conversion', () => {
     const spec = [
       {
         name: 'id',
-        type: PARAM_TYPES.INTEGER,
+        type: INTEGER_TYPE,
       },
       {
         name: 'isTrue',
-        type: PARAM_TYPES.BOOLEAN,
+        type: BOOLEAN_TYPE,
       },
       {
         name: 'name',
-        type: Object.assign({}, PARAM_TYPES.STRING, {
+        type: Object.assign({}, STRING_TYPE, {
           convertOutput: sandbox.fn().mockImplementation(value => value),
         }),
       },
@@ -270,33 +270,33 @@ describe('Parameter conversion', () => {
       'myConstant(uint)': [
         {
           name: 'a',
-          type: PARAM_TYPES.INTEGER,
+          type: INTEGER_TYPE,
         },
       ],
       'myConstant(bool)': [
         {
           name: 'a',
-          type: PARAM_TYPES.BOOLEAN,
+          type: BOOLEAN_TYPE,
         },
       ],
       'myConstant(uint,bool)': [
         {
           name: 'a',
-          type: PARAM_TYPES.INTEGER,
+          type: INTEGER_TYPE,
         },
         {
           name: 'b',
-          type: PARAM_TYPES.BOOLEAN,
+          type: BOOLEAN_TYPE,
         },
       ],
       'myConstant(uint,uint)': [
         {
           name: 'a',
-          type: PARAM_TYPES.INTEGER,
+          type: INTEGER_TYPE,
         },
         {
           name: 'b',
-          type: PARAM_TYPES.INTEGER,
+          type: INTEGER_TYPE,
         },
       ],
     };

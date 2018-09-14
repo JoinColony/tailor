@@ -1,19 +1,18 @@
 /* @flow */
 
 import type { ParamsSpec } from './Params';
-import type { FunctionSignature, EventSignature } from './flowtypes';
 import type { TransactionSpec } from '../modules/transactions/flowtypes';
 
-export type FunctionParams = {
-  [functionSig: FunctionSignature]: ParamsSpec,
+export type ParamsSpecWithSignatures = {
+  [signature: string]: ParamsSpec,
 };
 
-export type EventParams = {
-  [eventSig: EventSignature]: ParamsSpec,
-};
+export type ParamsSpecWithOptionalSignatures =
+  | ParamsSpec
+  | ParamsSpecWithSignatures;
 
 export type MethodSpec = {
-  input: FunctionParams,
+  input: ParamsSpecWithSignatures,
   isPayable: boolean,
   name: string,
   output: ParamsSpec,
@@ -22,11 +21,11 @@ export type MethodSpec = {
 
 export type EventSpec = {
   name: string,
-  output: EventParams,
+  output: ParamsSpecWithSignatures,
 };
 
 export type ConstantSpec = {
-  input: FunctionParams,
+  input: ParamsSpecWithSignatures,
   name: string,
   output: ParamsSpec,
 };
@@ -41,37 +40,6 @@ export type MethodSpecs = {
 
 export type ConstantSpecs = {
   [constantName: string]: ConstantSpec,
-};
-
-export type PartialMethodSpec = {
-  input?: FunctionParams,
-  isPayable?: boolean,
-  name?: string,
-  output?: ParamsSpec,
-  type?: TransactionSpec,
-};
-
-export type PartialEventSpec = {
-  name?: string,
-  output?: EventParams,
-};
-
-export type PartialConstantSpec = {
-  name?: string,
-  input?: FunctionParams,
-  output?: ParamsSpec,
-};
-
-export type PartialEventSpecs = {
-  [eventName: string]: Array<PartialEventSpec>,
-};
-
-export type PartialMethodSpecs = {
-  [methodName: string]: Array<PartialMethodSpec>,
-};
-
-export type PartialConstantSpecs = {
-  [constantName: string]: Array<PartialConstantSpec>,
 };
 
 export type ContractSpec = {

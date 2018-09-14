@@ -1,7 +1,7 @@
 /* @flow */
 
 import type { ParamsSpec } from '../../interface/Params';
-import type { FunctionParams } from '../../interface/ContractSpec';
+import type { ParamsSpecWithSignatures } from '../../interface/ContractSpec';
 import type { FunctionSignature } from '../../interface/flowtypes';
 
 /*
@@ -78,7 +78,7 @@ export function convertOutput(spec: ParamsSpec = [], ...output: Array<any>) {
  * fall back to the signatures with the most params.
  */
 export function findMatchingFunctionSignatures(
-  functionParams: FunctionParams,
+  functionParams: ParamsSpecWithSignatures,
   ...input: any
 ): Array<FunctionSignature> {
   const functionSignatures = Object.keys(functionParams);

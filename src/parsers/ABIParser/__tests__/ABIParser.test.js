@@ -2,11 +2,16 @@
 /* eslint-disable no-console,camelcase */
 
 import createSandbox from 'jest-sandbox';
+import BigNumber from 'bn.js';
 
 import ABIParser from '../index';
 import MetaCoinABI from '../__fixtures__/MetaCoinABI';
 
-import PARAM_TYPES from '../../../modules/paramTypes';
+import {
+  ADDRESS_TYPE,
+  BIG_INTEGER_TYPE,
+  BOOLEAN_TYPE,
+} from '../../../modules/paramTypes';
 
 const [
   lastSenderABI,
@@ -66,52 +71,52 @@ describe('ABIParser', () => {
         'overloaded(uint256,uint256,uint256)': [
           {
             name: 'a',
-            type: PARAM_TYPES.INTEGER,
+            type: BIG_INTEGER_TYPE,
           },
           {
             name: 'b',
-            type: PARAM_TYPES.INTEGER,
+            type: BIG_INTEGER_TYPE,
           },
           {
             name: 'c',
-            type: PARAM_TYPES.INTEGER,
+            type: BIG_INTEGER_TYPE,
           },
         ],
         'overloaded(uint256,uint256)': [
           {
             name: 'a',
-            type: PARAM_TYPES.INTEGER,
+            type: BIG_INTEGER_TYPE,
           },
           {
             name: 'b',
-            type: PARAM_TYPES.INTEGER,
+            type: BIG_INTEGER_TYPE,
           },
         ],
         'overloaded(uint256,bool)': [
           {
             name: 'a',
-            type: PARAM_TYPES.INTEGER,
+            type: BIG_INTEGER_TYPE,
           },
           {
             name: 'b',
-            type: PARAM_TYPES.BOOLEAN,
+            type: BOOLEAN_TYPE,
           },
         ],
         'overloaded(bool,bool)': [
           {
             name: 'a',
-            type: PARAM_TYPES.BOOLEAN,
+            type: BOOLEAN_TYPE,
           },
           {
             name: 'b',
-            type: PARAM_TYPES.BOOLEAN,
+            type: BOOLEAN_TYPE,
           },
         ],
       },
       output: [
         {
           name: 'sum',
-          type: PARAM_TYPES.INTEGER,
+          type: BIG_INTEGER_TYPE,
         },
       ],
     });
@@ -136,18 +141,18 @@ describe('ABIParser', () => {
         'sendCoin(address,uint256)': [
           {
             name: 'receiver',
-            type: PARAM_TYPES.ADDRESS,
+            type: ADDRESS_TYPE,
           },
           {
             name: 'amount',
-            type: PARAM_TYPES.INTEGER,
+            type: BIG_INTEGER_TYPE,
           },
         ],
       },
       output: [
         {
           name: 'sufficient',
-          type: PARAM_TYPES.BOOLEAN,
+          type: BOOLEAN_TYPE,
         },
       ],
       isPayable: false,
@@ -199,7 +204,7 @@ describe('ABIParser', () => {
       output: [
         {
           name: lastSenderABI.name,
-          type: PARAM_TYPES.ADDRESS,
+          type: ADDRESS_TYPE,
         },
       ],
     });
@@ -247,15 +252,15 @@ describe('ABIParser', () => {
         'Transfer(address,address,uint256)': [
           {
             name: 'from',
-            type: PARAM_TYPES.ADDRESS,
+            type: ADDRESS_TYPE,
           },
           {
             name: 'to',
-            type: PARAM_TYPES.ADDRESS,
+            type: ADDRESS_TYPE,
           },
           {
             name: 'value',
-            type: PARAM_TYPES.INTEGER,
+            type: BIG_INTEGER_TYPE,
           },
         ],
       },
@@ -293,16 +298,14 @@ describe('ABIParser', () => {
       .mockImplementationOnce(() => 'parsed tuple components');
 
     const components = ['components'];
-    expect(parser.constructor.parseType('tuple', components)).toEqual(
-      'parsed tuple components',
-    );
+    expect(
+      parser.constructor.parseType('tuple', 'tupleFieldName', components),
+    ).toEqual('parsed tuple components');
     expect(parser.constructor.parseTupleType).toHaveBeenCalledWith(components);
 
-    expect(parser.constructor.parseType('address')).toEqual(
-      PARAM_TYPES.ADDRESS,
-    );
+    expect(parser.constructor.parseType('address')).toEqual(ADDRESS_TYPE);
 
-    expect(parser.constructor.parseType('uint8')).toEqual(PARAM_TYPES.INTEGER);
+    expect(parser.constructor.parseType('uint8')).toEqual(BIG_INTEGER_TYPE);
 
     expect(() => {
       parser.constructor.parseType('an invalid type');
@@ -321,11 +324,13 @@ describe('ABIParser', () => {
       },
       {
         type: 'uint8',
+        name: 'id',
       },
     ];
 
     const tupleType = parser.constructor.parseTupleType(components);
     expect(tupleType).toEqual({
+      name: 'tuple',
       convertInput: expect.any(Function),
       convertOutput: expect.any(Function),
       validate: expect.any(Function),
@@ -334,32 +339,34 @@ describe('ABIParser', () => {
       'the_address',
       0,
     );
-    expect(parser.constructor.parseFieldName).toHaveBeenCalledWith(
-      undefined,
-      1,
+    expect(parser.constructor.parseFieldName).toHaveBeenCalledWith('id', 1);
+    expect(parser.constructor.parseType).toHaveBeenCalledWith(
+      'address',
+      'the_address',
     );
-    expect(parser.constructor.parseType).toHaveBeenCalledWith('address');
-    expect(parser.constructor.parseType).toHaveBeenCalledWith('uint8');
+    expect(parser.constructor.parseType).toHaveBeenCalledWith('uint8', 'id');
 
     const the_address = '0x7da82c7ab4771ff031b66538d2fb9b0b047f6cf9';
-    const field_1 = 123;
     expect(() => tupleType.validate()).toThrow('Must be an object');
-    expect(() => tupleType.validate({ the_address: 'abc', field_1 })).toThrow(
+    expect(() => tupleType.validate({ the_address: 'abc', id: 123 })).toThrow(
       'Must be a valid address',
     );
-    expect(tupleType.validate({ the_address, field_1 })).toBe(true);
-    expect(tupleType.convertInput({ the_address, field_1 })).toEqual({
+    expect(tupleType.validate({ the_address, id: 123 })).toBe(true);
+    expect(tupleType.convertInput({ the_address, id: 123 })).toEqual({
       the_address,
-      field_1,
+      id: 123,
     });
-    expect(tupleType.convertOutput({ the_address, field_1 })).toEqual({
+    expect(
+      tupleType.convertOutput({ the_address, id: new BigNumber(123) }),
+    ).toEqual({
       the_address,
-      field_1,
+      id: 123,
     });
 
     const input = { id: 1 };
     const output = { id: 'one' };
     const idType = {
+      name: 'integer',
       validate: sandbox.fn(),
       convertInput: undefined, // parseTupleType should pass through the input
       convertOutput: sandbox.fn().mockReturnValue(output.id),
@@ -375,6 +382,7 @@ describe('ABIParser', () => {
 
     // convertInput/convertOutput functions should have been created
     expect(tupleTypeWithoutConversion).toEqual({
+      name: 'tuple',
       validate: expect.any(Function),
       convertInput: expect.any(Function),
       convertOutput: expect.any(Function),
@@ -403,11 +411,12 @@ describe('ABIParser', () => {
     ).toEqual([
       {
         name: 'field_0',
-        type: PARAM_TYPES.ADDRESS,
+        type: ADDRESS_TYPE,
       },
     ]);
     expect(parser.constructor.parseType).toHaveBeenCalledWith(
       lastSenderABI.outputs[0].type,
+      '',
       undefined,
     );
     expect(parser.constructor.parseFieldName).toHaveBeenCalledWith('', 0);

@@ -6,9 +6,10 @@ import deepmerge from 'deepmerge';
  * Merges a partial override object with a full contract spec. Arrays
  * are merged only if an element exists in the spec at that index.
  */
-export default function mergeSpec(spec: Object, overrides: Object) {
+export default function mergeSpec(spec: Object, overrides?: Object) {
   return deepmerge(spec, overrides, {
     clone: false,
+    // TODO what about DEFAULT signature?
     arrayMerge: (target: Array<*>, source: Array<*>) =>
       target.map(
         (e, i) =>

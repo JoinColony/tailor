@@ -1,6 +1,9 @@
 /* @flow */
 
+export type ParamTypeName = string;
+
 export type ParamType = {
+  name: ParamTypeName,
   convertInput?: (input: *) => *,
   convertOutput?: (output: *) => *,
   validate: (input: *) => boolean,

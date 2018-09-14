@@ -7,7 +7,7 @@ import getFunctionCall from '../../getFunctionCall';
 
 import type { TransactionReceipt, TransactionState } from '../flowtypes';
 import type Tailor from '../../../Tailor';
-import type { FunctionParams } from '../../../interface/ContractSpec';
+import type { ParamsSpecWithSignatures } from '../../../interface/ContractSpec';
 
 export default class ContractTransaction extends Transaction {
   _tailor: Tailor;
@@ -29,7 +29,7 @@ export default class ContractTransaction extends Transaction {
     ...methodParams
   }: {
     tailor: Tailor,
-    functionParams: FunctionParams,
+    functionParams: ParamsSpecWithSignatures,
     isPayable?: boolean,
   }): ((...params: any) => Transaction) & Object {
     const hooks = new HookManager();
