@@ -1,16 +1,30 @@
 # Tailor
 
-Tailor is a library for interacting with Ethereum smart contracts, built by [Colony](https://colony.io/). It includes extensible type checking, detailed error reporting, support for different environments, and much more.
+Tailor is a library for interacting with Ethereum smart contracts, built by [Colony](https://colony.io/). It acts as a powerful and easy to use layer between lower-level libraries such as Web3, and your dApp, with features including dynamic ABI loading and extensible type checking.
+
+```sh
+yarn add @colony/tailor
+```
 
 ## Getting Started
 
-Let's start by loading a contract from Etherscan. To interact with a contract we need it's ABI - a description of what functions and events it has. This example relies on the code having been [verified](https://etherscan.io/verifyContract) on Etherscan.
+Let's start by loading a contract from Etherscan. To interact with a contract we need its ABI - a description of what functions and events it has. This example relies on the code having been [verified](https://etherscan.io/verifyContract) on Etherscan.
 
 ```js
-import Tailor from 'tailor'
+import Tailor from '@colony/tailor'
+import Web3 from 'web3'
+import { open } from '@colony/purser-software'
+
+const web3 = new Web3('wss://mainnet.infura.io/ws')
+const wallet = await open({ mnemonic: '...' })
 
 const cryptoKitties = await Tailor.load({
-  etherscan: '0x06012c8cf97BEaD5deAe237070F9587f8E7A266d'
+  loader: 'etherscan',
+  query: {
+    contractAddress: '0x06012c8cf97BEaD5deAe237070F9587f8E7A266d'
+  },
+  web3,
+  wallet
 })
 
 // get kitty ids owned by us
@@ -21,16 +35,19 @@ console.log(myKittyIds)
 // -> ['123456', ...]
 
 // transfer our first kitty
-await cryptoKitties.methods.transfer('0xabc...', myKittyIds[0]).send()
+await cryptoKitties.methods.transfer({
+  to: '0xabc...',
+  tokenId: myKittyIds[0]
+}).send()
 
 // helper method to get our kitties
 cryptoKitties.extend({
   async getKitties(count) {
-    const kittyIds = await cryptoKitties.constants
+    const kittyIds = await this.constants
       .tokensOfOwner(cryptoKitties.wallet.address)
     return kittyIds
       .slice(0, count)
-      .map(async id => await cryptoKitties.constants.getKitty(id))
+      .map(async id => await this.constants.getKitty(id))
   }
 })
 
@@ -47,25 +64,30 @@ cryptoKitties.events.Transfer.addListener(({from, to, tokenId}) => {
 })
 ```
 
-Tailor is clever enough to detect environments such as MetaMask or Mist and will automatically use them for wallets and interacting with the contract.
+In this example, you can see we set up a Web3 instance pointing to [Infura](https://infura.io/), and open a [Purser](https://github.com/JoinColony/purser) wallet to use with Tailor. Once the ABI has been loaded and parsed, all of the CryptoKitties constants, events and methods are available to interact with.
 
-If parameters are named in the contract, they can be passed as an object, otherwise as positional arguments. The same applies for outputs/event params.
+As long as parameters are named in the contract, they can be passed as an object, like with the `transfer` above. You can also just pass them as positional arguments.
 
 ## Configuration
 
 ### Loaders
 
-As well as getting contract data from Etherscan like in the getting started, there are several other ways of loading this in.
+As well as getting contract data from Etherscan like in the getting started, there are several other ways of loading this in. The query is what tells the loader what it should be loading, with some supporting `contractName`, `contractAddress`, or both. Some loaders also take options.
 
 ```js
-const client = await Tailor.load({ file: '../build/MyContract.json' })
+const client = await Tailor.load({
+  loader: {
+    name: 'truffle',
+    options: {}
+  },
+  // or just loader: 'truffle',
+  query: {
+    contractName: 'MyContract'
+  },
+  ...
+})
 
-// trufflepig: 'MyContract'
-// http: 'https://mycooldapp.com/contract.json'
-// ipfs: 'QmXyz...'
-// swarm: 'abc123...'
-// ens: 'mycontract.ens'
-// github: { repo: 'project/repo', version: 'v2.0.0' }
+// also supports fs, http, trufflepig, etherscan
 
 // alternatively pass pre-loaded contractData
 // contractData: {
@@ -74,21 +96,30 @@ const client = await Tailor.load({ file: '../build/MyContract.json' })
 // }
 ```
 
-Loaders are super flexible and allow for great development experiences using tools like [TrufflePig](https://github.com/JoinColony/trufflepig). You can also create your own loader and pass it as `loader`. See [extending loaders](todo) for more info.
+Loaders are super flexible and allow for great development experiences using tools like [TrufflePig](https://github.com/JoinColony/trufflepig). See [loaders](https://docs.colony.io/tailor/docs-loaders) for more info, as well as how to create your own custom loader.
 
 ### Wallet
 
-In most cases you shouldn't need to worry about telling Tailor which wallet to use. If you're using MetaMask or a browser with Web3 built in, it'll be detected and used automatically. Tailor supports a wide range of wallets through [Purser](todo). It's also possible to pass a mnemonic phrase, or specify a particular wallet.
+Tailor supports a wide range of wallets through [Purser](https://github.com/JoinColony/purser), including MetaMask and various hardware wallets.
 
 ```js
-// mnemonic
-await Tailor.load({ mnemonic: 'twelve words...' })
+import { open: software } from '@colony/purser-software'
+import { open: trezor } from '@colony/purser-trezor'
 
-// specific wallet
-await Tailor.load({ wallet: 'trezor' })
+// mnemonic
+await Tailor.load({
+  wallet: await software({ mnemonic: '...' }),
+  ...
+})
+
+// Trezor
+await Tailor.load({
+  wallet: await trezor(),
+  ...
+})
 ```
 
-Wallets need to conform to a standard interface, but creating a wrapper for your own is simple. See [wallet info](todo) for more info about wallets.
+See the [Purser docs](https://docs.colony.io/purser/docs-overview) for more info on how wallets work, as well as a full list of those available.
 
 ### Contract Overrides
 
@@ -143,7 +174,7 @@ console.log(events)
 
 Notice how at the top we define a custom type. This one doesn't actually do any checking/conversion, but you can see how it might do so.
 
-Overriden methods have a few different options, including the `functionName` which they should call, and the `type` of transaction to be used (e.g. `deploy` or `multisig` for ERC191 off-chain multisig). See [contract specification](todo) for more info.
+Overriden methods have a few different options, including the `functionName` which they should call, and the `type` of transaction to be used (e.g. `deploy` or `multisig` for ERC191 off-chain multisig). See [contract specification](https://docs.colony.io/tailor/api-contract-specification) for more info.
 
 ## Extending
 
@@ -162,7 +193,7 @@ await tx.send()
 // -> 1, 2, 3...
 ```
 
-For all available events see [events info](todo).
+For all available events see [events info](https://docs.colony.io/tailor/api-events).
 
 ### Hooks
 
@@ -185,7 +216,7 @@ tx.hooks({
 
 Hooks are called in the order `global > local`, meaning if we were to also set a `send` hook on the `tx` in the example above, the hooked value from the first would be what the second received as input. The hook functions must return the transformed input, but some hooks also provide additional arguments which should not be modified.
 
-For a full list of available hooks see [hooks info](todo).
+For a full list of available hooks see [hooks info](https://docs.colony.io/tailor/api-hooks).
 
 ### Extend
 
@@ -194,17 +225,17 @@ In a lot of cases, it's fine to pass all your Tailor configuration when you load
 ```js
 import myExtension from './myExtension'
 
-const cryptoKitties = await Tailor.load({ ... })
+const client = await Tailor.load({ ... })
 
 // conveniently use external extension modules
-cryptoKitties.extend(myExtension)
+client.extend(myExtension)
 
 // or do it manually
-cryptoKitties.extend({
+client.extend({
   ...
 })
 ```
 
-This is particularly handy for [`redux-logger`](https://github.com/evgenyrodionov/redux-logger#readme) style debugging, or optional _extra features_ which you can distribute for your contract libraries.
+This is particularly handy for [`redux-logger`](https://github.com/evgenyrodionov/redux-logger#readme) style debugging, or optional extra features which you can distribute for your contract libraries.
 
-See [configuration options](todo) for full details of how Tailor can be extended.
+See [configuration options](https://docs.colony.io/tailor/docs-extending-tailor) for full details of how Tailor can be extended.
