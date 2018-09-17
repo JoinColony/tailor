@@ -9,6 +9,7 @@ import type { ParamType } from '../../interface/Params';
 const assert = require('assert');
 
 export const ADDRESS_TYPE: ParamType = {
+  name: 'address',
   validate(value: *) {
     assert(
       isEmptyHexString(value) || isAddress(value),
@@ -29,6 +30,7 @@ export const ADDRESS_TYPE: ParamType = {
 };
 
 export const INTEGER_TYPE: ParamType = {
+  name: 'integer',
   validate(value: *) {
     assert(
       Number.isInteger(value) || BigNumber.isBN(value),
@@ -42,6 +44,7 @@ export const INTEGER_TYPE: ParamType = {
 };
 
 export const BOOLEAN_TYPE: ParamType = {
+  name: 'boolean',
   validate(value: *) {
     assert(typeof value === 'boolean', 'Must be a boolean');
     return true;
@@ -50,6 +53,7 @@ export const BOOLEAN_TYPE: ParamType = {
 
 // TODO validate size?
 export const BYTES_TYPE: ParamType = {
+  name: 'bytes',
   validate(value: *) {
     assert(isHexStrict(value), 'Must be a hex string');
     return true;
@@ -58,6 +62,7 @@ export const BYTES_TYPE: ParamType = {
 
 // TODO validate size?
 export const STRING_TYPE: ParamType = {
+  name: 'string',
   validate(value: *) {
     assert(typeof value === 'string', 'Must be a string');
     return true;
