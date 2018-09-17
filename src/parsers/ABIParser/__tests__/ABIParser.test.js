@@ -6,7 +6,11 @@ import createSandbox from 'jest-sandbox';
 import ABIParser from '../index';
 import MetaCoinABI from '../__fixtures__/MetaCoinABI';
 
-import PARAM_TYPES from '../../../modules/paramTypes';
+import {
+  ADDRESS_TYPE,
+  BIG_INTEGER_TYPE,
+  BOOLEAN_TYPE,
+} from '../../../modules/paramTypes';
 
 const [
   lastSenderABI,
@@ -66,52 +70,52 @@ describe('ABIParser', () => {
         'overloaded(uint256,uint256,uint256)': [
           {
             name: 'a',
-            type: PARAM_TYPES.INTEGER,
+            type: BIG_INTEGER_TYPE,
           },
           {
             name: 'b',
-            type: PARAM_TYPES.INTEGER,
+            type: BIG_INTEGER_TYPE,
           },
           {
             name: 'c',
-            type: PARAM_TYPES.INTEGER,
+            type: BIG_INTEGER_TYPE,
           },
         ],
         'overloaded(uint256,uint256)': [
           {
             name: 'a',
-            type: PARAM_TYPES.INTEGER,
+            type: BIG_INTEGER_TYPE,
           },
           {
             name: 'b',
-            type: PARAM_TYPES.INTEGER,
+            type: BIG_INTEGER_TYPE,
           },
         ],
         'overloaded(uint256,bool)': [
           {
             name: 'a',
-            type: PARAM_TYPES.INTEGER,
+            type: BIG_INTEGER_TYPE,
           },
           {
             name: 'b',
-            type: PARAM_TYPES.BOOLEAN,
+            type: BOOLEAN_TYPE,
           },
         ],
         'overloaded(bool,bool)': [
           {
             name: 'a',
-            type: PARAM_TYPES.BOOLEAN,
+            type: BOOLEAN_TYPE,
           },
           {
             name: 'b',
-            type: PARAM_TYPES.BOOLEAN,
+            type: BOOLEAN_TYPE,
           },
         ],
       },
       output: [
         {
           name: 'sum',
-          type: PARAM_TYPES.INTEGER,
+          type: BIG_INTEGER_TYPE,
         },
       ],
     });
@@ -136,18 +140,18 @@ describe('ABIParser', () => {
         'sendCoin(address,uint256)': [
           {
             name: 'receiver',
-            type: PARAM_TYPES.ADDRESS,
+            type: ADDRESS_TYPE,
           },
           {
             name: 'amount',
-            type: PARAM_TYPES.INTEGER,
+            type: BIG_INTEGER_TYPE,
           },
         ],
       },
       output: [
         {
           name: 'sufficient',
-          type: PARAM_TYPES.BOOLEAN,
+          type: BOOLEAN_TYPE,
         },
       ],
       isPayable: false,
@@ -199,7 +203,7 @@ describe('ABIParser', () => {
       output: [
         {
           name: lastSenderABI.name,
-          type: PARAM_TYPES.ADDRESS,
+          type: ADDRESS_TYPE,
         },
       ],
     });
@@ -247,15 +251,15 @@ describe('ABIParser', () => {
         'Transfer(address,address,uint256)': [
           {
             name: 'from',
-            type: PARAM_TYPES.ADDRESS,
+            type: ADDRESS_TYPE,
           },
           {
             name: 'to',
-            type: PARAM_TYPES.ADDRESS,
+            type: ADDRESS_TYPE,
           },
           {
             name: 'value',
-            type: PARAM_TYPES.INTEGER,
+            type: BIG_INTEGER_TYPE,
           },
         ],
       },
@@ -403,7 +407,7 @@ describe('ABIParser', () => {
     ).toEqual([
       {
         name: 'field_0',
-        type: PARAM_TYPES.ADDRESS,
+        type: ADDRESS_TYPE,
       },
     ]);
     expect(parser.constructor.parseType).toHaveBeenCalledWith(

@@ -5,7 +5,7 @@ import createSandbox from 'jest-sandbox';
 import BigNumber from 'bn.js';
 
 import methodFactory from '../index';
-import PARAM_TYPES from '../../paramTypes';
+import { BOOLEAN_TYPE, INTEGER_TYPE } from '../../paramTypes';
 import Transaction from '../../transactions/ContractTransaction';
 
 describe('Methods', () => {
@@ -33,33 +33,33 @@ describe('Methods', () => {
     'myMethod(uint)': [
       {
         name: 'a',
-        type: PARAM_TYPES.INTEGER,
+        type: INTEGER_TYPE,
       },
     ],
     'myMethod(bool)': [
       {
         name: 'a',
-        type: PARAM_TYPES.BOOLEAN,
+        type: BOOLEAN_TYPE,
       },
     ],
     'myMethod(uint,bool)': [
       {
         name: 'a',
-        type: PARAM_TYPES.INTEGER,
+        type: INTEGER_TYPE,
       },
       {
         name: 'b',
-        type: PARAM_TYPES.BOOLEAN,
+        type: BOOLEAN_TYPE,
       },
     ],
     'myMethod(uint,uint)': [
       {
         name: 'a',
-        type: PARAM_TYPES.INTEGER,
+        type: INTEGER_TYPE,
       },
       {
         name: 'b',
-        type: PARAM_TYPES.INTEGER,
+        type: INTEGER_TYPE,
       },
     ],
   };

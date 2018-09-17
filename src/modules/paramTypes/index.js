@@ -120,12 +120,12 @@ export const STRING_TYPE: ParamType = {
   },
 };
 
-const PARAM_TYPES: { [paramTypeName: string]: ParamType } = {
-  ADDRESS: ADDRESS_TYPE,
-  BOOLEAN: BOOLEAN_TYPE,
-  BYTES: BYTES_TYPE,
-  INTEGER: INTEGER_TYPE,
-  STRING: STRING_TYPE,
+export const PARAM_TYPE_NAME_MAP: { [paramName: string]: ParamType } = {
+  [ADDRESS_TYPE.name]: ADDRESS_TYPE,
+  [BIG_INTEGER_TYPE.name]: BIG_INTEGER_TYPE,
+  [BOOLEAN_TYPE.name]: BOOLEAN_TYPE,
+  [BYTES_TYPE.name]: BYTES_TYPE,
+  [DATE_TYPE.name]: DATE_TYPE,
+  [INTEGER_TYPE.name]: INTEGER_TYPE,
+  [STRING_TYPE.name]: STRING_TYPE,
 };
-
-export default PARAM_TYPES;

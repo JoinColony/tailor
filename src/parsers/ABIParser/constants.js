@@ -4,8 +4,10 @@ import type { ParamType } from '../../interface/Params';
 
 import {
   ADDRESS_TYPE,
+  BIG_INTEGER_TYPE,
   BOOLEAN_TYPE,
   BYTES_TYPE,
+  DATE_TYPE,
   INTEGER_TYPE,
   STRING_TYPE,
 } from '../../modules/paramTypes';
