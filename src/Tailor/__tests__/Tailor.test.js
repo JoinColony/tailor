@@ -7,7 +7,7 @@ import Tailor from '../index';
 import Adapter from '../../adapters/Adapter';
 import ABIParser from '../../parsers/ABIParser';
 import Wallet from '../../wallets/Wallet';
-import PARAM_TYPES from '../../modules/paramTypes';
+import { BOOLEAN_TYPE, INTEGER_TYPE } from '../../modules/paramTypes';
 
 import { getAdapter, getLoader, getParser, getWallet } from '../factory';
 import DeployTransaction from '../../modules/transactions/DeployTransaction';
@@ -216,11 +216,11 @@ describe('Tailor', () => {
             'myMethod(uint,bool)': [
               {
                 name: 'id',
-                type: PARAM_TYPES.INTEGER,
+                type: INTEGER_TYPE,
               },
               {
                 name: 'isProbablyTrue',
-                type: PARAM_TYPES.BOOLEAN,
+                type: BOOLEAN_TYPE,
               },
             ],
           },
@@ -233,21 +233,21 @@ describe('Tailor', () => {
             'MyEvent(uint256,uint256)': [
               {
                 name: 'a',
-                type: PARAM_TYPES.INTEGER,
+                type: INTEGER_TYPE,
               },
               {
                 name: 'b',
-                type: PARAM_TYPES.INTEGER,
+                type: INTEGER_TYPE,
               },
             ],
             'MyEvent(bool,bool)': [
               {
                 name: 'a',
-                type: PARAM_TYPES.BOOLEAN,
+                type: BOOLEAN_TYPE,
               },
               {
                 name: 'b',
-                type: PARAM_TYPES.BOOLEAN,
+                type: BOOLEAN_TYPE,
               },
             ],
           },
@@ -259,15 +259,15 @@ describe('Tailor', () => {
             'getTaskRole(uint,uint)': [
               {
                 name: 'id',
-                type: PARAM_TYPES.INTEGER,
+                type: INTEGER_TYPE,
               },
               {
                 name: 'role',
-                type: PARAM_TYPES.INTEGER,
+                type: INTEGER_TYPE,
               },
               {
                 name: 'notOverriden',
-                type: PARAM_TYPES.INTEGER,
+                type: INTEGER_TYPE,
               },
             ],
           },
@@ -303,21 +303,21 @@ describe('Tailor', () => {
             'MyEvent(uint256,uint256)': [
               {
                 name: 'a',
-                type: PARAM_TYPES.INTEGER,
+                type: INTEGER_TYPE,
               },
               {
                 name: 'b',
-                type: PARAM_TYPES.INTEGER,
+                type: INTEGER_TYPE,
               },
             ],
             'MyEvent(bool,bool)': [
               {
                 name: 'a',
-                type: PARAM_TYPES.BOOLEAN,
+                type: BOOLEAN_TYPE,
               },
               {
                 name: 'b',
-                type: PARAM_TYPES.BOOLEAN,
+                type: BOOLEAN_TYPE,
               },
             ],
           },
@@ -329,11 +329,11 @@ describe('Tailor', () => {
             'myMethod(uint,bool)': [
               {
                 name: 'id',
-                type: PARAM_TYPES.INTEGER,
+                type: INTEGER_TYPE,
               },
               {
                 name: 'isTotallyTrue',
-                type: PARAM_TYPES.BOOLEAN,
+                type: BOOLEAN_TYPE,
               },
             ],
           },
@@ -372,7 +372,7 @@ describe('Tailor', () => {
             'getTaskRole(uint,uint)': [
               {
                 name: 'id',
-                type: PARAM_TYPES.INTEGER,
+                type: INTEGER_TYPE,
               },
               {
                 name: 'role',
@@ -380,7 +380,7 @@ describe('Tailor', () => {
               },
               {
                 name: 'notOverriden',
-                type: PARAM_TYPES.INTEGER,
+                type: INTEGER_TYPE,
               },
             ],
           },

@@ -4,7 +4,7 @@
 import createSandbox from 'jest-sandbox';
 
 import constantFactory from '../index';
-import PARAM_TYPES from '../../paramTypes';
+import { INTEGER_TYPE, BOOLEAN_TYPE } from '../../paramTypes';
 
 describe('Constants', () => {
   const sandbox = createSandbox();
@@ -24,40 +24,40 @@ describe('Constants', () => {
   const outputSpec = [
     {
       name: 'z',
-      type: PARAM_TYPES.INTEGER,
+      type: INTEGER_TYPE,
     },
   ];
   const inputs = {
     'myConstant(uint)': [
       {
         name: 'a',
-        type: PARAM_TYPES.INTEGER,
+        type: INTEGER_TYPE,
       },
     ],
     'myConstant(bool)': [
       {
         name: 'a',
-        type: PARAM_TYPES.BOOLEAN,
+        type: BOOLEAN_TYPE,
       },
     ],
     'myConstant(uint,bool)': [
       {
         name: 'a',
-        type: PARAM_TYPES.INTEGER,
+        type: INTEGER_TYPE,
       },
       {
         name: 'b',
-        type: PARAM_TYPES.BOOLEAN,
+        type: BOOLEAN_TYPE,
       },
     ],
     'myConstant(uint,uint)': [
       {
         name: 'a',
-        type: PARAM_TYPES.INTEGER,
+        type: INTEGER_TYPE,
       },
       {
         name: 'b',
-        type: PARAM_TYPES.INTEGER,
+        type: INTEGER_TYPE,
       },
     ],
   };
