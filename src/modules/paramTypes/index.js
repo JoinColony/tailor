@@ -1,7 +1,7 @@
 /* @flow */
 
 import BigNumber from 'bn.js';
-import { isAddress, isHexStrict, utf8ToHex } from 'web3-utils';
+import { isAddress, isHexStrict, utf8ToHex, toHex } from 'web3-utils';
 import { isEmptyHexString } from '../utils';
 
 import type { ParamType } from '../../interface/Params';
@@ -29,6 +29,36 @@ export const ADDRESS_TYPE: ParamType = {
   },
 };
 
+export const DATE_TYPE: ParamType = {
+  name: 'date',
+  validate(value: any) {
+    // XXX This allows dates initialised without a value (or with `0` value)
+    return value instanceof Date;
+  },
+  convertOutput(value: any) {
+    const converted = parseInt(
+      BigNumber.isBN(value) ? value.toNumber() : value,
+      10,
+    );
+    // Recreate the date by adding milliseconds to the timestamp
+    return converted > 0 ? new Date(converted * 1000) : null;
+  },
+  convertInput(value: Date) {
+    // Dates are stored as timestamps without milliseconds
+    return parseInt(value.setMilliseconds(0) / 1000, 10);
+  },
+};
+
+export const HEX_STRING_TYPE: ParamType = {
+  name: 'hexString',
+  validate(value: any) {
+    return isHexStrict(value);
+  },
+  convertOutput(value: any) {
+    return toHex(value);
+  },
+};
+
 export const INTEGER_TYPE: ParamType = {
   name: 'integer',
   validate(value: *) {
@@ -40,6 +70,23 @@ export const INTEGER_TYPE: ParamType = {
   },
   convertOutput(value: string) {
     return parseInt(value, 10);
+  },
+};
+
+export const BIG_INTEGER_TYPE: ParamType = {
+  name: 'bigInteger',
+  validate(value: *) {
+    assert(
+      Number.isInteger(value) || BigNumber.isBN(value),
+      'Must be a valid integer or BigNumber',
+    );
+    return true;
+  },
+  convertInput(value: any) {
+    return new BigNumber(value);
+  },
+  convertOutput(value: string) {
+    return new BigNumber(value);
   },
 };
 
