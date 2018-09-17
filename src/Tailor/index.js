@@ -6,7 +6,6 @@ import methodFactory from '../modules/methodFactory';
 import DeployTransaction from '../modules/transactions/DeployTransaction';
 import { mergeOverrides, mergeSpec } from '../modules/utils';
 import { getAdapter, getLoader, getParser, getWallet } from './factory';
-import { PARAM_TYPE_NAME_MAP } from '../modules/paramTypes';
 
 import type Transaction from '../modules/transactions/Transaction';
 import type {
