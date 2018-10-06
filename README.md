@@ -1,177 +1,244 @@
-# Tailor API
-Tailor is a library for interacting with Ethereum smart contracts, built by [Colony](https://colony.io/).
+# Tailor
 
-------
-# WIP!
-------
+Tailor is a library for interacting with Ethereum smart contracts, built by [Colony](https://colony.io/). It acts as a powerful and easy to use layer between lower-level libraries such as Web3, and your dApp, with features including dynamic ABI loading and extensible type checking.
 
-> Quoted sections are WIP comments.
-
-## Key Features
-* Extensible type checking and validation
-* Detailed error reporting
-* Simple for beginners, but flexible for more complex applications
-* Support for various environments (Web3, Ethers, MetaMask, etc)
+```sh
+yarn add @colony/tailor
+```
 
 ## Getting Started
-```js
-import Tailor from 'tailor'
-import abi from './MetaCoinABI.json'
 
-const contractAddress = '0x123'
-const metaCoin = new Tailor({ abi, contractAddress })
-
-const balance = await metaCoin.getBalance('0x456')
-// -> BigNumber(50)
-
-const transaction = metaCoin.sendCoin('0x789', 20)
-const estimatedGas = await transaction.estimate()
-// -> BigNumber(46000)
-await transaction.send()
-// -> { successful: true, eventData: { ... }, meta: { ... } }
-```
-
-Here, we’re loading in the [MetaCoin](https://github.com/ConsenSys/truffle-webpack-demo/blob/master/contracts/MetaCoin.sol) ABI from a file, and using it to instantiate a contract client. Tailor is clever enough to detect environments such as MetaMask or Mist and will automatically use them.
-
-> Actually maybe we want to use loaders in the quick start? I feel like this is a big feature, but also maybe complicated to a newcomer.
-
-### Contract Loaders
-TODO: why they’re so amazing!
+Let's start by loading a contract from Etherscan. To interact with a contract we need its ABI - a description of what functions and events it has. This example relies on the code having been [verified](https://etherscan.io/verifyContract) on Etherscan.
 
 ```js
-import { TrufflepigLoader } from 'tailor/loaders'
+import Tailor from '@colony/tailor'
+import Web3 from 'web3'
+import { open } from '@colony/purser-software'
 
-const contractName = 'MetaCoin'
+const web3 = new Web3('wss://mainnet.infura.io/ws')
+const wallet = await open({ mnemonic: '...' })
 
-const loader = new TrufflepigLoader()
-const myContract = new Tailor({ loader, contractName })
-
-// also works with a specific address
-// new Tailor({ loader, contractAddress })
-```
-
-> How will we now handle loading account keys via TrufflePig? Maybe this functionality shouldn’t be in contract loaders, but rather account loaders?
-
-### Specific Contract Interface
-Giving callers, senders, events - more control over how things are handled. Allows named params.
-
-```js
-const callers = {
-  getThing: {
-    input: [['owner', 'address']],
-    output: [['thing', 'paramType']]
-  }
-}
-const senders = {
-  doThing: {
-    functionName: 'doTheThing', // optional
-    input: [['amount', 'number']],
-    events: ['MyEvent']
-  }
-}
-const events = {
-  MyEvent: [['thingResult'], ['string']]
-}
-
-const myContract = new Tailor({
-  callers,
-  senders,
-  events,
-  loader,
-  contractName
-})
-
-await myContract.doThing({ amount: 20 }).send()
-```
-
-TODO: explanation of above.
-
-> There still feels something a little bit off with the input/output params syntax, could be nicer.
-
-### Manual Environment
-In some cases, you may want to use a specific environment which Tailor isn’t able to detect automatically. Fortunately, Tailor lets you manually set how it should connect to the Ethereum network and sign transactions.
-
-```js
-import { EtherscanLoader } from 'tailor/loaders'
-import { open } from 'colony-wallet/software'
-
-const loader = new EtherscanLoader()
-const contractAddress = '0x123'
-const provider = window.web3.currentProvider
-const wallet = await open({ mnemonic: 'random words' })
-
-const myContract = new Tailor({
-  loader,
-  contractAddress,
-  provider,
+const cryptoKitties = await Tailor.load({
+  loader: 'etherscan',
+  query: {
+    contractAddress: '0x06012c8cf97BEaD5deAe237070F9587f8E7A266d'
+  },
+  adapter: {
+    name: 'web3',
+    options: { web3 }
+  },
   wallet
 })
-```
 
-> I think the parsing of different combinations of parameters could end up being a long and complicated bit of code.
+// get kitty ids owned by us
+const myKittyIds = await cryptoKitties.constants
+  .tokensOfOwner(cryptoKitties.wallet.address)
 
-### Custom Types
-Out of the box Tailor comes with type checking for Solidity types, so transactions won’t be sent unless parameters pass validation. However for many parameters, a Solidity type may be used to hold a value with more strict criteria.
+console.log(myKittyIds)
+// -> ['123456', ...]
 
-For example, a contract could have a `uint8` parameter which represents a rating between 1 and 10. Zero and any number greater than 10 are not valid, but Tailor doesn’t know this.
+// transfer our first kitty
+await cryptoKitties.methods.transfer({
+  to: '0xabc...',
+  tokenId: myKittyIds[0]
+}).send()
 
-```js
-const callers = { ... }
-const senders = {
-  giveRating: {
-    input: ['rating', 'rating']
+// helper method to get our kitties
+cryptoKitties.extend({
+  async getKitties(count) {
+    const kittyIds = await this.constants
+      .tokensOfOwner(cryptoKitties.wallet.address)
+    return kittyIds
+      .slice(0, count)
+      .map(async id => await this.constants.getKitty(id))
   }
-}
-const types = {
-  rating: {
-    validate(value) {
-      return value >= 1 && value <= 10
-    }
-  }
-}
+})
 
-const myContract = new Tailor({
-  callers,
-  senders,
-  types,
+// list our first 5 kitties
+const myKitties = await cryptoKitties.getKitties(5)
+
+console.log(myKitties)
+// -> [{ generation, genes, ... }, ...]
+
+// listen for kitties being transferred to us
+cryptoKitties.events.Transfer.addListener(({ from, to, tokenId }) => {
+  if (to === cryptoKitties.wallet.address)
+    console.log(`${from} sent you kitty with id ${tokenId}!`)
 })
 ```
 
-Custom types are passed to the constructor along with the rest of your config.
+In this example, you can see we set up a Web3 instance pointing to [Infura](https://infura.io/), and open a [Purser](https://github.com/JoinColony/purser) wallet to use with Tailor. Once the ABI has been loaded and parsed, all of the CryptoKitties constants, events and methods are available to interact with.
 
-### Method Hooks
+As long as parameters are named in the contract, they can be passed as an object, like with the `transfer` above. You can also just pass them as positional arguments.
+
+## Configuration
+
+### Loaders
+
+As well as getting contract data from Etherscan like in the getting started, there are several other ways of loading this in. The query is what tells the loader what it should be loading, with some supporting `contractName`, `contractAddress`, or both. Some loaders also take options.
+
 ```js
-const senders = {
-  doThing: {
-    input: [['amount', 'number']],
-    events: ['MyEvent'],
-    beforeSend: params => {
-      // do something
+const client = await Tailor.load({
+  loader: {
+    name: 'truffle',
+    options: {}
+  },
+  // or just loader: 'truffle',
+  query: {
+    contractName: 'MyContract'
+  },
+  ...
+})
+
+// also supports fs, http, trufflepig, etherscan
+
+// alternatively pass pre-loaded contractData
+// contractData: {
+//   abi: [{ ... }],
+//   address: '0xabc'
+// }
+```
+
+Loaders are super flexible and allow for great development experiences using tools like [TrufflePig](https://github.com/JoinColony/trufflepig). See [loaders](docs/Loaders.md) for more info, as well as how to create your own custom loader.
+
+### Wallet
+
+Tailor supports a wide range of wallets through [Purser](https://github.com/JoinColony/purser), including MetaMask and various hardware wallets.
+
+```js
+import { open: software } from '@colony/purser-software'
+import { open: trezor } from '@colony/purser-trezor'
+
+// mnemonic
+await Tailor.load({
+  wallet: await software({ mnemonic: '...' }),
+  ...
+})
+
+// Trezor
+await Tailor.load({
+  wallet: await trezor(),
+  ...
+})
+```
+
+See the [Purser docs](https://docs.colony.io/purser/docs-overview) for more info on how wallets work, as well as a full list of those available.
+
+### Contract Overrides
+
+Sometimes it helps to be able to specify in more detail how Tailor should interact with your contract, and what values it can expect to be returned. We can do this by passing method, constant and event overrides.
+
+```js
+const KITTY_ID_TYPE = {
+  validate: value => true,
+  convertInput: value => value,
+  convertOutput: value => value
+}
+
+const cryptoKitties = await Tailor.load({
+  methods: {
+    sendKitty: {
+      functionName: 'transfer',
+      type: 'contract',
+      input: [{
+        name: 'to',
+        type: 'address'
+      }, {
+        name: 'kitty',
+        type: KITTY_ID_TYPE
+      }]
     }
-  }
-}
+  },
+  events: {
+    Transfer: {
+      output: [{
+        name: 'from',
+        type: 'address'
+      }, {
+        name: 'to',
+        type: 'address'
+      }, {
+        name: 'tokenId',
+        type: 'integer'
+      }]
+    }
+  },
+  ...
+})
+
+const { events } = await cryptoKitties.methods.sendKitty({
+  to: '0xabc...',
+  kitty: 123456
+}).send()
+
+console.log(events)
+// -> [{ from, to, tokenId }, ...]
 ```
 
-> What other hooks do we want?
+Notice how at the top we define a custom type. This one doesn't actually do any checking/conversion, but you can see how it might do so.
 
-### Extending Tailor
-TODO: explain how it removes much of the verbosity of instantiating Tailor; custom methods; great for writing contract libraries.
+Overriden methods have a few different options, including the `functionName` which they should call, and the `type` of transaction to be used (e.g. `deploy` or `multisig` for ERC191 off-chain multisig). See [contract specification](docs/ContractSpec.md) for more info.
+
+## Extending
+
+### Event Emitters
+
+Various things which happen internally within Tailor emit events. These can be used, for example, to update off-chain stores, display UI elements, or for logging purposes.
 
 ```js
-class MyTailor extends Tailor {
-  static get definition() {
-    return { callers, senders, events, types, contractName }
-  }
+const cryptoKitties = await Tailor.load({ ... })
+const tx = cryptoKitties.methods.transfer(...)
 
-  // helper functions
-  complicatedThing() {
-    const params = someFunction()
-    someOtherFunction(params)
-    return this.doThing(params)
-  }
-}
+tx.on('confirmation', (confirmationNumber, receipt) =>
+  console.log(confirmationNumber))
 
-// no config required
-const myContract = new MyTailor()
-await myContract.complicatedThing().send()
+await tx.send()
+// -> 1, 2, 3...
 ```
+
+For all available events see [events info](docs/Events.md).
+
+### Hooks
+
+Emitted events are great for when you want to perform an action in response to something happening, but sometimes you need more control. That's where hooks come in - they let you asynchronously transform an internal Tailor value before it's used. We call these _hooked_ values.
+
+```js
+const cryptoKitties = await Tailor.load({ ... })
+
+cryptoKitties.methods.transfer.hooks({
+  // always transfer to this address
+  send: (state, tx) => { ...state, to: '0x7e57...' }
+})
+
+const tx = cryptoKitties.methods.transfer(...)
+
+tx.hooks({
+  receipt: receipt => { ...receipt, hooked: true }
+})
+```
+
+Hooks are called in the order `global > local`, meaning if we were to also set a `send` hook on the `tx` in the example above, the hooked value from the first would be what the second received as input. The hook functions must return the transformed input, but some hooks also provide additional arguments which should not be modified.
+
+For a full list of available hooks see [hooks info](docs/Hooks.md).
+
+### Extend
+
+In a lot of cases, it's fine to pass all your Tailor configuration when you load the instance. But what if, for example, you wanted to provide developers using your contract with an instance which could be further extended? We've got you covered.
+
+```js
+import myExtension from './myExtension'
+
+const client = await Tailor.load({ ... })
+
+// conveniently use external extension modules
+client.extend(myExtension)
+
+// or do it manually
+client.extend({
+  ...
+})
+```
+
+This is particularly handy for [`redux-logger`](https://github.com/evgenyrodionov/redux-logger#readme) style debugging, or optional extra features which you can distribute for your contract libraries.
+
+See [contract spec](docs/ContractSpec.md) for full details of how Tailor can be extended.
