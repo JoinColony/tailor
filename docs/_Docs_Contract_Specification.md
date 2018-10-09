@@ -54,4 +54,4 @@ It's useful to understand the contract spec structure, as this is what overrides
 }
 ```
 
-For more info about the different types of transaction available, see [transactions](Transactions.md).
+For more info about the different types of transaction available, see [transactions](https://docs.colony.io/tailor/docs-transactions/).

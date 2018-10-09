@@ -31,7 +31,7 @@ await client.methods.myMethod({
 
 ## MultiSig Transactions
 
-These are for use with contract methods which require a transaction to be signed by multiple parties, specifically designed around [`simple-multisig`](https://github.com/christianlundkvist/simple-multisig). See [Multisig](Multisig.md) docs for more in depth explanation.
+These are for use with contract methods which require a transaction to be signed by multiple parties, specifically designed around [`simple-multisig`](https://github.com/christianlundkvist/simple-multisig). See [Multisig](http://docs.colony.io/tailor/docs-multisignature-transactions/) docs for more in depth explanation.
 
 ```js
 const client = await Tailor.load({
