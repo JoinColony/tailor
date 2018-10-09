@@ -1,3 +1,9 @@
+---
+title: FAQ
+section: Docs
+order: 7
+---
+
 # Frequently Asked Questions
 
 > Which versions of Web3 does Tailor support?

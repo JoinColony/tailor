@@ -1,3 +1,9 @@
+---
+title: Transactions
+section: Docs
+order: 5
+---
+
 # Transactions
 
 Interacting with the Ethereum blockchain in a way which will cause its state to change is done with a transaction. In Tailor we have various types of `Transaction` which handle everything for you surrounding sending a transaction.
