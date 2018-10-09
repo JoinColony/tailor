@@ -4,8 +4,6 @@ section: Docs
 order: 3
 ---
 
-# Hooks
-
 Tailor has a system of "hooks" which can be used to transform internal values before they are used. The idea with these is to allow more flexibility and customization when certain things happen in Tailor.
 
 ## Hooks Usage

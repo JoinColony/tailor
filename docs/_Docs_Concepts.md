@@ -4,8 +4,6 @@ section: Docs
 order: 0
 ---
 
-# Concepts
-
 Tailor is made up of various moving parts, from wallets to adapters, which help to take away some of the complexity of interacting with Ethereum contracts. Some of this is going on behind the scenes, while other parts will be actively used.
 
 ## Lifecycle of a Tailor instance

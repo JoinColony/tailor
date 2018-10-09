@@ -4,8 +4,6 @@ section: Docs
 order: 6
 ---
 
-# Multisignature Transactions
-
 Some contract functions rely on what's known as a [Multisignature](https://en.wikipedia.org/wiki/Multisignature) in order to process a transaction. A popular implementation of this for Solidity contracts is [`simple-multisig`](https://github.com/christianlundkvist/simple-multisig), which we use for various functions in `colonyNetwork`.
 
 In order to use these functions, we need to create contract data to call our target contract function, gather parameters needed for executing the change on the contract, find which addresses we need signatures from, get each party to sign a transaction in a specific format, and finally, collate these signatures and send them off in one single transaction.

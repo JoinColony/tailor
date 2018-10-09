@@ -4,8 +4,6 @@ section: Docs
 order: 1
 ---
 
-# Loaders
-
 Loaders make it possible to easily access and load Ethereum smart contracts.
 
 To interact with a contract, whether it's on mainnet, a testnet, or your local machine, one needs to have the contract's deployed address, together with its Application Binary Interface (ABI).
