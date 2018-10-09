@@ -1,3 +1,5 @@
+<img align="center" src="/docs/img/tailor_color.svg" />
+
 # Tailor
 
 Tailor is a library for interacting with Ethereum smart contracts, built by [Colony](https://colony.io/). It acts as a powerful and easy to use layer between lower-level libraries such as Web3, and your dApp, with features including dynamic ABI loading and extensible type checking.
