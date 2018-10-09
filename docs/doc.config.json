@@ -2,5 +2,5 @@
     "logo": "img/tailor_color.svg",
     "logoSmall": "img/tailor_color.svg",
     "sectionOrder": ["Docs"],
-    "description": "Tailor is a library for interacting with Ethereum smart contracts. It acts as a powerful and easy-to-use layer between lower-level libraries such as Web3, and your dApp."
+    "description": "Tailor is a library for interacting with Ethereum smart contracts. It acts as a powerful and easy-to-use layer between lower-level libraries and your dApp."
 }
