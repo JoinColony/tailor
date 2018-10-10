@@ -1,4 +1,8 @@
-# Events
+---
+title: Events
+section: Docs
+order: 4
+---
 
 Certain actions within Tailor cause an event to be emitted. Currently, these are all within a `Transaction` but in the future may be expanded to other parts of Tailor.
 

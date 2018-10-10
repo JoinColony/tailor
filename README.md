@@ -1,3 +1,5 @@
+<img align="center" src="/docs/img/tailor_color.svg" />
+
 # Tailor
 
 Tailor is a library for interacting with Ethereum smart contracts, built by [Colony](https://colony.io/). It acts as a powerful and easy to use layer between lower-level libraries such as Web3, and your dApp, with features including dynamic ABI loading and extensible type checking.
@@ -99,7 +101,7 @@ const client = await Tailor.load({
 // }
 ```
 
-Loaders are super flexible and allow for great development experiences using tools like [TrufflePig](https://github.com/JoinColony/trufflepig). See [loaders](docs/Loaders.md) for more info, as well as how to create your own custom loader.
+Loaders are super flexible and allow for great development experiences using tools like [TrufflePig](https://github.com/JoinColony/trufflepig). See [loaders](https://docs.colony.io/tailor/docs-loaders) for more info, as well as how to create your own custom loader.
 
 ### Wallet
 
@@ -177,7 +179,7 @@ console.log(events)
 
 Notice how at the top we define a custom type. This one doesn't actually do any checking/conversion, but you can see how it might do so.
 
-Overriden methods have a few different options, including the `functionName` which they should call, and the `type` of transaction to be used (e.g. `deploy` or `multisig` for ERC191 off-chain multisig). See [contract specification](docs/ContractSpec.md) for more info.
+Overriden methods have a few different options, including the `functionName` which they should call, and the `type` of transaction to be used (e.g. `deploy` or `multisig` for ERC191 off-chain multisig). See [contract specification](https://docs.colony.io/tailor/docs-contract-specification) for more info.
 
 ## Extending
 
@@ -196,7 +198,7 @@ await tx.send()
 // -> 1, 2, 3...
 ```
 
-For all available events see [events info](docs/Events.md).
+For all available events see [events info](https://docs.colony.io/tailor/docs-events).
 
 ### Hooks
 
@@ -219,7 +221,7 @@ tx.hooks({
 
 Hooks are called in the order `global > local`, meaning if we were to also set a `send` hook on the `tx` in the example above, the hooked value from the first would be what the second received as input. The hook functions must return the transformed input, but some hooks also provide additional arguments which should not be modified.
 
-For a full list of available hooks see [hooks info](docs/Hooks.md).
+For a full list of available hooks see [hooks info](https://docs.colony.io/tailor/docs-hooks).
 
 ### Extend
 
@@ -241,4 +243,4 @@ client.extend({
 
 This is particularly handy for [`redux-logger`](https://github.com/evgenyrodionov/redux-logger#readme) style debugging, or optional extra features which you can distribute for your contract libraries.
 
-See [contract spec](docs/ContractSpec.md) for full details of how Tailor can be extended.
+See [contract spec](https://docs.colony.io/tailor/docs-contract-specification) for full details of how Tailor can be extended.
