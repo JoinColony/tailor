@@ -209,7 +209,26 @@ export default class Web3Adapter extends Adapter {
       ...args,
     ).call();
 
-    return convertResultObj(args.length, rawResult);
+    // Sometimes only a single value is returned when there is only one
+    // return value on the contract function. Here we convert it to an
+    // object.
+    // TODO: why does this happen? Are we correctly handling a single
+    // array being returned?
+    const resultObject =
+      typeof rawResult !== 'object' ? { '0': rawResult } : rawResult;
+
+    // determine the number of return values from the resultObject
+    let allFound = false;
+    let resultLength = 0;
+    while (!allFound) {
+      if (resultObject[resultLength]) {
+        resultLength += 1;
+      } else {
+        allFound = true;
+      }
+    }
+
+    return convertResultObj(resultLength, resultObject);
   }
 
   subscribe(options: SubscriptionOptions = {}): EventEmitter {

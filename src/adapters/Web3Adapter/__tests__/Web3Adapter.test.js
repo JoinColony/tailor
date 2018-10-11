@@ -380,8 +380,12 @@ describe('Web3Adapter', () => {
       mySecond: 'second',
       length: 2,
     };
+    const singleCallResult = 'single value';
 
-    const mockCall = sandbox.fn().mockImplementation(() => callResult);
+    const mockCall = sandbox
+      .fn()
+      .mockImplementationOnce(() => callResult)
+      .mockImplementationOnce(() => singleCallResult);
     const mockMethod = sandbox.fn().mockImplementation(() => ({
       call: mockCall,
     }));
@@ -407,6 +411,10 @@ describe('Web3Adapter', () => {
         }" not defined on this contract`,
       ),
     );
+
+    // single returned value from contract
+    const singleReturnResult = await adapter.call(functionCall);
+    expect(singleReturnResult).toEqual(['single value']);
   });
 
   test('Subscribe', () => {
