@@ -14,7 +14,7 @@ With Purser, the configuration for the `Web3Wallet` is simple.
 
 ### Web3 Wallet using MetaMask
 
-Import the `@colony/purser-metamsk` package, then execute the `open` method and pass the result to the `.load` method.
+Import the `@colony/purser-metamask` package, then execute the `open` method and pass the result to the `.load` method.
 
 ```js
 

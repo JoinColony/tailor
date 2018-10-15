@@ -10,7 +10,7 @@ In this case, the adapter is the layer between Tailor and your connection to Eth
 
 ## How to use adapters
 
-Tailor currently uses the [web3.js](https://github.com/ethereum/web3.js) library for the adapter, which has become the standard for interacting with the Ethereum network.
+Tailor currently only supports a [web3.js](https://github.com/ethereum/web3.js) adapter, with plans to support an [ethers.js](https://github.com/ethers-io/ethers.js/) adapter and new adapters as they become available.
 
 ### Web3 Adapter
 

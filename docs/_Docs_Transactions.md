@@ -4,7 +4,7 @@ section: Docs
 order: 5
 ---
 
-Interacting with the Ethereum blockchain in a way which will cause its state to change is done with a transaction. In Tailor we have various types of transactions, which handles everything for you when sending a transaction.
+Interacting with the Ethereum blockchain in a way which will cause its state to change is done with a transaction. In Tailor we have various types of transactions, which handle everything for you when sending a transaction.
 
 ## Contract Transactions
 
@@ -31,17 +31,21 @@ await client.methods.myMethod({
 
 ## Multisignature Transactions
 
-The `multisig` transactions is used with contract methods which require a transaction to be signed by multiple parties. The `multisig` transaction was designed around [`simple-multisig`](https://github.com/christianlundkvist/simple-multisig). See [Multisignature Transactions](https://docs.colony.io/tailor/docs-multisignature-transactions/) in the [colonyJS docs](https://docs.colony.io/colonyjs/docs-overview/) for more information.
+The `multisig` transaction is used with contract methods which require a transaction to be signed by multiple parties. The `multisig` transaction was designed around [`simple-multisig`](https://github.com/christianlundkvist/simple-multisig). See [Multisignature Transactions](https://docs.colony.io/tailor/docs-multisignature-transactions/) in the [colonyJS docs](https://docs.colony.io/colonyjs/docs-overview/) for more information.
 
 ```js
 
 const client = await Tailor.load({
   methods: {
     myMethod: {
-      type: 'multisig',
-      getRequiredSigners: () => {},
-      multiSigFunctionName: 'multiSigMethod',
-      getMultiSigNonce: () => {},
+      type: {
+        name: 'multisig',
+        options: {
+          getRequiredSigners,
+          multiSigFunctionName,
+          getMultiSigNonce
+        }
+      },
     },
   },
 });
