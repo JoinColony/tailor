@@ -1,7 +1,7 @@
 ---
 title: FAQ
 section: Docs
-order: 7
+order: 8
 ---
 
 ## Which versions of Web3 does Tailor support?
