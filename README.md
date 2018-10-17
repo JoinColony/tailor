@@ -1,4 +1,14 @@
-<img align="center" src="/docs/img/tailor_color.svg" />
+<div align="center">
+  <img src="/docs/img/tailor_color.svg" width="600" />
+</div>
+<div align="center">
+  <a href="https://gitter.im/JoinColony/tailor">
+    <img src="https://img.shields.io/gitter/room/TechnologyAdvice/Stardust.svg" />
+  </a>
+  <a href="https://build.colony.io/">
+    <img src="https://img.shields.io/discourse/https/build.colony.io/status.svg" />
+  </a>
+</div>
 
 # Tailor
 
