@@ -31,7 +31,7 @@ await client.methods.myMethod({
 
 ## Multisignature Transactions
 
-The `multisig` transaction is used with contract methods which require a transaction to be signed by multiple parties. The `multisig` transaction was designed around [`simple-multisig`](https://github.com/christianlundkvist/simple-multisig). See [Multisignature Transactions](https://docs.colony.io/tailor/docs-multisignature-transactions/) in the [colonyJS docs](https://docs.colony.io/colonyjs/docs-overview/) for more information.
+The `multisig` transaction is used with contract methods which require a transaction to be signed by multiple parties. The `multisig` transaction was designed around [`simple-multisig`](https://github.com/christianlundkvist/simple-multisig).
 
 ```js
 
