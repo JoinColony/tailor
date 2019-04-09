@@ -17,7 +17,7 @@ export const ADDRESS_PATTERN = /address(\[([0-9]*)])?/;
 
 export const BOOLEAN_PATTERN = /^bool(\[([0-9]*)])*$/;
 
-export const BYTES_PATTERN = /^bytes(([0-9]{1,})(\[([0-9]*)])|(\[([0-9]*)]))*$/;
+export const BYTES_PATTERN = /^bytes([0-9]{1,})(\[([0-9]*)])*$/;
 
 export const BIG_INTEGER_PATTERN = /^u?int([0-9]*)?(\[([0-9]*)])*$/;
 

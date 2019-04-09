@@ -15,7 +15,6 @@ import {
 import Adapter from '../adapters/Adapter';
 import Loader from '../loaders/Loader';
 import Parser from '../parsers/Parser';
-import Wallet from '../wallets/Wallet';
 
 import type {
   AdapterName,
@@ -116,7 +115,8 @@ export async function getWallet(
 ): Promise<IWallet> {
   if (!input) throw new Error('Expected a wallet option');
 
-  if (input instanceof Wallet) return Promise.resolve(input);
+  // $FlowFixMe find a better way to check it's a Wallet
+  if (input.sign && input.signMessage) return Promise.resolve(input);
 
   let name: WalletName = '';
   let options;

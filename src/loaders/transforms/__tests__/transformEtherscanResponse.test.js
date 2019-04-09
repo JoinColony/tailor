@@ -14,6 +14,9 @@ describe('Transforming Etherscan responses', () => {
     expect(() => {
       transformEtherscanResponse('abc', query);
     }).toThrow('Malformed response from Etherscan');
+    expect(() => {
+      transformEtherscanResponse({ status: '1', abi: 'rubbish' }, query);
+    }).toThrow('Error parsing result from Etherscan');
   });
 
   test('Erroneous response', () => {
@@ -33,7 +36,7 @@ describe('Transforming Etherscan responses', () => {
       transformEtherscanResponse(
         {
           status: '1',
-          result: abi,
+          result: JSON.stringify(abi),
         },
         query,
       ),
@@ -47,11 +50,21 @@ describe('Transforming Etherscan responses', () => {
     expect(
       transformEtherscanResponse({
         status: '1',
-        result: abi,
+        result: JSON.stringify(abi),
       }),
     ).toEqual({
       abi,
       address: undefined,
     });
+  });
+
+  test('Getting bytecode errors', () => {
+    expect(
+      () =>
+        transformEtherscanResponse({
+          status: '1',
+          result: JSON.stringify(abi),
+        }).bytecode,
+    ).toThrow('Etherscan does not currently provide contract bytecode');
   });
 });

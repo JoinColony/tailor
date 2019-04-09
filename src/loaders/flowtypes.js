@@ -32,7 +32,7 @@ export type EtherscanQuery = {
 
 export type EtherscanResponse = {
   status: '0' | '1',
-  result: Array<*>, // The ABI
+  result: string, // ABI JSON string
 };
 
 export type TruffleArtifact = {
